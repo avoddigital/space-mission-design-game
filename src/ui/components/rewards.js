@@ -79,18 +79,6 @@ export function reportRewards(report) {
     </section>`;
 }
 
-/** Falling confetti for a successful mission. Hidden when the system asks for reduced motion. */
-export function confetti() {
-  const colors = ['#56ccf2', '#27ae60', '#ffd166', '#eb5757', '#2d9cdb', '#f2c94c'];
-  const pieces = Array.from({ length: 48 }, (_, index) => {
-    const left = (index * 37) % 100;
-    const delay = (index % 12) * 70;
-    const duration = 1800 + ((index * 53) % 900);
-    return `<i style="left:${left}%;--delay:${delay}ms;--duration:${duration}ms;--color:${colors[index % colors.length]};--spin:${(index % 2 ? 1 : -1) * (180 + index * 7)}deg"></i>`;
-  }).join('');
-  return `<div class="confetti" aria-hidden="true">${pieces}</div>`;
-}
-
 /**
  * Live projected score while designing, with the stars it would earn.
  * @param {object} score scoreMission result (no simulation)

@@ -1,4 +1,5 @@
 import { esc, fmt } from '../format.js';
+import { icon } from './icons.js';
 
 /** What each of the 5 meters shows. `budget` is the result of computeBudget. */
 export const METERS = Object.freeze({
@@ -9,10 +10,10 @@ export const METERS = Object.freeze({
   time: { read: (b) => ({ entry: b.time, used: b.time.totalDays, limit: b.time.limitDays }), unit: 'days', pending: 'Pick an orbit' },
 });
 
-/** From this share of the limit a meter reads RISKY and the checklist says CHECK. */
+/** From this share of the limit a meter reads Risky and the checklist says CHECK. */
 export const RISKY_RATIO = 0.9;
 
-const TAGS = { ok: 'OK', tight: 'TIGHT', over: 'OVER THE LIMIT', pending: 'NOT SET' };
+const TAGS = { ok: 'OK', tight: 'Tight', over: 'Over limit', pending: 'Not set' };
 
 /** Bar color by how full it is (PRD 8.2): blue, amber, orange, red. */
 function tone(entry) {
@@ -23,9 +24,9 @@ function tone(entry) {
   return 'ok';
 }
 
-/** Text tag, so the state never depends on color alone. 90% to 100% reads "RISKY" (PRD 8.2). */
+/** Text tag, so the state never depends on color alone. 90% to 100% reads "Risky" (PRD 8.2). */
 function tagFor(entry) {
-  return tone(entry) === 'risky' && entry.status === 'ok' ? 'RISKY' : TAGS[entry.status];
+  return tone(entry) === 'risky' && entry.status === 'ok' ? 'Risky' : TAGS[entry.status];
 }
 
 function barWidth(entry) {
@@ -59,6 +60,7 @@ export function meter(key, budget, meta, { shake = false, baseline = null } = {}
   return `
     <button type="button" class="meter tone-${tone(entry)}${shake ? ' shake' : ''}" data-action="meter" data-value="${key}"
       aria-label="${esc(meta?.name ?? key)}: ${esc(value)}, ${tagFor(entry)}">
+      <span class="meter-icon">${icon(key, 18)}</span>
       <span class="meter-head">
         <span class="meter-name">${esc(meta?.name ?? key)}</span>
         <span class="tag">${tagFor(entry)}</span>
@@ -75,12 +77,46 @@ export function scienceMeter(budget, baseline = null) {
   const width = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 100;
   return `
     <div class="meter tone-${ok ? 'good' : 'pending'}" aria-label="Science: ${value} of goal ${goal}">
+      <span class="meter-icon">${icon('science', 18)}</span>
       <span class="meter-head">
         <span class="meter-name">Science</span>
-        <span class="tag">${ok ? 'GOAL REACHED' : 'BELOW GOAL'}</span>
+        <span class="tag">${ok ? 'Goal reached' : 'Below goal'}</span>
       </span>
       <span class="meter-bar"><span class="meter-fill" style="width:${width}%"></span></span>
       <span class="meter-value">${fmt(value)} / goal ${fmt(goal)} points${delta ? ` <span class="meter-delta">(${delta})</span>` : ''}</span>
+    </div>`;
+}
+
+/**
+ * Readiness summary at the top of the meters: how many of the 6 systems are GO.
+ * Display only: it just counts what computeBudget and validateMission already decided.
+ * @param {{ ok: boolean, issues: object[], budget: object }} evaluation
+ */
+export function readiness(evaluation) {
+  const { budget, issues, ok } = evaluation;
+  const keys = ['budget', 'mass', 'power', 'data', 'time'];
+  const go = keys.filter((key) => ['ok', 'tight'].includes(budget[key].status)).length + (budget.science.ok ? 1 : 0);
+  const total = keys.length + 1;
+  const pending = keys.some((key) => budget[key].status === 'pending');
+  const warnings = issues.some((issue) => issue.severity === 'warning');
+
+  let label;
+  let toneName;
+  if (!ok) {
+    label = pending ? 'Keep building' : 'Not ready';
+    toneName = pending ? 'pending' : 'bad';
+  } else if (warnings) {
+    label = 'GO, with risks';
+    toneName = 'warn';
+  } else {
+    label = 'GO for launch';
+    toneName = 'good';
+  }
+  const angle = Math.round((go / total) * 360);
+  return `
+    <div class="readiness tone-${toneName}" role="status" aria-label="Launch readiness: ${go} of ${total} systems GO. ${label}.">
+      <span class="ring" style="--angle:${angle}deg"><span class="ring-value">${go}<small>/${total}</small></span></span>
+      <span class="readiness-text"><strong>${label}</strong><span>systems GO</span></span>
     </div>`;
 }
 

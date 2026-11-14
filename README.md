@@ -60,6 +60,8 @@ All game values (mass, power, cost, data, rocket capacity, travel time) are **si
 
 **Reference material:** NASA Design and Develop Science Missions, Mission Design Lab, GMAT and CubeSat 101 (linked on the challenge Resources tab).
 
+**Mission Library** (menu → Mission Library, or the book button during a mission): real facts and real NASA images, kept apart from the simplified game values. Every fact links to the official page it came from (science.nasa.gov, nasa.gov, svs.gsfc.nasa.gov and the challenge Resources tab), checked on 2026-11-14. Images come from the [NASA Image and Video Library](https://images.nasa.gov/) with each image's credit shown; they load from NASA's servers, so they need an internet connection. The data lives in `src/data/library.js` and is guarded by `tests/library.test.js`.
+
 **Planet textures in the 3D view** (public domain, reduced to 1024×512 for fast loading):
 - Earth: Blue Marble, NASA/Goddard Space Flight Center Scientific Visualization Studio ([svs.gsfc.nasa.gov/3615](https://svs.gsfc.nasa.gov/3615/))
 - Moon: CGI Moon Kit (LRO data), NASA's Scientific Visualization Studio ([svs.gsfc.nasa.gov/4720](https://svs.gsfc.nasa.gov/4720/))

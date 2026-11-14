@@ -1,13 +1,12 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
-  <!-- Space Mission Design Game icon: a planet, an orbit and a small spacecraft. Original artwork. -->
-  <rect width="64" height="64" rx="14" fill="#08111f"/>
-  <circle cx="40" cy="42" r="16" fill="#1f5fa8"/>
-  <ellipse cx="35" cy="38" rx="7" ry="4" fill="#2f8f4e" transform="rotate(-20 35 38)"/>
-  <ellipse cx="46" cy="48" rx="5" ry="3" fill="#2f8f4e"/>
-  <ellipse cx="38" cy="38" rx="27" ry="9" fill="none" stroke="#56ccf2" stroke-width="2.5" transform="rotate(-20 38 38)"/>
-  <g transform="translate(16 22) rotate(-20)">
-    <rect x="-13" y="-2.5" width="9" height="5" fill="#2d9cdb"/>
-    <rect x="4" y="-2.5" width="9" height="5" fill="#2d9cdb"/>
-    <rect x="-4" y="-4" width="8" height="8" fill="#f0b92e"/>
+  <!-- Space Mission Design Game emblem: a planet, its orbit and a small spacecraft. Original artwork. -->
+  <rect width="64" height="64" rx="6" fill="#121514"/>
+  <circle cx="32" cy="34" r="15" fill="#2f5fa8"/>
+  <path d="M17.5 30a15 15 0 0 1 29 0z" fill="#5c9ae6"/>
+  <ellipse cx="32" cy="34" rx="27" ry="9" fill="none" stroke="#e8e4d6" stroke-width="3" transform="rotate(-18 32 34)"/>
+  <g transform="translate(53 22) rotate(-18)">
+    <rect x="-3" y="-3" width="6" height="6" fill="#ffbe55"/>
+    <rect x="-10" y="-1.5" width="6" height="3" fill="#e8e4d6"/>
+    <rect x="4" y="-1.5" width="6" height="3" fill="#e8e4d6"/>
   </g>
 </svg>

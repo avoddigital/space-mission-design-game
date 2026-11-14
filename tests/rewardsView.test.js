@@ -47,7 +47,7 @@ describe('report rewards', () => {
     expect(html.match(/is-pop/g)).toHaveLength(3);
   });
 
-  it('renders the full report with rewards and confetti right after a success', () => {
+  it('renders the full report with rewards after a success', () => {
     let state = { ...createInitialState(), scenarioId: 'earth-observation' };
     for (const id of ['multispectral-imager', 'imaging-spectrometer']) state = togglePart(state, id);
     state = setComms(setPower(state, 'solar-panel-m', gameData.parts), 'hga-antenna', gameData.parts);
@@ -61,11 +61,9 @@ describe('report rewards', () => {
       scenario: selectScenario(state), mission: selectMission(state), evaluation: selectEvaluation(state), simulation: state.simulation,
     };
     const html = reportScreen(ctx);
-    expect(html).toContain('SUCCESS');
+    expect(html).toContain('Mission success');
     expect(html).toContain(`data-count-to="${score.total}"`);
     expect(html).toContain('Badge unlocked: First Launch');
-    expect(html).toContain('class="confetti"');
-    expect(reportScreen({ ...ctx, ui: { celebrateUntil: 0 } })).not.toContain('class="confetti"');
   });
 });
 
