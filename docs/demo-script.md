@@ -9,6 +9,15 @@
 
 **Before recording:** record only after the game screens are on `main`. Play this exact path once and check that the numbers on screen match the ones below. They come from the rules engine and the data tables on 2026-11-13; update them if the tables change after playtesting.
 
+**Starting ship (set it up before you start recording):**
+- Mission: **Observe Earth**
+- Instrument: **Multispectral Imager**
+- Power: **Medium Solar Panel**
+- Antenna: **High-Gain Antenna**
+- Orbit: **Sun-Synchronous Orbit (705 km)**. In Low Earth Orbit the random events are different and the solar storm does not appear.
+
+**Record the first launch.** Do not click "Try again with new conditions": it changes the random events. The same design always gets the same events, so the solar storm appears every time you follow this path.
+
 **Story:** one Earth mission. The player gets greedy, fails twice, learns why, and succeeds. About 65 words of narration, which fits 30 seconds at a calm pace.
 
 ---
@@ -35,7 +44,7 @@ All three attempts use the Sun-Synchronous Orbit, the Multispectral Imager, the 
 | High-Resolution Camera | Medium Lifter | Fails: over budget |
 | Thermal Infrared Imager | Small Lifter | Success |
 
-The numbers in the narration (10 kg, 20 million USD, 73/100) come from the data tables on 2026-11-13. The tables are the source of truth: read the numbers on screen when recording and update the narration if they changed.
+The numbers in the narration (10 kg, 20 million USD, 73/100, solar storm in green) were checked in the live game on 2026-11-14. The tables are the source of truth: if a number in `src/data/` changes after playtesting, tell Silvio so he can check the script again, and read the numbers on screen when recording.
 
 ---
 
