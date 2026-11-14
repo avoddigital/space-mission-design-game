@@ -25,7 +25,8 @@ Optional, only if time allows: 3 difficulty levels, roles for up to 4 players on
 - Vite + vanilla JavaScript (ES modules). No backend. State in memory and `localStorage`.
 - Tests with Vitest for the rules engine.
 - **Free tools only.** Do not add paid services or API keys.
-- Keep dependencies minimal. Ask before adding a library.
+- **Three.js (`three`) is approved** as the only 3D library, used as a visual layer (see "3D layer"). No React Three Fiber, no physics engine, no other game engine.
+- Keep other dependencies minimal. Ask before adding a library.
 - Deploy target: static hosting (GitHub Pages or similar).
 
 ## Suggested structure
@@ -33,11 +34,26 @@ Optional, only if time allows: 3 difficulty levels, roles for up to 4 players on
 src/
   data/        # instruments, rockets, orbits, scenarios (plain JS/JSON tables)
   engine/      # pure functions: resource totals, compatibility checks, simulation, scoring
-  ui/          # screens and components for each of the 5 steps
+  state/       # single mission state object and the functions that update it
+  ui/          # HTML/CSS screens and components for each of the 5 steps
+  view3d/      # Three.js scenes (spacecraft viewer, orbit view); read-only consumer of state
   main.js
 tests/         # Vitest tests for src/engine
 ```
-Keep game rules in `engine/` as pure functions with no DOM access, so they are easy to test. UI only renders state and calls the engine.
+Keep game rules in `engine/` as pure functions with no DOM and no Three.js access, so they are easy to test. UI only renders state and calls the engine.
+
+## 3D layer (Three.js)
+Decision (2026-11-14): the game is a decision simulator, so rules and UI stay in plain JavaScript and HTML/CSS. Three.js is only a visual layer for the moments where 3D adds value.
+- Data flow is always `UI → state → engine → state → view3d`. `view3d/` only reads state and draws. It never decides game rules and never writes to state.
+- The game must stay fully playable with the 3D layer turned off. If WebGL fails, show a 2D fallback (image or simple canvas) instead of an error.
+- Priority order, **only after the game works end to end with plain HTML UI**:
+  1. Spacecraft viewer (step 2): low-poly craft built from simple primitives (cylinders, boxes, solar panels) that changes when instruments change. No imported models.
+  2. Orbit view (steps 3 and 4): planet sphere with a NASA public-domain texture, orbit ring at the chosen altitude, moving spacecraft.
+  3. Optional short launch animation.
+- Time-box the whole 3D work to about 3–4 hours.
+- Performance matters (students, weak laptops, phones): load `view3d/` lazily with dynamic `import()`, cap pixel ratio at 2, reuse geometries and materials, dispose of them when leaving a screen, keep textures small.
+- Use scene units, not real kilometers. Do not add a physics engine; the simulation lives in `engine/`.
+- Textures and images must be free to use (NASA media is public domain). Note the source in a comment or in the README credits.
 
 ## Data rules
 - Values in `src/data/` should be inspired by real missions and rockets, but simplified. Keep units explicit in names (`massKg`, `powerW`, `costMUsd`, `dataGbPerDay`).
