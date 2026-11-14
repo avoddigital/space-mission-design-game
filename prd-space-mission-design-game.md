@@ -1,10 +1,10 @@
 # PRD: Space Mission Design Game (Tupi Orbit)
 
-> **Versão:** 0.2 (MVP de hackathon)
+> **Versão:** 0.3 (MVP de hackathon, junção com o que já está no repositório)
 > **Data:** 13/11/2026 (véspera do evento, 14 e 15/11/2026)
-> **Autor:** Product Owner, equipe Tupi Orbit (Silvio Barretto e Carlos)
+> **Autores:** Carlos (versão 0.2) e Silvio (junção 0.3), equipe Tupi Orbit
 > **Stack:** Vite + JavaScript puro (ES modules) + HTML/CSS + Three.js como camada visual + Vitest. Sem backend, `localStorage`, deploy estático no GitHub Pages.
-> **Base:** repositório `avoddigital/space-mission-design-game` (commit `462b22e`), desafio NASA Space Apps 2026 "Space Mission Design Game" e o protótipo 3D local (`index.html` desta pasta).
+> **Base:** repositório `avoddigital/space-mission-design-game` (versão 0.2 escrita sobre o commit `462b22e`; versão 0.3 ajustada ao motor e às tabelas do `main` em 13/11 à noite), desafio NASA Space Apps 2026 "Space Mission Design Game" e o protótipo 3D local (`index.html` desta pasta).
 
 ---
 
@@ -28,9 +28,26 @@ O que este PRD **acrescenta ou ajusta**, com base no feedback do protótipo ("fi
 2. **Educação embutida em cada etapa:** caixa "Learn" com um conceito por etapa, checklist em linguagem simples antes do lançamento, relatório que explica o *porquê* e um quiz de 1 pergunta no fim.
 3. **3D promovido de "enfeite" a parte central da demo**, sem quebrar a regra de arquitetura: visualizador da nave que muda a cada peça (etapa 2) e cena de lançamento e órbita (etapas 3 e 4). O jogo continua 100% jogável sem WebGL.
 4. **Eventos aleatórios ligados a margens.** Tempestade solar, atraso de lançamento e queda de estação terrestre só machucam quem deixou pouca folga. Isso ensina por que engenheiros guardam margem.
-5. **Dados de jogo propostos e balanceados** (seção 6), com força bruta: cada cenário tem várias soluções vencedoras e nenhuma "resposta única".
+5. **Equilíbrio protegido por testes** (seção 6.4): cada cenário precisa ter soluções vencedoras e nenhuma "resposta única".
 
-> ⚠️ **Campos novos nos dados** (marcados com 🆕 na seção 6) mudam o contrato que o Carlos está seguindo. **Combinar com o Silvio antes de usar**, como pede o `Carlos.md` §6.
+### 0.1 Junção da versão 0.3 (13/11, noite): o que vale
+
+A versão 0.2 foi escrita antes de o motor de regras e as tabelas do Carlos entrarem no `main`. A 0.3 junta as duas coisas. **Em caso de dúvida, vale o que está nesta seção e nas seções 6 e 7.**
+
+| Tema | Decisão | Por quê |
+|---|---|---|
+| Motor de regras | **Mantido o que existe** (`computeBudget`, `validateMission`, `scoreMission`) e **estendido** com a simulação e os status dos medidores (seção 7) | Já está pronto e coberto por 50 testes |
+| Dados | **Tabelas do Carlos** (`src/data/`). O PRD não repete números | Já estão equilibradas e verificadas por teste |
+| Pontuação | **0 a 100: ciência 50, eficiência 30, objetivo 20** (aprovada pelo Silvio). Sem multiplicador de dificuldade | Simples de explicar no relatório |
+| Quiz | Entra (US-018), mas **não soma pontos**: dá o selo "Mission expert" | Mantém a nota de 0 a 100 limpa |
+| Textos | Um arquivo só, `src/data/content.js` (seção 6.5). Mensagens de problema são dados, com `{valores}` | O Carlos escreve sem depender do código |
+| Eventos | Tabela `src/data/events.js` (seção 6.6). Sobra ≥ 15% protege; evento sozinho não destrói a missão | Ideia do PRD, com dados editáveis pelo Carlos |
+| Estrutura da nave | 100 kg, 30 W, US$ 25M (já no motor) | O equilíbrio atual foi testado com esses valores |
+| Física extra (sol e sinal por distância, RTG, arrasto) | **P1**, com valor padrão neutro (seção 6.3) | Boa lição, mas mexe no equilíbrio. Só depois do jogo pronto |
+| Combustível automático, bônus de ciência por órbita | **Fora do MVP** | Complexidade que o feedback pediu para evitar |
+| Experiência e educação (Learn, GO/NO-GO, 5 medidores, fases, 3D, controles, recorde, modo equipe P1) | **Mantidas do PRD** (seções 3, 4, 8 e 9) | É o ponto forte da 0.2 |
+
+**Números nos fluxos e histórias:** os exemplos com números nas seções 3 e 4 (US$ 200M, Light Lifter, LEO 300 km, 594 kg) são **ilustrativos** e vêm da 0.2. Os números reais estão nas tabelas. O roteiro final da demo sai dos testes de jogo (tarefa do Carlos).
 
 ---
 
@@ -53,7 +70,7 @@ Um simulador de decisões com cara de jogo:
 
 ### 1.4 Métricas de sucesso do MVP (hackathon)
 1. **Uma partida completa em menos de 5 minutos** na demo (cenário Terra), medida cronometrando 3 pessoas de fora do time.
-2. **3 cenários jogáveis de ponta a ponta** (Terra, Lua, Marte), cada um com pelo menos 10 combinações vencedoras (verificado por teste automatizado, seção 7.6).
+2. **3 cenários jogáveis de ponta a ponta** (Terra, Lua, Marte), cada um com pelo menos 10 combinações vencedoras (verificado por teste automatizado, seção 6.4).
 3. **Pelo menos 7 de 10 testadores** respondem certo à pergunta "por que sua missão falhou?" depois de ver o relatório (teste de corredor no evento).
 4. **Zero erros no console** e jogo funcionando em celular (Chrome Android) e notebook fraco.
 5. **Entrega completa no Space Apps:** link público (GitHub Pages), README, vídeo de demo e pitch em inglês.
@@ -95,6 +112,8 @@ Um simulador de decisões com cara de jogo:
 ## 3. User stories + critérios de aceitação
 
 Prioridade: **P0** = sem isso não tem demo. **P1** = entra se o P0 fechar até a noite de 14/11. **P2** = só se sobrar tempo.
+
+> **Ajustes da junção 0.3 nas histórias:** US-005 (RTG e energia "no destino") e US-009 (arrasto em LEO) dependem dos campos P1 da seção 6.3; até lá, a energia e a antena mostram o valor da tabela. US-016: "tight but valid" e "Efficient design" são **selos**, sem bônus de pontos (a eficiência já vale 30 pontos). US-018: o quiz **não soma pontos**. US-020: o recorde é por cenário, de 0 a 100.
 
 ### Épico 1: Início e cenário (Etapa 1)
 
@@ -222,7 +241,7 @@ Prioridade: **P0** = sem isso não tem demo. **P1** = entra se o P0 fechar até 
 > Como Ana, quero responder uma pergunta rápida no final, para fixar o conceito e ganhar pontos.
 
 - Dado que estou no relatório, então vejo 1 pergunta com 3 opções ligada ao cenário.
-- Dado que respondo, então vejo a correta em verde, a explicação em 2 frases e +200 pontos se acertei. Só posso responder uma vez.
+- Dado que respondo, então vejo a correta em verde, a explicação em 2 frases e, se acertei, o selo "Mission expert" (sem pontos; ver 0.1). Só posso responder uma vez.
 
 **US-019 (P0): Refazer a missão**
 > Como Ana, quero voltar e consertar minha missão, para tentar de novo sem recomeçar.
@@ -263,6 +282,8 @@ Prioridade: **P0** = sem isso não tem demo. **P1** = entra se o P0 fechar até 
 
 ## 4. Fluxos de usuário (passo a passo)
 
+> Os números deste capítulo vêm da versão 0.2 e são **ilustrativos** (ver 0.1). O fluxo 4.2 depende do campo P1 `lifetimeDays`.
+
 ### 4.1 Fluxo: Primeira partida (cenário Terra, o caminho da demo)
 1. Abre o link do GitHub Pages. Tela inicial com 3 cartões; "Observe Earth" já vem destacado.
 2. Lê "How to play" (5 linhas) e clica **Start mission** (ou Enter).
@@ -287,7 +308,7 @@ Prioridade: **P0** = sem isso não tem demo. **P1** = entra se o P0 fechar até 
 
 ### 4.3 Fluxo: Missão Marte (difícil)
 - Pontos de aprendizado: luz solar a 43% (painel pequeno vira 129 W), comunicação a 4% da capacidade em LEO, combustível de captura (+30% a +45% de massa) e só os foguetes médio e pesado chegam a TMI.
-- Existem 16 combinações vencedoras de 18.360 (seção 6.6). A dica da etapa aponta para instrumentos com pouco dado (magnetômetro, altímetro, sondador atmosférico).
+- O número de combinações vencedoras é medido pelo teste de equilíbrio (seção 6.4). A dica da etapa aponta para instrumentos com pouco dado (magnetômetro, altímetro, sondador atmosférico).
 
 ### 4.4 Fluxo: Modo equipe (P1)
 1. Menu → "Team mode" → escolhe 2 a 4 jogadores e digita apelidos (opcional, só na memória, nunca salvo).
@@ -356,13 +377,17 @@ src/
     rockets.js
     orbits.js
     scenarios.js
-    content.js           # textos para o jogador: learn boxes, quiz, missões reais, eventos (etapa 6 do Carlos)
+    content.js           # textos para o jogador: issues, learn, meters, cenários, quiz, missões reais (Carlos)
+    events.js            # eventos aleatórios (Carlos)
   engine/
-    resources.js         # sumResources (já existe)
-    constants.js         # BUS, limites de near-miss, pesos do score
-    evaluate.js          # evaluateDesign(design, data) -> evaluation
-    simulate.js          # simulateMission(design, evaluation, seed) -> timeline
-    score.js             # scoreMission(...)
+    resources.js         # ✅ sumResources, launchCapacityKg, computeBudget, SPACECRAFT_BUS
+    compatibility.js     # ✅ checkLaunch
+    validation.js        # ✅ validateMission (códigos de problema)
+    scoring.js           # ✅ scoreMission 0–100, effectiveScience
+    constants.js         # TIGHT_RATIO, EVENT_SAFE_MARGIN
+    resolve.js           # resolveDesign(design, data): ids -> objetos
+    messages.js          # formatIssue(issue, content)
+    simulate.js          # simulateMission(mission, scenario, events, seed)
     random.js            # mulberry32, hashDesign
   state/
     store.js             # estado único + subscribe/dispatch
@@ -379,165 +404,136 @@ src/
     fallback2d.js
   assets/textures/       # earth_1k.jpg, moon_1k.jpg, mars_1k.jpg (domínio público, < 300 KB cada)
 tests/
-  resources.test.js      # já existe
-  evaluate.test.js
+  resources, compatibility, validation, scoring, findWinningMission, data  # ✅ já existem (50 testes)
+  helpers/findWinningMission.js                                            # ✅ busca de solução vencedora
   simulate.test.js
-  score.test.js
-  balance.test.js        # garante soluções vencedoras por cenário
+  messages.test.js
 ```
 
 ---
 
 ## 6. Modelo de dados
 
-Não há banco. O "schema" são as tabelas em `src/data/` (contrato do `Carlos.md`) mais o estado em memória e as chaves do `localStorage`. **Valores simplificados, inspirados em missões reais, não exatos.** Campos 🆕 são propostas novas: combinar com o Silvio.
+> **Versão após a junção (13/11/2026, noite).** Os **números** dos dados não ficam mais neste PRD: a fonte da verdade são as tabelas em `src/data/`, feitas pelo Carlos e verificadas por `tests/data.test.js`. Assim, PRD e código não divergem. O formato de cada tabela está no [`Carlos.md`](Carlos.md).
 
-### 6.1 Constantes do motor (`src/engine/constants.js`)
-```js
-// Simplified. Every spacecraft has a core bus: structure, computer, attitude control, thermal.
-export const BUS = { massKg: 200, powerW: 60, costMUsd: 30 };
-export const NEAR_MISS_MIN = 0.95;      // 95–100% of a limit = "tight but valid"
-export const EVENT_SAFE_MARGIN = 0.15;  // margins below 15% get hurt by events
-export const SCORE = { success: 1000, perScience: 20, budgetSaved: 300, nearMiss: 75, eventSurvived: 100, quiz: 200 };
-export const DIFFICULTY_MULT = { easy: 1.0, medium: 1.3, hard: 1.6 };
-```
+Não há banco. O "schema" são as tabelas em `src/data/`, o estado em memória e as chaves do `localStorage`. **Valores simplificados, inspirados em missões reais, não exatos.**
 
-### 6.2 `parts.js` (8 instrumentos, 3 energias, 3 antenas)
-```js
-// Simplified values, inspired by real missions. Not exact.
-export const parts = [
-  // --- instruments ---
-  { id: 'wide-camera', name: 'Wide-Angle Camera', type: 'instrument', massKg: 15, powerW: 20, costMUsd: 8, dataGbPerDay: 10, scienceValue: 4 },
-  { id: 'hd-camera', name: 'High-Resolution Camera', type: 'instrument', massKg: 50, powerW: 60, costMUsd: 20, dataGbPerDay: 40, scienceValue: 7 }, // inspired by LRO LROC
-  { id: 'multispectral-imager', name: 'Multispectral Imager', type: 'instrument', massKg: 40, powerW: 50, costMUsd: 30, dataGbPerDay: 30, scienceValue: 8 }, // inspired by Landsat OLI
-  { id: 'radar-sar', name: 'Imaging Radar (SAR)', type: 'instrument', massKg: 120, powerW: 300, costMUsd: 60, dataGbPerDay: 80, scienceValue: 9 },
-  { id: 'spectrometer', name: 'Spectrometer', type: 'instrument', massKg: 25, powerW: 35, costMUsd: 25, dataGbPerDay: 5, scienceValue: 6 },
-  { id: 'magnetometer', name: 'Magnetometer', type: 'instrument', massKg: 5, powerW: 5, costMUsd: 6, dataGbPerDay: 0.5, scienceValue: 3 },
-  { id: 'laser-altimeter', name: 'Laser Altimeter', type: 'instrument', massKg: 20, powerW: 40, costMUsd: 18, dataGbPerDay: 2, scienceValue: 5 }, // inspired by LOLA
-  { id: 'atmosphere-sounder', name: 'Atmosphere Sounder', type: 'instrument', massKg: 30, powerW: 40, costMUsd: 22, dataGbPerDay: 8, scienceValue: 6 }, // inspired by MAVEN
-  // --- power ---
-  { id: 'solar-panel-s', name: 'Small Solar Panels', type: 'power', massKg: 15, powerW: 0, powerGenW: 300, costMUsd: 5, dataGbPerDay: 0, scienceValue: 0 },
-  { id: 'solar-panel-l', name: 'Large Solar Panels', type: 'power', massKg: 45, powerW: 0, powerGenW: 1000, costMUsd: 15, dataGbPerDay: 0, scienceValue: 0 },
-  { id: 'rtg', name: 'Nuclear Battery (RTG)', type: 'power', massKg: 45, powerW: 0, powerGenW: 110, costMUsd: 70, dataGbPerDay: 0, scienceValue: 0, nuclear: true }, // 🆕 nuclear: ignores sunlight. Inspired by MMRTG
-  // --- comms ---
-  { id: 'low-gain-antenna', name: 'Low-Gain Antenna', type: 'comms', massKg: 3, powerW: 10, costMUsd: 2, dataGbPerDay: 0, downlinkGbPerDay: 5, scienceValue: 0 },
-  { id: 'medium-gain-antenna', name: 'Medium-Gain Antenna', type: 'comms', massKg: 10, powerW: 30, costMUsd: 8, dataGbPerDay: 0, downlinkGbPerDay: 40, scienceValue: 0 },
-  { id: 'high-gain-antenna', name: 'High-Gain Antenna', type: 'comms', massKg: 25, powerW: 40, costMUsd: 15, dataGbPerDay: 0, downlinkGbPerDay: 300, scienceValue: 0 },
-];
-```
-Regra: `downlinkGbPerDay` é a capacidade **em órbita baixa da Terra**. O motor multiplica pelo `commsFactor` da órbita.
-
-> Nota: o `Carlos.md` sugere de 8 a 10 instrumentos, 3 energias e 3 antenas; esta proposta fica no mínimo de propósito (menos é mais para o jogador).
-
-### 6.3 `rockets.js`
-```js
-// Simplified values, inspired by real rockets. Not exact. TLI and TMI values are simplified.
-export const rockets = [
-  { id: 'small-lifter', name: 'Small Lifter', costMUsd: 10, payloadKg: { LEO: 300, GTO: 0, TLI: 0, TMI: 0 } },              // inspired by Electron
-  { id: 'light-lifter', name: 'Light Lifter', costMUsd: 40, payloadKg: { LEO: 1500, GTO: 400, TLI: 250, TMI: 0 } },          // inspired by Vega
-  { id: 'medium-lifter', name: 'Medium Lifter', costMUsd: 70, payloadKg: { LEO: 22800, GTO: 8300, TLI: 2500, TMI: 1500 } },  // inspired by Falcon 9
-  { id: 'heavy-lifter', name: 'Heavy Lifter', costMUsd: 150, payloadKg: { LEO: 63800, GTO: 26700, TLI: 15000, TMI: 16800 } }, // inspired by Falcon Heavy
-];
-```
-
-### 6.4 `orbits.js` (com campos 🆕 que o motor precisa)
-```js
-// Simplified values. Not exact.
-// 🆕 sunFactor: sunlight vs Earth (1 = Earth). 🆕 commsFactor: downlink vs LEO.
-// 🆕 propellantFactor: extra mass as fuel to reach/stay in orbit (fraction of dry mass).
-// 🆕 lifetimeDays: how long the orbit lasts (drag). 🆕 scienceBonus: score multiplier for this vantage point.
-export const orbits = [
-  { id: 'leo-300', name: 'Low Earth Orbit (300 km)', target: 'LEO', altitudeKm: 300, transferDays: 0, lifetimeDays: 180, sunFactor: 1, commsFactor: 1, propellantFactor: 0.05, scienceBonus: 1.2 },
-  { id: 'sso-700', name: 'Sun-Synchronous Orbit (700 km)', target: 'LEO', altitudeKm: 700, transferDays: 0, lifetimeDays: 3650, sunFactor: 1, commsFactor: 0.8, propellantFactor: 0.05, scienceBonus: 1.1 },
-  { id: 'geo', name: 'Geostationary Orbit', target: 'GTO', altitudeKm: 35786, transferDays: 10, lifetimeDays: 5475, sunFactor: 1, commsFactor: 1, propellantFactor: 0.8, scienceBonus: 0.7 },
-  { id: 'lunar-polar', name: 'Low Lunar Polar Orbit', target: 'TLI', altitudeKm: 100, transferDays: 5, lifetimeDays: 1000, sunFactor: 1, commsFactor: 0.1, propellantFactor: 0.35, scienceBonus: 1.2 },
-  { id: 'lunar-elliptical', name: 'High Lunar Orbit', target: 'TLI', altitudeKm: 3000, transferDays: 5, lifetimeDays: 2000, sunFactor: 1, commsFactor: 0.1, propellantFactor: 0.25, scienceBonus: 0.8 },
-  { id: 'mars-low', name: 'Low Mars Orbit', target: 'TMI', altitudeKm: 400, transferDays: 210, lifetimeDays: 3000, sunFactor: 0.43, commsFactor: 0.04, propellantFactor: 0.45, scienceBonus: 1.1 },
-  { id: 'mars-high', name: 'High Mars Orbit', target: 'TMI', altitudeKm: 6000, transferDays: 210, lifetimeDays: 5000, sunFactor: 0.43, commsFactor: 0.04, propellantFactor: 0.3, scienceBonus: 0.8 },
-];
-```
-`commsFactor` é um fator de jogo, **não** a lei do inverso do quadrado real (que tornaria Marte impraticável no jogo). O texto educativo explica a ideia ("signals get weaker with distance") sem prometer proporção exata.
-
-### 6.5 `scenarios.js`
-```js
-// Simplified values. Not exact.
-export const scenarios = [
-  { id: 'earth-observation', name: 'Observe Earth', difficulty: 'easy', // 🆕 difficulty
-    budgetMUsd: 200, maxDays: 400, operationDays: 365,
-    allowedOrbits: ['leo-300', 'sso-700', 'geo'], requiredTypes: ['instrument', 'power', 'comms'], minScience: 12 },
-  { id: 'moon-explorer', name: 'Explore the Moon', difficulty: 'medium',
-    budgetMUsd: 240, maxDays: 400, operationDays: 365,
-    allowedOrbits: ['lunar-polar', 'lunar-elliptical'], requiredTypes: ['instrument', 'power', 'comms'], minScience: 12 },
-  { id: 'mars-study', name: 'Study Mars', difficulty: 'hard',
-    budgetMUsd: 350, maxDays: 700, operationDays: 400,
-    allowedOrbits: ['mars-low', 'mars-high'], requiredTypes: ['instrument', 'power', 'comms'], minScience: 11 },
-];
-```
-
-### 6.6 Balanceamento verificado (força bruta, 13/11/2026)
-Todas as combinações de subconjuntos de instrumentos × energia × antena × órbita permitida × foguete, com a regra da seção 7.2:
-
-| Cenário | Combinações vencedoras | Taxa | Leitura |
+### 6.1 Constantes do motor
+| Constante | Valor | Onde | Situação |
 |---|---|---|---|
-| Observe Earth (easy) | 605 / 27.540 | 2,2% | Muitas saídas. Bom para a demo |
-| Explore the Moon (medium) | 74 / 18.360 | 0,4% | Exige pensar em comunicação e combustível |
-| Study Mars (hard) | 16 / 18.360 | 0,09% | Exige instrumentos de pouco dado e foguete médio ou pesado |
+| `SPACECRAFT_BUS` | `{ massKg: 100, powerW: 30, costMUsd: 25 }` | `src/engine/resources.js` | ✅ existe |
+| `MIN_MASS_MARGIN_RATIO` | `0.1` (aviso "sobra de massa abaixo de 10%") | `src/engine/compatibility.js` | ✅ existe |
+| `SCORE_WEIGHTS` | `{ science: 50, efficiency: 30, objective: 20 }` | `src/engine/scoring.js` | ✅ existe |
+| `TIGHT_RATIO` | `0.95` (95–100% de um limite = "tight but valid") | `src/engine/constants.js` | a criar |
+| `EVENT_SAFE_MARGIN` | `0.15` (sobra ≥ 15% protege contra eventos) | `src/engine/constants.js` | a criar |
 
-Exemplos de soluções:
-- Terra: Multispectral + Spectrometer, painel S, antena HGA, SSO 700, Light Lifter → US$ 145M, 320 kg de 1.500 kg.
-- Lua: Wide camera + Magnetometer + Laser altimeter, painel L, HGA, órbita lunar alta, Medium Lifter → US$ 162M.
-- Marte: Magnetometer + Laser altimeter + Atmosphere sounder, painel L, HGA, órbita marciana alta, Heavy Lifter → US$ 256M.
+### 6.2 Tabelas que já existem (`src/data/`, Carlos)
+| Tabela | Conteúdo hoje | Campos |
+|---|---|---|
+| `parts.js` | 10 instrumentos, 3 painéis solares, 3 antenas | `id`, `name`, `type`, `massKg`, `powerW`, `costMUsd`, `dataGbPerDay`, `scienceValue`; `powerGenW` (power); `downlinkGbPerDay` (comms) |
+| `rockets.js` | Small, Medium, Heavy, Super Heavy Lifter | `id`, `name`, `costMUsd`, `payloadKg: { LEO, GTO, TLI, TMI }` |
+| `orbits.js` | LEO 500, SSO 700, GEO, órbita lunar, órbita de Marte | `id`, `name`, `target`, `altitudeKm`, `transferDays` |
+| `scenarios.js` | Terra (US$ 150M), Lua (US$ 220M), Marte (US$ 230M) | `id`, `name`, `budgetMUsd`, `maxDays`, `operationDays`, `allowedOrbits`, `requiredTypes`, `minScience` |
 
-Esse script vira o teste `tests/balance.test.js` (prompt 10.4), para ninguém quebrar o jogo mudando um número.
+### 6.3 Campos novos
+**P0 (o Carlos pode acrescentar já, o motor ignora o que não usa):**
+- `description` em todo item das 4 tabelas: 1 ou 2 frases para o cartão.
+- `difficulty` nos cenários: `'easy'`, `'medium'` ou `'hard'`. Só rótulo, sem multiplicador de pontos.
 
-### 6.7 `content.js` (textos para o jogador, em inglês)
+**P1 (só depois do marco do dia 14, quando o jogo estiver jogável de ponta a ponta):** são os campos que dão "sabor de física" ao jogo. O Silvio implementa primeiro no motor, **com valor padrão neutro**, e só então o Carlos preenche. Os testes de equilíbrio avisam se algo quebrou.
+
+| Campo | Tabela | Padrão se faltar | Efeito no motor | Lição |
+|---|---|---|---|---|
+| `sunFactor` | orbits | `1` | energia gerada = `powerGenW × sunFactor` | Marte recebe menos sol |
+| `commsFactor` | orbits | `1` | capacidade de envio = `downlinkGbPerDay × commsFactor` | o sinal enfraquece com a distância |
+| `nuclear: true` | parts (power) | `false` | ignora `sunFactor` | RTG funciona no escuro |
+| `lifetimeDays` | orbits | sem limite | se `lifetimeDays < operationDays`, erro `ORBIT_DECAY` | órbitas baixas caem por arrasto |
+
+**Fora do MVP:** `propellantFactor` (combustível automático), `scienceBonus` por órbita e multiplicador de dificuldade. Deixariam o jogo mais difícil de explicar.
+
+### 6.4 Equilíbrio do jogo (testes automáticos)
+`tests/data.test.js` já confere, com as tabelas reais:
+- o formato de todas as tabelas;
+- se cada cenário pode ser vencido;
+- se a escolha do foguete importa;
+- se não dá para levar todos os instrumentos.
+
+A acrescentar (P1, Silvio): **pelo menos 10 combinações vencedoras por cenário** e **pelo menos 2 foguetes ou 2 órbitas diferentes entre as vencedoras**, para provar que não existe resposta única.
+
+### 6.5 `src/data/content.js` (textos para o jogador, Carlos)
+Todos os textos longos ficam num arquivo só. As descrições curtas ficam em `description`, nas tabelas.
 ```js
 export const content = {
+  issues: {   // one entry per issue code (section 7.3); {name} placeholders are filled by the game
+    POWER_DEFICIT: { title: 'Not enough power', text: 'Your spacecraft needs {missingW} W more than it produces.', tip: 'Add a bigger solar panel or remove an instrument.', learn: 'Every instrument must be powered all the time.' },
+  },
+  learn: {    // "Learn" box, one per step (max. 3 sentences + one rule of thumb)
+    objective: { text: '...', rule: '...' },
+    spacecraft: { text: '...', rule: 'Every gram you add must be launched and powered.' },
+    launch: { text: '...', rule: '...' },
+    simulation: { text: '...', rule: '...' },
+    report: { text: '...', rule: '...' },
+  },
+  meters: {   // modal opened when the player taps a meter (5 meters: data + comms are one)
+    budget: { name: 'Budget', unit: 'million USD', text: '...' },
+    mass: { name: 'Mass', unit: 'kg', text: '...' },
+    power: { name: 'Power', unit: 'W', text: '...' },
+    data: { name: 'Data downlink', unit: 'GB/day', text: '...' },
+    time: { name: 'Time', unit: 'days', text: '...' },
+  },
   scenarios: {
     'earth-observation': {
       question: "How are Earth's forests, ice and cities changing?",
-      fact: 'Landsat satellites have photographed every part of Earth since 1972.',
-      realMission: { name: 'Landsat 9', text: 'Launched in 2021 into a 705 km sun-synchronous orbit to image all of Earth every 16 days.' },
-      quiz: { q: 'Why do Earth-observing satellites often use a sun-synchronous orbit?',
-        options: ['They pass over each place at the same local time, so the lighting is consistent', 'It is the only orbit rockets can reach', 'It is closer to the Sun'],
-        answer: 0, why: 'Same lighting every pass makes it easy to compare images over the years.' },
+      briefing: '2 to 4 sentences that tell the player the mission.',
+      fact: 'Did you know? ...',
+      realMissions: [ { name: 'Landsat 9', launchYear: 2021, summary: '...', url: 'https://...' } ],
+      quiz: { q: '...', options: ['...', '...', '...'], answer: 0, why: '...' },
     },
-    // 'moon-explorer': realMission LRO, quiz about braking/propellant
-    // 'mars-study': realMission MAVEN, quiz about weaker sunlight
   },
-  learn: {
-    objective: 'Scientists start with a question. Engineers then build the spacecraft that can answer it.',
-    spacecraft: 'Every instrument adds science, but also mass, power, data and cost. Every gram must be launched and powered.',
-    orbit: 'Lower orbits see more detail but feel more air drag. Farther destinations need more fuel and get less sunlight.',
-    rocket: 'A rocket carries less the farther it has to go. Too small fails; too big wastes money.',
-  },
-  meters: { /* title, rule of thumb, explanation for each of the 5 meters */ },
-  events: { /* text for each random event: safe and hurt variants */ },
+  glossary: { margin: 'Extra room left below a limit; protects against surprises.' },
 };
 ```
-Regra do `CLAUDE.md`: sempre que o texto em inglês for escrito, mandar ao Silvio um resumo em pt-BR.
+Missões reais: **fatos conferidos** em nasa.gov, com link em `url`.
 
-### 6.8 Estado em memória (`src/state/store.js`)
+### 6.6 `src/data/events.js` (eventos aleatórios, Carlos)
+```js
+// Simplified random events. Effects are game values, not real statistics.
+export const events = [
+  {
+    id: 'solar-storm',
+    name: 'Solar Storm',
+    scenarios: ['all'],          // or a list of scenario ids
+    protectedBy: 'power',        // budget | mass | power | data | time
+    scienceLossPct: 20,          // science lost if the margin is too small
+    safeText: 'A solar storm hit, but your {marginPct}% power margin kept everything running.',
+    hurtText: 'A solar storm hit and your power margin was only {marginPct}%. Some instruments shut down.',
+    lesson: 'Engineers add extra power so missions survive bad space weather.',
+  },
+];
+```
+**Regra:** a cada lançamento o motor sorteia 1 ou 2 eventos que valem para o cenário. Se a sobra no recurso `protectedBy` for **≥ 15%**, não há dano: o cartão fica verde e mostra `safeText`. Abaixo disso, perde `scienceLossPct` da ciência: o cartão fica âmbar e mostra `hurtText`. Um evento **sozinho não destrói** a missão. Só falha se a ciência entregue cair abaixo de `minScience`, e o relatório cita o evento.
+
+### 6.7 Estado em memória (`src/state/store.js`)
 ```js
 const initialState = {
   screen: 'menu',              // 'menu' | 'objective' | 'spacecraft' | 'launch' | 'simulation' | 'report'
   scenarioId: 'earth-observation',
   design: { partIds: [], orbitId: null, rocketId: null },
-  confirmedSteps: [],          // for "Stage complete" banners and tab checkmarks
+  confirmedSteps: [],
   runCount: 0,
-  simulation: null,            // { seed, phases: [...], events: [...], outcome, failedKey }
-  report: null,                // { success, score, breakdown, nearMisses, quizAnswered, quizRight }
-  team: null,                  // P1: { players: [{ role, nick }], priorities: [...] }
+  simulation: null,            // result of simulateMission (7.2)
+  report: null,                // { success, score, quizAnswered, quizRight }
+  team: null,                  // P1
   paused: false,
   ui: { modal: null, toast: null },
 };
 ```
-`evaluation` **não é guardado**: é sempre derivado com `evaluateDesign(state.design, data, scenario)`.
+A avaliação **não é guardada**: é sempre derivada com `validateMission(resolveDesign(state.design, data), scenario)`.
 
-### 6.9 `localStorage`
+### 6.8 `localStorage`
 | Chave | Valor | Quando |
 |---|---|---|
-| `space-mission-design-game:best-v1` | `{ "total": 2150, "byScenario": { "earth-observation": 2150 } }` | Ao fim de cada missão |
+| `space-mission-design-game:best-v1` | `{ "byScenario": { "earth-observation": 87 } }` | Ao fim de cada missão |
 | `space-mission-design-game:prefs-v1` | `{ "reducedMotion": false, "seenHowTo": true }` | Ao mudar preferência |
 
 Toda leitura e escrita em `try/catch`. Nunca guardar apelidos do modo equipe.
@@ -546,101 +542,70 @@ Toda leitura e escrita em `try/catch`. Nunca guardar apelidos do modo equipe.
 
 ## 7. Contratos do motor (a "API" do jogo)
 
-Tudo em `src/engine/`, sem DOM e sem Three.js, coberto por Vitest.
+Tudo em `src/engine/`, sem DOM e sem Three.js, coberto por Vitest. O motor recebe **objetos resolvidos** (`{ parts, rocket, orbit }`), não ids.
 
-### 7.1 `sumResources(parts)` (já existe)
-Soma `massKg`, `powerW`, `costMUsd` e `dataGbPerDay`. Manter como está.
+### 7.1 Já existe e está testado ✅
+| Função | Arquivo | Devolve |
+|---|---|---|
+| `sumResources(parts)` | `resources.js` | soma de `massKg`, `powerW`, `powerGenW`, `costMUsd`, `dataGbPerDay`, `downlinkGbPerDay`, `scienceValue` |
+| `launchCapacityKg(rocket, orbit)` | `resources.js` | capacidade do foguete para o destino (`0` = não chega; `null` = falta escolher) |
+| `computeBudget(mission, scenario)` | `resources.js` | os 6 recursos (`mass`, `power`, `budget`, `data`, `comms`, `time`), cada um com usado, limite, sobra e `ok`, mais `scienceValue` |
+| `checkLaunch(rocket, orbit, massKg)` | `compatibility.js` | `{ ok, capacityKg, marginKg, marginRatio, issues }` |
+| `validateMission(mission, scenario)` | `validation.js` | `{ ok, issues, budget }`; cada problema é `{ code, severity: 'error' \| 'warning', ...valores }` |
+| `effectiveScience(budget)` | `scoring.js` | ciência que chega à Terra (cai se a antena não dá conta dos dados) |
+| `scoreMission(mission, scenario)` | `scoring.js` | `{ total 0–100, failed, breakdown: { science, efficiency, objective }, issues, budget }` |
 
-### 7.2 `evaluateDesign(design, data, scenario) → evaluation`
-**Entrada:** `design = { partIds, orbitId, rocketId }`, `data = { parts, rockets, orbits }`, `scenario`.
+**Pontuação (aprovada pelo Silvio):**
+- Ciência: 50 pontos, cheia com o dobro da ciência mínima.
+- Eficiência: 30 pontos (15 pela sobra de orçamento e 15 pela sobra de massa, cheios com 20%).
+- Objetivo: 20 pontos, ao atingir a ciência mínima.
+- Qualquer erro: 0 pontos e missão falha.
 
-**Cálculo (ordem fixa):**
-```
-selected   = parts filtradas por partIds
-orbit      = orbits[orbitId] (pode ser null)
-dryKg      = BUS.massKg + Σ massKg
-wetKg      = round(dryKg × (1 + orbit.propellantFactor))           // combustível automático
-capKg      = rocket.payloadKg[orbit.target]                           // 0 = não chega
-useW       = BUS.powerW + Σ powerW
-genW       = Σ power parts: nuclear ? powerGenW : powerGenW × orbit.sunFactor
-dataGb     = Σ dataGbPerDay
-downGb     = Σ comms parts: downlinkGbPerDay × orbit.commsFactor
-costM      = BUS.costMUsd + Σ costMUsd + rocket.costMUsd
-missionDays= orbit.transferDays + scenario.operationDays
-science    = Σ scienceValue
-```
+### 7.2 A fazer (Silvio)
+| Função | Arquivo | O que faz |
+|---|---|---|
+| `resolveDesign(design, data)` | `resolve.js` | ids → objetos. Id desconhecido lança `Error('Unknown part id: x')`, porque é bug de dados |
+| status nos recursos | `resources.js` | acrescentar `ratio` e `status` (`'ok'` ≤ 0,95 · `'tight'` 0,95–1 · `'over'` > 1 · `'pending'` sem escolha) a cada recurso do `computeBudget`, para os medidores. Sem mudar o que já existe |
+| `formatIssue(issue, content)` | `messages.js` | preenche os `{name}` do `content.issues` e devolve `{ title, text, tip, learn }` |
+| `mulberry32(seed)`, `hashDesign(design)` | `random.js` | sorteio com semente: a mesma missão relançada repete os eventos |
+| `simulateMission(mission, scenario, events, seed)` | `simulate.js` | fases, eventos e resultado (abaixo) |
+| `scoreMission(...)` com simulação | `scoring.js` | a ciência dos 50 pontos passa a ser a **ciência entregue** depois dos eventos |
 
-**Saída:**
 ```js
-{
-  ready: boolean,                    // has orbit, rocket, ≥1 power, ≥1 comms, ≥1 instrument
-  missing: ['orbit', 'rocket', ...],
-  totals: { dryKg, wetKg, propellantKg, useW, genW, dataGb, downGb, costM, missionDays, science },
-  checks: {
-    budget:  { used: costM, limit: budget, ratio, status },     // status: 'ok' | 'tight' | 'over' | 'pending'
-    mass:    { used: wetKg, limit: capKg, ratio, status, reason },// reason: 'cannot-reach' quando capKg = 0
-    power:   { used: useW, limit: genW, ratio, status },
-    data:    { used: dataGb, limit: downGb, ratio, status },
-    time:    { used: missionDays, limit: maxDays, ratio, status, orbitLifetimeOk },
-    science: { used: science, limit: minScience, ratio, status },
-  },
-  allGo: boolean,
-}
-```
-**Regras de status:** `ratio ≤ 0.95` → `ok`; `0.95 < ratio ≤ 1` → `tight`; `ratio > 1` → `over`. Ciência é invertida (`used ≥ limit` é ok). Tempo fica `over` também se `orbit.lifetimeDays < operationDays`.
-
-**Erros:** IDs desconhecidos lançam `Error('Unknown part id: x')`, porque é bug de dados e deve aparecer nos testes.
-
-### 7.3 `explainCheck(key, evaluation, scenario, data) → string`
-Frase em inglês, com números, para o checklist, o toast e o relatório. Exemplo para `mass`/`over`:
-`"Spacecraft + fuel = 594 kg, but the Light Lifter can only carry 400 kg to GTO. Pick a stronger rocket or a lighter design."`
-
-### 7.4 `simulateMission(design, evaluation, scenario, seed) → simulation`
-```js
+// simulateMission result
 {
   seed,
   phases: [
-    { id: 'launch',     ok, failKey: 'budget' | 'mass' | null },
-    { id: 'transfer',   ok, failKey: null },
-    { id: 'operations', ok, failKey: 'power' | 'time' | null, events: [...] },
-    { id: 'data',       ok, failKey: 'data' | 'science' | null, events: [...] },
+    { id: 'launch', ok, issues: [...] },
+    { id: 'transfer', ok, issues: [...] },
+    { id: 'operations', ok, issues: [...] },
+    { id: 'data', ok, issues: [...] },
   ],
-  events: [{ id: 'solar-storm', hit: 'power', margin: 0.38, harmed: false, scienceLoss: 0 }],
+  events: [{ id: 'solar-storm', protectedBy: 'power', marginPct: 38, harmed: false, scienceLossPct: 0 }],
   outcome: 'success' | 'failure',
-  failedKey,           // primeiro check que falhou, na ordem budget → mass → power → time → data → science
-  scienceDelivered,    // ciência depois das perdas por eventos
+  failedPhase: null | 'launch' | 'transfer' | 'operations' | 'data',
+  scienceDelivered,
 }
 ```
-**Eventos** (sorteia 1 ou 2 com `mulberry32(seed)`):
+A simulação **pode rodar com erros** ("falhar ensina"): ela para na fase do primeiro erro, conforme a tabela 7.3.
 
-| Evento | Recurso testado | Dano se a margem for < 15% |
-|---|---|---|
-| Solar storm | power | −20% de ciência entregue |
-| Launch delay (+30 dias) | time | −15% de ciência (menos dias de operação) |
-| Ground station outage | data | −15% de ciência |
-| Instrument glitch | o instrumento sorteado | −metade do `scienceValue` dele |
+### 7.3 Códigos de problema → fase da simulação → etapa para corrigir
+| Código | Tipo | Fase em que a missão falha | "Redesign" leva para |
+|---|---|---|---|
+| `NO_ROCKET`, `ROCKET_CANNOT_REACH_ORBIT`, `PAYLOAD_TOO_HEAVY` | erro | launch | etapa 3 |
+| `OVER_BUDGET` | erro | launch | etapa 2 |
+| `NO_ORBIT`, `ORBIT_NOT_ALLOWED` | erro | transfer | etapa 3 |
+| `MISSING_REQUIRED_TYPE` (instrument, power), `POWER_DEFICIT` | erro | operations | etapa 2 |
+| `OVER_TIME`, `ORBIT_DECAY` (P1) | erro | operations | etapa 3 |
+| `MISSING_REQUIRED_TYPE` (comms), `NO_COMMS` | erro | data | etapa 2 |
+| ciência entregue < mínima (depois dos eventos) | falha | data | etapa 2 |
+| `LOW_MASS_MARGIN`, `DATA_BACKLOG`, `LOW_SCIENCE` | aviso | não falha | — |
 
-Margem = `1 − ratio`. Eventos **nunca** transformam sucesso em falha sozinhos, a não ser que a ciência entregue caia abaixo de `minScience` (aí falha por `science`, com o evento citado no relatório). Isso ensina o valor da margem sem frustrar.
+### 7.4 Testes
+- ✅ Já existem: `resources`, `compatibility`, `validation`, `scoring`, `findWinningMission` e `data` (formato e equilíbrio com as tabelas reais). São 50 testes.
+- A fazer: `simulate.test.js` (mesma semente gera os mesmos eventos; sobra ≥ 15% sem dano; fase de falha conforme 7.3), `messages.test.js` (todo código do motor tem texto em `content.issues`; nenhum `{name}` sobra sem preencher) e as regras extras de equilíbrio da 6.4.
 
-### 7.5 `scoreMission(evaluation, simulation, scenario, { quizRight }) → { total, breakdown }`
-```
-success:        +1000 (só se outcome = success)
-science:        +20 × scienceDelivered × orbit.scienceBonus
-budget saved:   +300 × max(0, (budget − cost) / budget)
-efficient:      +75 por check 'tight' (exceto science)
-events:         +100 por evento sobrevivido sem dano
-quiz:           +200 se acertou
-× DIFFICULTY_MULT[scenario.difficulty]
-falha:          apenas science × 5 + quiz (para não zerar o aprendizado)
-```
-
-### 7.6 Testes obrigatórios (Vitest)
-- `evaluate.test.js`: casos de borda (sem foguete, foguete com `payloadKg = 0`, RTG ignora `sunFactor`, `tight` em 0,96, `over` em 1,01, `leo-300` falha tempo).
-- `simulate.test.js`: mesma semente gera os mesmos eventos; margem ≥ 15% não sofre dano; ordem de `failedKey`.
-- `score.test.js`: breakdown soma o total; multiplicador por dificuldade.
-- `balance.test.js`: para cada cenário, `≥ 10` combinações vencedoras e `≥ 2` órbitas ou foguetes diferentes entre as vencedoras (prova que não existe resposta única).
-
-### 7.7 Contrato do `view3d` (somente leitura)
+### 7.5 Contrato do `view3d` (somente leitura)
 ```js
 // src/view3d/index.js
 export async function mount(container) {}           // cria renderer; lança se WebGL falhar (main.js trata e usa fallback2d)
@@ -710,19 +675,19 @@ Todas desligam com `prefers-reduced-motion`.
 > Datas do evento: 14 e 15/11/2026. Confirmar o prazo de submissão no site do Space Apps.
 
 ### Fase 0: Setup (hoje, 13/11, ~1 h)
-- [ ] Silvio aprova este PRD e os campos 🆕 da seção 6.
-- [ ] Carlos faz o merge de `main` na `carlos/data` (passo 1 do `Carlos.md`).
+- [x] Motor de regras com testes (`silvio/engine`) e tabelas de dados (`carlos/data`) juntos no `main`, 50 testes verdes.
+- [x] Junção do PRD 0.2 com o que já existe (versão 0.3, seção 0.1).
 - [ ] `npm install three` e confirmar `npm run dev`, `npm test` e `npm run build`.
 - [ ] Criar as pastas da seção 5.5 vazias com `.gitkeep`.
 
 ### Fase 1: Jogo jogável em HTML (14/11, manhã e tarde, P0)
 | Bloco | Dono sugerido | Stories |
 |---|---|---|
-| Dados (`parts`, `rockets`, `orbits`, `scenarios`) | Carlos | base da seção 6 |
-| Motor: `evaluate`, `explainCheck`, testes | Silvio | US-004 a US-012 (regras) |
+| Dados (`parts`, `rockets`, `orbits`, `scenarios`) | Carlos | ✅ feito; falta `description` e `difficulty` (6.3) |
+| Motor: status dos medidores, `resolveDesign`, `formatIssue`, testes | Silvio | US-004 a US-012 (regras) |
 | Estado + menu + etapas 1 a 3 em HTML | Silvio | US-001 a US-006, US-009, US-010, US-012 |
 | Simulação (sem 3D) + relatório | Silvio | US-013, US-014, US-016, US-019, US-020 |
-| Textos (`content.js`): learn, explicações, missões reais, quiz | Carlos | US-008, US-017, US-018 |
+| Textos (`content.js`) e eventos (`events.js`): mensagens, learn, medidores, missões reais, quiz | Carlos | US-008, US-014, US-016, US-017, US-018 |
 | Controles, pausa, legenda | Silvio | US-021, US-022 |
 
 **Marco do fim do dia 14:** os 3 cenários jogáveis de ponta a ponta sem 3D, testes verdes, deploy no GitHub Pages.
@@ -759,78 +724,61 @@ Todas desligam com `prefers-reduced-motion`.
 
 ```
 Contexto: Space Mission Design Game (Tupi Orbit), NASA Space Apps 2026. Leia CLAUDE.md e
-prd-space-mission-design-game.md (seções 5.5 e 6). Stack: Vite + JS puro + Vitest + Three.js como camada visual.
+prd-space-mission-design-game.md (seções 0.1, 5.5, 6 e 7). Stack: Vite + JS puro + Vitest + Three.js como camada visual.
 
 Tarefa:
 1. Instalar `three` como dependência.
-2. Criar as pastas de src/ da seção 5.5 (data, engine, state, ui/screens, ui/components, view3d, assets/textures) com .gitkeep onde estiver vazio.
-3. Criar src/engine/constants.js com BUS, NEAR_MISS_MIN, EVENT_SAFE_MARGIN, SCORE e DIFFICULTY_MULT exatamente como na seção 6.1.
+2. Criar as pastas de src/ da seção 5.5 que ainda não existem (state, ui/screens, ui/components, view3d,
+   assets/textures) com .gitkeep onde estiver vazio. Não mexer no que já existe em engine/ e data/.
+3. Criar src/engine/constants.js com TIGHT_RATIO e EVENT_SAFE_MARGIN (seção 6.1).
 4. Atualizar src/style.css com os tokens de cor da seção 8.2 (manter a estrutura atual).
 
 Antes de mexer, mostre o plano em pt-BR e espere aprovação.
 Critérios de aceitação:
-- npm run dev, npm test e npm run build passam.
+- npm run dev, npm test e npm run build passam (os 50 testes atuais continuam verdes).
 - Nenhuma outra dependência adicionada.
 - Comentários e código em inglês.
 ```
 
-### 10.2 Prompt: Dados do jogo (para o Carlos ou com ele)
+### 10.2 Prompt: Dados e textos (Carlos)
+
+As tabelas já estão prontas. Os próximos passos do Carlos, com um prompt para cada tarefa, estão no [`Carlos.md`](Carlos.md).
+
+### 10.3 Prompt: Status dos medidores, resolveDesign e formatIssue
 
 ```
-Contexto: siga Carlos.md (formato e regras) e a seção 6 do PRD.
-
-Tarefa: criar src/data/parts.js, rockets.js, orbits.js e scenarios.js com os valores das seções 6.2 a 6.5.
-Os campos marcados 🆕 (nuclear, sunFactor, commsFactor, propellantFactor, lifetimeDays, scienceBonus, difficulty)
-só devem entrar se o Silvio já aprovou. Se não, pare e me avise.
-
-Regras:
-- Comentário "// simplified" e a missão ou foguete de referência quando houver.
-- Nomes de campo exatamente como no PRD, com unidade no nome.
-- Nada de textos para o jogador nesses arquivos (vão para content.js).
-
-Critérios de aceitação:
-- Arquivos exportam arrays com os nomes parts, rockets, orbits, scenarios.
-- Teste simples em tests/data.test.js: ids únicos; todo allowedOrbits existe em orbits; todo target ∈ {LEO, GTO, TLI, TMI}; todo part tem type válido.
-- npm test verde.
-```
-
-### 10.3 Prompt: Motor de avaliação
-
-```
-Contexto: PRD seção 7.2 e 7.3. Funções puras em src/engine/, sem DOM e sem Three.js.
+Contexto: PRD seções 6.1, 7.1, 7.2 e 7.3. Funções puras em src/engine/, sem DOM e sem Three.js.
+O motor atual (computeBudget, validateMission, scoreMission) já funciona e tem testes: estender, não reescrever.
 
 Tarefa:
-1. Criar src/engine/evaluate.js com evaluateDesign(design, data, scenario) seguindo exatamente o cálculo e o
-   formato de saída da seção 7.2 (incluindo status 'ok' | 'tight' | 'over' | 'pending', reason 'cannot-reach'
-   e a regra de lifetimeDays no check de tempo).
-2. Criar src/engine/explain.js com explainCheck(key, evaluation, scenario, data) que devolve frases em
-   inglês com números, no estilo do exemplo da seção 7.3. Uma frase para cada key × status.
-3. Reutilizar sumResources de resources.js onde fizer sentido.
+1. src/engine/resolve.js: resolveDesign(design, data) transforma { partIds, orbitId, rocketId } em
+   { parts, rocket, orbit }. Id desconhecido lança Error('Unknown part id: x').
+2. Em computeBudget, acrescentar ratio e status ('ok' | 'tight' | 'over' | 'pending') a cada recurso,
+   usando TIGHT_RATIO. Não mudar os campos que já existem.
+3. src/engine/messages.js: formatIssue(issue, content) preenche os {name} de content.issues[issue.code].
+   Se o código não tiver texto, devolver um texto genérico com o código (não quebrar).
 
-Critérios de aceitação (tests/evaluate.test.js):
-- design vazio → ready=false e missing lista orbit, rocket, power, comms, instrument.
-- RTG em mars-low gera 110 W; painel S em mars-low gera 129 W.
-- light-lifter + geo + nave de 594 kg → mass 'over'.
-- small-lifter + lunar-polar → mass 'over' com reason 'cannot-reach'.
-- leo-300 no cenário earth-observation → time 'over' mesmo com missionDays ≤ maxDays.
-- ratio 0,96 → 'tight'; 1,01 → 'over'.
+Critérios de aceitação:
+- Os 50 testes atuais continuam verdes.
+- Novos testes: status em 0,96 → 'tight', 1,01 → 'over', sem foguete → mass 'pending';
+  resolveDesign com id desconhecido lança erro; formatIssue preenche todos os valores.
 - Mostre a saída de npm test ao terminar.
 ```
 
-### 10.4 Prompt: Teste de balanceamento
+### 10.4 Prompt: Regras extras de equilíbrio
 
 ```
-Contexto: PRD seção 6.6 e 7.6. Quero um teste que impeça mudanças de dados de quebrar a jogabilidade.
+Contexto: PRD seção 6.4. tests/data.test.js e tests/helpers/findWinningMission.js já existem.
 
-Tarefa: criar tests/balance.test.js que, para cada cenário, testa todas as combinações de
-(subconjunto não vazio de instrumentos) × (1 power) × (1 comms) × (órbitas permitidas) × (foguetes)
-usando evaluateDesign, e conta as que têm allGo = true.
+Tarefa: acrescentar a tests/data.test.js, para cada cenário, a contagem de combinações vencedoras
+(subconjunto não vazio de instrumentos × 1 power × 1 comms × órbitas permitidas × foguetes), usando
+validateMission e scoreMission (vencedora = sem erros e objetivo atingido).
 
 Critérios de aceitação:
 - Cada cenário tem ≥ 10 combinações vencedoras.
-- Entre as vencedoras de cada cenário há pelo menos 2 foguetes OU 2 órbitas diferentes.
-- O teste imprime (console.info) a contagem por cenário. Com os dados do PRD, o esperado é cerca de 605 / 74 / 16.
-- Roda em menos de 2 s.
+- Entre as vencedoras há pelo menos 2 foguetes OU 2 órbitas diferentes.
+- O teste imprime (console.info) a contagem por cenário e roda em menos de 2 s.
+- Se as tabelas atuais não passarem, NÃO mude os dados: mostre os números para o time decidir.
 ```
 
 ### 10.5 Prompt: Estado e ações
@@ -842,14 +790,14 @@ Tarefa: criar src/state/store.js (estado único, getState, subscribe(listener), 
 src/state/actions.js com: selectScenario, startMission, confirmStep, goToStep, togglePart(partId),
 setPower(partId) (troca a fonte de energia anterior), setComms(partId), setOrbit, setRocket, launch,
 redesign, togglePause, answerQuiz.
-- evaluation nunca é guardada no estado: exporte selectEvaluation(state) que chama evaluateDesign.
+- A avaliação nunca é guardada no estado: exporte selectEvaluation(state), que chama
+  validateMission(resolveDesign(state.design, data), scenario).
 - Recorde: src/state/persistence.js com loadBest/saveBest usando a chave
   space-mission-design-game:best-v1, tudo em try/catch.
 
 Critérios de aceitação:
 - tests/state.test.js: togglePart duas vezes remove a peça; setPower substitui; redesign mantém o design
-  e vai para a etapa ligada ao failedKey (mapa: budget→launch, mass→launch, power→spacecraft,
-  time→launch, data→spacecraft, science→spacecraft).
+  e vai para a etapa da tabela 7.3 ligada ao primeiro erro.
 - Sem DOM nesses arquivos.
 ```
 
@@ -868,12 +816,13 @@ Tarefa:
    launch.js (órbita + foguete + checklist GO/NO-GO).
 3. Medidores: Budget, Mass, Power, Data downlink, Time + linha de Science (estrelas).
    Cores e tags conforme a seção 8.2. Tocar no medidor abre modal com content.meters.
+   Problemas aparecem com formatIssue + content.issues.
 4. Teclado: Enter = next, Backspace = back, 1–8 = escolher cartão, P/Esc = pause.
 5. Responsivo: abaixo de 860 px, cartões viram gaveta inferior (máx. 44vh) e os medidores ficam em grade no topo.
 
 Critérios de aceitação:
 - Consigo jogar o fluxo 4.1 até o checklist sem 3D.
-- Escolha que estoura um limite: medidor treme 160 ms e aparece toast com explainCheck.
+- Escolha que estoura um limite: medidor treme 160 ms e aparece toast com formatIssue.
 - Todos os cartões são <button>, com foco visível. Sem erros no console.
 - Teste manual em 375×812 e 1280×720 (descreva o que verificou).
 ```
@@ -881,24 +830,25 @@ Critérios de aceitação:
 ### 10.7 Prompt: Simulação e relatório
 
 ```
-Contexto: PRD seções 7.4, 7.5, 3 (Épicos 4 e 5) e 4.2.
+Contexto: PRD seções 6.6, 7.2, 7.3, 3 (Épicos 4 e 5) e 4.2. src/data/events.js e content.js (Carlos).
 
 Tarefa:
 1. src/engine/random.js: mulberry32(seed) e hashDesign(design).
-2. src/engine/simulate.js: simulateMission conforme 7.4 (4 fases, 1 ou 2 eventos, margem 15%,
-   ordem de failedKey, ciência entregue).
-3. src/engine/score.js: scoreMission conforme 7.5.
+2. src/engine/simulate.js: simulateMission(mission, scenario, events, seed) conforme 7.2 e 7.3
+   (4 fases, 1 ou 2 eventos do cenário, sobra ≥ EVENT_SAFE_MARGIN sem dano, fase de falha pela tabela 7.3,
+   scienceDelivered depois dos eventos; falha por ciência só se scienceDelivered < minScience).
+3. scoreMission passa a aceitar a simulação e usa scienceDelivered nos 50 pontos de ciência.
 4. src/ui/screens/simulation.js: linha do tempo das 4 fases (~1,5 s cada), mensagem por fase,
-   cartões de evento (verde se seguro, âmbar se houve dano), congela 300 ms na falha + pulso vermelho.
+   cartões de evento (verde com safeText, âmbar com hurtText), congela 300 ms na falha + pulso vermelho.
    Pausa congela o tempo.
-5. src/ui/screens/report.js: título SUCCESS/FAILED, breakdown, o que funcionou/falhou com explainCheck,
-   What to learn, Real mission like yours, quiz (uma resposta só, +200), recorde dourado,
-   botões Redesign / Next mission / Main menu.
+5. src/ui/screens/report.js: SUCCESS/FAILED, nota 0–100 com breakdown, o que funcionou/falhou com formatIssue,
+   What to learn, Real mission like yours, quiz (uma resposta, selo "Mission expert", sem pontos),
+   recorde por cenário, botões Redesign / Next mission / Main menu.
 
 Critérios de aceitação:
-- tests/simulate.test.js e tests/score.test.js conforme 7.6.
-- Fluxo 4.2 (leo-300) falha em Operations com a frase de arrasto.
+- tests/simulate.test.js conforme 7.4; os testes atuais continuam verdes.
 - Mesma missão relançada → mesmos eventos. "Try again with new conditions" → runCount+1.
+- Se events.js ou content.js ainda não existirem, a simulação roda sem eventos e com textos genéricos.
 ```
 
 ### 10.8 Prompt: Visualizador 3D da nave
@@ -983,7 +933,7 @@ Critérios de aceitação:
 
 ```
 Tarefa: rodar npm test e npm run build; abrir npm run preview; jogar os fluxos 4.1 e 4.2 e um Marte
-vencedor (use uma combinação da seção 6.6); testar em 375×812; testar com WebGL desligado e em aba anônima.
+vencedor (o teste de equilíbrio da seção 6.4 mostra combinações vencedoras); testar em 375×812; testar com WebGL desligado e em aba anônima.
 Relatar em pt-BR, com honestidade, o que passou, o que falhou e o que não foi possível verificar.
 Não corrigir nada sem me perguntar.
 ```
@@ -995,8 +945,8 @@ Não corrigir nada sem me perguntar.
 | Risco | Prob. | Impacto | Mitigação |
 |---|---|---|---|
 | 3D consome o dia 15 e o jogo não fecha | Alta | Alto | 3D só depois do marco do dia 14; time-box de 3 a 4 h; prompts 10.8 e 10.9 com "pare em 2 h" |
-| Mudança de dados quebra o balanceamento | Média | Alto | `balance.test.js` no CI |
-| Carlos e Silvio divergem no formato dos dados | Média | Médio | Campos 🆕 aprovados antes; `data.test.js` valida ids e targets |
+| Mudança de dados quebra o balanceamento | Média | Alto | `tests/data.test.js` no CI (formato + equilíbrio) |
+| Carlos e Silvio divergem no formato dos dados | Média | Médio | Formatos combinados no `Carlos.md` e na seção 6; `data.test.js` valida tudo |
 | Jurado acha os números "irreais" | Média | Médio | Rótulo "simplified" visível no jogo e no README; citar referências reais |
 | WebGL ou GPU fraca no PC do jurado | Baixa | Alto | Lazy-load + fallback 2D + vídeo de demo como garantia |
 | Jogo complexo demais de novo | Média | Alto | Máx. 5 medidores; máx. 8 cartões por tela; teste de corredor com alguém de fora |
@@ -1063,11 +1013,11 @@ Não corrigir nada sem me perguntar.
 |---|---|
 | Definir objetivo antes do design | Etapa 1, US-003 |
 | Nave, instrumentos com massa, energia, custo, dados, ciência | US-004 a US-007, seção 6.2 |
-| Foguete e órbita com checagem de compatibilidade | US-009, US-010, 7.2 (`cannot-reach`) |
-| Recursos: massa, energia, orçamento, dados, comunicação, tempo | 5 medidores, 7.2 |
-| Simulação e avaliação | US-013, US-014, 7.4, 7.5 |
-| Explicar o porquê, não só certo ou errado | `explainCheck`, What to learn, US-016 |
-| Não existe solução única | 6.6 e `balance.test.js` |
+| Foguete e órbita com checagem de compatibilidade | US-009, US-010, 7.1 (`checkLaunch`) |
+| Recursos: massa, energia, orçamento, dados, comunicação, tempo | 5 medidores, 7.1 (`computeBudget`) |
+| Simulação e avaliação | US-013, US-014, 7.2, 7.3 |
+| Explicar o porquê, não só certo ou errado | `formatIssue` + `content.issues`, What to learn, US-016 |
+| Não existe solução única | 6.4 e `tests/data.test.js` |
 | Até 4 participantes com papéis | US-024 (P1) |
-| Níveis de dificuldade e cenários | 3 cenários easy, medium, hard |
+| Níveis de dificuldade e cenários | 3 cenários com rótulo easy, medium, hard (6.3) |
 | Eventos aleatórios, relatório, visualização interativa | US-014, US-016, US-007, US-015 |
