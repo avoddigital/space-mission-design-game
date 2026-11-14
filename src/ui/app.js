@@ -15,6 +15,7 @@ import { objectiveScreen, spacecraftScreen, launchScreen } from './screens/desig
 import { simulationScreen, reportScreen, phasesToShow } from './screens/mission.js';
 import { meterDetail, METERS } from './components/meter.js';
 import { modal, toast, pauseOverlay } from './components/overlays.js';
+import { syncView3d } from './view3dHost.js';
 
 const SCREENS = {
   objective: objectiveScreen,
@@ -83,6 +84,13 @@ export function mountApp(root, { store, data = gameData, storage }) {
     if (state.paused) html += pauseOverlay();
     if (ui.toast) html += toast(ui.toast);
     root.innerHTML = html;
+
+    // Optional 3D view: only reads the chosen parts and draws them.
+    if (state.screen !== 'menu') {
+      syncView3d(root, selectMission(state, data).parts, { paused: state.paused || Boolean(ui.modal), onReady: render });
+    } else {
+      syncView3d(root, [], { paused: true, onReady: render });
+    }
 
     // Keep keyboard focus on the same control after re-rendering.
     const autofocus = root.querySelector('[autofocus]');

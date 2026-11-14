@@ -514,6 +514,46 @@ kbd {
   font-style: italic;
 }
 
+/* --- 3D view --- */
+
+.view3d-slot {
+  position: relative;
+  margin-bottom: 12px;
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.view3d-canvas {
+  display: block;
+  width: 100%;
+  cursor: grab;
+}
+
+.view3d-canvas:active {
+  cursor: grabbing;
+}
+
+.view3d-note {
+  margin: 0;
+  padding: 8px 12px;
+  color: var(--sub);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.view3d-slot.is-3d .view3d-note {
+  display: none;
+}
+
+.view3d-slot.is-3d + .craft {
+  gap: 4px;
+  font-size: 0.85rem;
+}
+
+.view3d-slot.is-3d + .craft .craft-body {
+  display: none;
+}
+
 /* --- Meters --- */
 
 .meter {

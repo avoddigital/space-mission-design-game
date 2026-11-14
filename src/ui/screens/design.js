@@ -49,6 +49,13 @@ function craftDiagram(mission) {
     </div>`;
 }
 
+/** 3D slot (filled by src/ui/view3dHost.js when 3D is available) above the 2D diagram. */
+function craftStage(mission) {
+  return `
+    <div class="view3d-slot" data-view3d><p class="view3d-note">Loading 3D view…</p></div>
+    ${craftDiagram(mission)}`;
+}
+
 function metersPanel(evaluation, content, shake) {
   return `
     <section class="meters" aria-label="Resources">
@@ -98,7 +105,7 @@ export function objectiveScreen(ctx) {
     ...ctx,
     title: 'Step 1 · Your mission',
     cards,
-    stage: craftDiagram(ctx.mission),
+    stage: craftStage(ctx.mission),
     footer: `<button type="button" class="btn" data-action="menu">← Missions</button>
       <button type="button" class="btn btn-primary" data-action="confirm" data-value="1">Build the spacecraft →</button>`,
   });
@@ -156,7 +163,7 @@ export function spacecraftScreen(ctx) {
     ...ctx,
     title: 'Step 2 · Build your spacecraft',
     cards: `${tabs}<div class="card-list">${cards}</div>${learnBox(content.learn?.spacecraft)}`,
-    stage: craftDiagram(ctx.mission),
+    stage: craftStage(ctx.mission),
     footer: `<button type="button" class="btn" data-action="go-step" data-value="1">← Back</button>
       <button type="button" class="btn btn-primary" data-action="confirm" data-value="2">Choose orbit and rocket →</button>`,
   });

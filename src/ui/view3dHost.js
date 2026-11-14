@@ -1,0 +1,61 @@
+// Connects the HTML screens to the optional 3D layer.
+// The 3D code is loaded on demand. If it fails (no WebGL, old device, ?3d=off),
+// the 2D diagram stays and the game works the same.
+
+const FALLBACK_TEXT = '3D view unavailable on this device. The game works the same.';
+
+let view = null;
+let status = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
+
+function disabledByUrl() {
+  try {
+    return new URLSearchParams(globalThis.location?.search ?? '').get('3d') === 'off';
+  } catch {
+    return false;
+  }
+}
+
+function showFallback(slot) {
+  slot.classList.add('is-off');
+  const note = slot.querySelector('.view3d-note');
+  if (note) note.textContent = FALLBACK_TEXT;
+}
+
+/**
+ * Call after every render. Puts the 3D canvas in the slot of the current screen, if any.
+ * @param {HTMLElement} root app root
+ * @param {object[]} parts resolved parts of the current design
+ * @param {{ paused: boolean, onReady: Function }} options onReady re-renders when 3D finished loading
+ */
+export function syncView3d(root, parts, { paused, onReady }) {
+  const slot = root.querySelector('[data-view3d]');
+  if (!slot) {
+    view?.setPaused(true); // nothing to draw on this screen
+    return;
+  }
+  if (status === 'failed' || disabledByUrl()) {
+    showFallback(slot);
+    return;
+  }
+  if (status === 'ready') {
+    view.attach(slot);
+    view.showSpacecraft(parts);
+    view.setPaused(paused);
+    slot.classList.add('is-3d');
+    return;
+  }
+  if (status === 'idle') {
+    status = 'loading';
+    import('../view3d/index.js')
+      .then(async (module) => {
+        await module.mount();
+        view = module;
+        status = 'ready';
+      })
+      .catch((error) => {
+        status = 'failed';
+        console.info('[view3d] 3D disabled:', error?.message ?? error);
+      })
+      .finally(onReady);
+  }
+}
