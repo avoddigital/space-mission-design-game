@@ -21,6 +21,11 @@ Game flow (5 steps):
 
 Optional, only if time allows: 3 difficulty levels, roles for up to 4 players on one device, leaderboard (local), sandbox mode.
 
+## Source documents
+- `prd-space-mission-design-game.md`: product requirements (v0.3). Section 0.1 lists the decisions that win when documents disagree; sections 6 and 7 are the data and engine contracts.
+- `Carlos.md`: Carlos's task list and the exact format of every file in `src/data/`.
+- The numbers live in `src/data/` and are guarded by `tests/data.test.js`. Do not copy numbers into the docs.
+
 ## Stack and constraints
 - Vite + vanilla JavaScript (ES modules). No backend. State in memory and `localStorage`.
 - Tests with Vitest for the rules engine.
