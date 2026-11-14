@@ -1,6 +1,6 @@
 # Space Mission Design Game
 
-> Team **Binary Stars** · NASA Space Apps Challenge 2026
+> Team **Tupi Orbit** · NASA Space Apps Challenge 2026
 
 An interactive game where players design, launch and manage a complete space mission. Choose a mission objective, build the spacecraft, pick instruments, a launch vehicle and an orbit, then simulate the mission and see why it succeeded or failed.
 
