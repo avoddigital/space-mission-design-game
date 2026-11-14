@@ -2,6 +2,8 @@
 
 > Team **Tupi Orbit** · NASA Space Apps Challenge 2026
 
+**▶ Play it now: https://avoddigital.github.io/space-mission-design-game/** (no install, no login; works on phones)
+
 An interactive game where players design, launch and manage a complete space mission. Choose a mission objective, build the spacecraft, pick instruments, a launch vehicle and an orbit, then simulate the mission and see why it succeeded or failed.
 
 ## Why
