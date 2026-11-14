@@ -1,9 +1,18 @@
 :root {
-  --bg: #0b1020;
-  --fg: #e6ecff;
-  --accent: #4da3ff;
+  /* Color tokens (PRD section 8.2) */
+  --bg: #08111f; /* space background */
+  --panel: #123a63; /* panels */
+  --sel: #2d9cdb; /* selection and main buttons */
+  --hi: #56ccf2; /* highlight and information */
+  --warn: #f2c94c; /* trade-off and attention */
+  --bad: #eb5757; /* failure and limit exceeded */
+  --good: #27ae60; /* success */
+  --text: #e0e6f0; /* main text */
+  --sub: #8e9aaf; /* secondary text */
+  --gold: #ffd166; /* best score */
+
   font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
-  color: var(--fg);
+  color: var(--text);
   background: var(--bg);
 }
 
@@ -24,5 +33,9 @@ body {
 }
 
 h1 {
-  color: var(--accent);
+  color: var(--sel);
+}
+
+small {
+  color: var(--sub);
 }
