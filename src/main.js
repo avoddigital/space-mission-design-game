@@ -1,13 +1,6 @@
 import './style.css';
-import { sumResources } from './engine/resources.js';
+import { createStore } from './state/store.js';
+import { mountApp } from './ui/app.js';
 
-const app = document.querySelector('#app');
-
-// Temporary start screen. The 5 game steps will live in src/ui/.
-const totals = sumResources([]);
-
-app.innerHTML = `
-  <h1>Space Mission Design Game</h1>
-  <p>Design, launch and simulate your own space mission.</p>
-  <p><small>Engine ready. Starting mass: ${totals.massKg} kg.</small></p>
-`;
+// The game works with plain HTML. The 3D view (src/view3d) will be loaded later, on demand.
+mountApp(document.querySelector('#app'), { store: createStore() });
