@@ -7,7 +7,7 @@ export const scenarios = [
     description: 'Build a satellite that watches Earth change for a whole year. A good first mission: Earth is close, so even a small rocket can do the job.',
     difficulty: 'easy',
     budgetMUsd: 150,
-    maxDays: 400,
+    maxDays: 440, // leaves a 17% time margin, so a launch delay can be survived
     operationDays: 365,
     allowedOrbits: ['leo-500', 'sso-700', 'geo'],
     requiredTypes: ['instrument', 'power', 'comms'],
