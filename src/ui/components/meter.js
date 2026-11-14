@@ -1,19 +1,20 @@
 import { esc, fmt } from '../format.js';
 import { icon } from './icons.js';
+import { t } from '../../i18n/index.js';
 
 /** What each of the 5 meters shows. `budget` is the result of computeBudget. */
 export const METERS = Object.freeze({
-  budget: { read: (b) => ({ entry: b.budget, used: b.budget.usedMUsd, limit: b.budget.limitMUsd }), unit: 'M USD', pending: '' },
-  mass: { read: (b) => ({ entry: b.mass, used: b.mass.usedKg, limit: b.mass.limitKg }), unit: 'kg', pending: 'Pick an orbit and a rocket' },
-  power: { read: (b) => ({ entry: b.power, used: b.power.consumedW, limit: b.power.generatedW }), unit: 'W', pending: 'Pick a power source' },
-  data: { read: (b) => ({ entry: b.data, used: b.data.producedGbPerDay, limit: b.data.downlinkGbPerDay }), unit: 'GB/day', pending: 'Pick an antenna' },
-  time: { read: (b) => ({ entry: b.time, used: b.time.totalDays, limit: b.time.limitDays }), unit: 'days', pending: 'Pick an orbit' },
+  budget: { read: (b) => ({ entry: b.budget, used: b.budget.usedMUsd, limit: b.budget.limitMUsd }), unit: () => 'M USD', pending: '' },
+  mass: { read: (b) => ({ entry: b.mass, used: b.mass.usedKg, limit: b.mass.limitKg }), unit: () => 'kg', pending: 'pending.mass' },
+  power: { read: (b) => ({ entry: b.power, used: b.power.consumedW, limit: b.power.generatedW }), unit: () => 'W', pending: 'pending.power' },
+  data: { read: (b) => ({ entry: b.data, used: b.data.producedGbPerDay, limit: b.data.downlinkGbPerDay }), unit: () => t('unit.gbDay'), pending: 'pending.data' },
+  time: { read: (b) => ({ entry: b.time, used: b.time.totalDays, limit: b.time.limitDays }), unit: () => t('unit.daysWord'), pending: 'pending.time' },
 });
 
 /** From this share of the limit a meter reads Risky and the checklist says CHECK. */
 export const RISKY_RATIO = 0.9;
 
-const TAGS = { ok: 'OK', tight: 'Tight', over: 'Over limit', pending: 'Not set' };
+const TAGS = { ok: 'tag.ok', tight: 'tag.tight', over: 'tag.over', pending: 'tag.pending' };
 
 /** Bar color by how full it is (PRD 8.2): blue, amber, orange, red. */
 function tone(entry) {
@@ -26,7 +27,7 @@ function tone(entry) {
 
 /** Text tag, so the state never depends on color alone. 90% to 100% reads "Risky" (PRD 8.2). */
 function tagFor(entry) {
-  return tone(entry) === 'risky' && entry.status === 'ok' ? 'Risky' : TAGS[entry.status];
+  return tone(entry) === 'risky' && entry.status === 'ok' ? t('tag.risky') : t(TAGS[entry.status]);
 }
 
 function barWidth(entry) {
@@ -45,18 +46,19 @@ function change(now, before) {
 
 /** One meter as a button: tapping it opens the explanation. With `baseline`, it shows the change. */
 export function meter(key, budget, meta, { shake = false, baseline = null } = {}) {
-  const { read, unit, pending } = METERS[key];
+  const { read, pending } = METERS[key];
+  const unit = METERS[key].unit();
   const { entry, used, limit } = read(budget);
   let delta = '';
   if (baseline) {
     const before = read(baseline);
     const usedChange = change(used, before.used);
     const limitChange = change(limit, before.limit);
-    delta = [usedChange && `${usedChange} ${unit}`, limitChange && `limit ${limitChange}`].filter(Boolean).join(' · ');
+    delta = [usedChange && `${usedChange} ${unit}`, limitChange && t('meter.limitChange', { change: limitChange })].filter(Boolean).join(' · ');
   }
   let value = `${fmt(used)} / ${limit === null ? '—' : fmt(limit)} ${unit}`;
-  if (entry.status === 'pending' && pending) value = pending;
-  else if (key === 'mass' && limit === 0) value = "This rocket can't reach this orbit";
+  if (entry.status === 'pending' && pending) value = t(pending);
+  else if (key === 'mass' && limit === 0) value = t('meter.cantReach');
   return `
     <button type="button" class="meter tone-${tone(entry)}${shake ? ' shake' : ''}" data-action="meter" data-value="${key}"
       aria-label="${esc(meta?.name ?? key)}: ${esc(value)}, ${tagFor(entry)}">
@@ -76,14 +78,14 @@ export function scienceMeter(budget, baseline = null) {
   const delta = baseline ? change(value, baseline.science.value) : '';
   const width = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 100;
   return `
-    <div class="meter tone-${ok ? 'good' : 'pending'}" aria-label="Science: ${value} of goal ${goal}">
+    <div class="meter tone-${ok ? 'good' : 'pending'}" aria-label="${t('meter.scienceAria', { value, goal })}">
       <span class="meter-icon">${icon('science', 18)}</span>
       <span class="meter-head">
-        <span class="meter-name">Science</span>
-        <span class="tag">${ok ? 'Goal reached' : 'Below goal'}</span>
+        <span class="meter-name">${t('stat.science')}</span>
+        <span class="tag">${ok ? t('meter.goalReached') : t('meter.belowGoal')}</span>
       </span>
       <span class="meter-bar"><span class="meter-fill" style="width:${width}%"></span></span>
-      <span class="meter-value">${fmt(value)} / goal ${fmt(goal)} points${delta ? ` <span class="meter-delta">(${delta})</span>` : ''}</span>
+      <span class="meter-value">${t('meter.scienceValue', { value: fmt(value), goal: fmt(goal) })}${delta ? ` <span class="meter-delta">(${delta})</span>` : ''}</span>
     </div>`;
 }
 
@@ -103,28 +105,28 @@ export function readiness(evaluation) {
   let label;
   let toneName;
   if (!ok) {
-    label = pending ? 'Keep building' : 'Not ready';
+    label = pending ? t('ready.keepBuilding') : t('ready.notReady');
     toneName = pending ? 'pending' : 'bad';
   } else if (warnings) {
-    label = 'GO, with risks';
+    label = t('ready.risks');
     toneName = 'warn';
   } else {
-    label = 'GO for launch';
+    label = t('ready.go');
     toneName = 'good';
   }
   const angle = Math.round((go / total) * 360);
   return `
-    <div class="readiness tone-${toneName}" role="status" aria-label="Launch readiness: ${go} of ${total} systems GO. ${label}.">
+    <div class="readiness tone-${toneName}" role="status" aria-label="${t('ready.aria', { go, total, label })}">
       <span class="ring" style="--angle:${angle}deg"><span class="ring-value">${go}<small>/${total}</small></span></span>
-      <span class="readiness-text"><strong>${label}</strong><span>systems GO</span></span>
+      <span class="readiness-text"><strong>${label}</strong><span>${t('ready.systems')}</span></span>
     </div>`;
 }
 
 /** Text for the meter modal: the explanation plus the current numbers. */
 export function meterDetail(key, budget) {
-  const { unit } = METERS[key];
+  const unit = METERS[key].unit();
   const { entry, used, limit } = METERS[key].read(budget);
-  if (entry.status === 'pending') return METERS[key].pending ? `${METERS[key].pending} to see this value.` : '';
+  if (entry.status === 'pending') return METERS[key].pending ? t('meter.pendingDetail', { what: t(METERS[key].pending) }) : '';
   const pct = entry.ratio === null ? '' : ` (${Math.round(entry.ratio * 100)}%)`;
-  return `Right now: ${fmt(used)} of ${limit === null ? '—' : fmt(limit)} ${unit}${pct}.`;
+  return t('meter.rightNow', { used: fmt(used), limit: limit === null ? '—' : fmt(limit), unit, pct });
 }

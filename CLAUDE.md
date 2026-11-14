@@ -6,7 +6,8 @@ Team: Silvio Barretto (developer) and Carlos (Business Information Systems, Fate
 
 ## Language rules (important)
 - Talk to the team in **Brazilian Portuguese (pt-BR)**. Silvio does not speak English.
-- Everything that ships is in **English**: game UI, texts, tutorials, in-game explanations, README, code comments, commit messages, pitch and demo script.
+- Everything that ships is written first in **English**: game UI, texts, tutorials, in-game explanations, README, code comments, commit messages, pitch and demo script.
+- The game is translated into **Portuguese and Spanish** (decision 2026-11-14). English is the reference text; translations live in `src/i18n/` (see "Translations" below).
 - When you write English texts for the game, give Silvio a short pt-BR explanation of what they say.
 
 ## Product
@@ -19,10 +20,18 @@ Game flow (5 steps):
 4. Simulation (random events such as solar storms or component failures).
 5. Final report (score, what worked, what failed, similar real NASA missions).
 
-Optional, only if time allows: 3 difficulty levels, roles for up to 4 players on one device, leaderboard (local), sandbox mode.
+On top of the 5 steps (decisions of 2026-11-14):
+- **Campaign:** the player founds an agency (a 2026 Space Apps partner country, plus Europe, and a focus), manages funds and science, and unlocks three phases in order: Earth, Moon, Mars. Side jobs, research and agency events between missions. Rules in `src/engine/campaign.js`, tables in `src/data/campaign.js`.
+- **Free mission:** the original mode (any mission, no agency) for classes and demos.
+- **Mission Library:** real facts and real NASA images, unlocked as the agency grows (`src/data/library.js`).
+- **Badges:** 16 achievements ("mission patches") in `src/engine/achievements.js`.
+- **Visual identity and sound:** see `DESIGN.md` ("Console Tupi"). Learning design: `docs/learning-design.md`.
+
+Optional, only if time allows: roles for up to 4 players on one device, leaderboard (local), sandbox mode.
 
 ## Source documents
-- `prd-space-mission-design-game.md`: product requirements (v0.3). Section 0.1 lists the decisions that win when documents disagree; sections 6 and 7 are the data and engine contracts.
+- `prd-space-mission-design-game.md`: product requirements (v0.5). Section 0.1 lists the decisions that win when documents disagree; sections 6 and 7 are the data and engine contracts; sections 14 and 15 cover the audience, learning, units, languages, campaign, Library and badges.
+- `DESIGN.md`: visual identity, components, motion and sounds. `docs/learning-design.md`: audience, what players learn, pedagogy, NASA open data, units, languages.
 - `Carlos.md`: Carlos's task list and the exact format of every file in `src/data/`.
 - The numbers live in `src/data/` and are guarded by `tests/data.test.js`. Do not copy numbers into the docs.
 
@@ -31,19 +40,21 @@ Optional, only if time allows: 3 difficulty levels, roles for up to 4 players on
 - Tests with Vitest for the rules engine.
 - **Free tools only.** Do not add paid services or API keys.
 - **Three.js (`three`) is approved** as the only 3D library, used as a visual layer (see "3D layer"). No React Three Fiber, no physics engine, no other game engine.
-- Keep other dependencies minimal. Ask before adding a library.
+- Keep other dependencies minimal. Ask before adding a library. Approved so far: `three`, and `flag-icons` (MIT, only the 17 partner flags are imported in `src/ui/flags.js`).
+- Fonts come from Google Fonts (SIL OFL); sounds are synthesized with the Web Audio API (no audio files).
 - Deploy target: static hosting (GitHub Pages or similar).
 
 ## Suggested structure
 ```
 src/
-  data/        # instruments, rockets, orbits, scenarios (plain JS/JSON tables)
-  engine/      # pure functions: resource totals, compatibility checks, simulation, scoring
-  state/       # single mission state object and the functions that update it
-  ui/          # HTML/CSS screens and components for each of the 5 steps
-  view3d/      # Three.js scenes (spacecraft viewer, orbit view); read-only consumer of state
+  data/        # instruments, rockets, orbits, scenarios, events, content; campaign.js; library.js
+  engine/      # pure functions: resources, compatibility, simulation, scoring, campaign, achievements
+  state/       # game state (mission + campaign), actions, selectors, localStorage saving
+  i18n/        # en.js, pt.js, es.js and t() / localizeData() / localizeList()
+  ui/          # HTML/CSS screens and components (steps, title, setup, command center, library, badges), sound.js, flags.js
+  view3d/      # Three.js scenes (spacecraft, flight, globe); read-only consumer of state
   main.js
-tests/         # Vitest tests for src/engine
+tests/         # Vitest tests for src/engine, src/data, src/i18n
 ```
 Keep game rules in `engine/` as pure functions with no DOM and no Three.js access, so they are easy to test. UI only renders state and calls the engine.
 
@@ -55,15 +66,24 @@ Decision (2026-11-14): the game is a decision simulator, so rules and UI stay in
   1. Spacecraft viewer (step 2): low-poly craft built from simple primitives (cylinders, boxes, solar panels) that changes when instruments change. No imported models.
   2. Orbit view (steps 3 and 4): planet sphere with a NASA public-domain texture, orbit ring at the chosen altitude, moving spacecraft.
   3. Optional short launch animation.
+  4. Globe (title, new agency, command center): Earth from space, with the Moon and Mars lit as the campaign unlocks them (`view3d/globe.js`).
 - Time-box the whole 3D work to about 3–4 hours.
 - Performance matters (students, weak laptops, phones): load `view3d/` lazily with dynamic `import()`, cap pixel ratio at 2, reuse geometries and materials, dispose of them when leaving a screen, keep textures small.
 - Use scene units, not real kilometers. Do not add a physics engine; the simulation lives in `engine/`.
 - Textures and images must be free to use (NASA media is public domain). Note the source in a comment or in the README credits.
 
+## Translations
+- Interface text: add the key to `src/i18n/en.js`, `pt.js` and `es.js` and use `t('key', { values })`. Never hard-code player text in a screen.
+- Game tables and content: translate by id in the `data` section of `pt.js` and `es.js`. Translations change only words: ids, numbers, links, images and the number of facts stay the same.
+- `tests/i18n.test.js` fails if a language misses a key, changes a `{placeholder}` or changes a number or link. Run it after any text change.
+- Library facts are translated from the checked English sentence; the source link stays the official page.
+
 ## Data rules
 - Values in `src/data/` should be inspired by real missions and rockets, but simplified. Keep units explicit in names (`massKg`, `powerW`, `costMUsd`, `dataGbPerDay`).
 - Mark anything approximate as simplified in a comment. Do not claim real-world accuracy that we have not checked.
 - Reference material: NASA Design and Develop Science Missions, Mission Design Lab, GMAT, CubeSat 101 (links are on the challenge Resources tab).
+- **Mission Library (`src/data/library.js`) is the exception: real facts only, never simplified.** Every fact needs an official source that was opened and checked (update `CHECKED_ON`), and images come from the NASA Image and Video Library with their credit. `tests/library.test.js` guards this.
+- Campaign values (funds, rewards, chances, research, events) are game values, like the other tables.
 
 ## Working agreements
 - Silvio approves before big changes. Show the plan first for anything that touches several files.

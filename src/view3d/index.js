@@ -5,6 +5,7 @@
 import * as THREE from 'three';
 import { buildSpacecraft, disposeShared } from './spacecraft.js';
 import { createFlight } from './flight.js';
+import { createGlobe } from './globe.js';
 import { disposePlanetTextures } from './planets.js';
 
 const MAX_PIXEL_RATIO = 2;
@@ -25,7 +26,8 @@ let lastTime = 0;
 let dragging = null;
 let lastDragAt = 0;
 let flight = null;
-let mode = 'spacecraft'; // 'spacecraft' (steps 1 and 2) or 'flight' (simulation)
+let globe = null;
+let mode = 'spacecraft'; // 'spacecraft' (steps 1 and 2), 'flight' (simulation) or 'globe' (menus)
 
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -95,7 +97,7 @@ function resize() {
     ? Math.max(1, parent.clientHeight)
     : Math.round(Math.min(520, Math.max(220, width * 0.72)));
   renderer.setSize(width, height, true);
-  for (const view of [camera, flight?.camera].filter(Boolean)) {
+  for (const view of [camera, flight?.camera, globe?.camera].filter(Boolean)) {
     view.aspect = width / height;
     view.updateProjectionMatrix();
   }
@@ -134,6 +136,20 @@ export function showFlight(params) {
   flight.set(params);
 }
 
+/**
+ * Show Earth from space, with the destinations the agency has opened (title screen and command center).
+ * @param {{ unlocked?: string[], target?: string|null }} params
+ */
+export function showGlobe(params = {}) {
+  if (!renderer) return;
+  if (!globe) {
+    globe = createGlobe();
+    resize();
+  }
+  mode = 'globe';
+  globe.set(params);
+}
+
 export function setPaused(value) {
   paused = Boolean(value);
 }
@@ -145,9 +161,10 @@ export function dispose() {
   renderer?.domElement.remove();
   renderer?.dispose();
   flight?.dispose();
+  globe?.dispose();
   disposeShared();
   disposePlanetTextures();
-  renderer = scene = camera = craft = flight = null;
+  renderer = scene = camera = craft = flight = globe = null;
   lastKey = '';
 }
 
@@ -159,6 +176,11 @@ function startLoop() {
     // Draw only when the canvas is on screen, the game is not paused and the tab is visible.
     if (!renderer.domElement.isConnected || paused || document.hidden) return;
 
+    if (mode === 'globe' && globe) {
+      globe.update(dt);
+      renderer.render(globe.scene, globe.camera);
+      return;
+    }
     if (mode === 'flight' && flight) {
       flight.update(dt);
       renderer.render(flight.scene, flight.camera);

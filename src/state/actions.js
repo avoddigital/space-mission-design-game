@@ -115,3 +115,33 @@ export function answerQuiz(state, choice, rightAnswer) {
     report: { ...state.report, quizAnswered: true, quizChoice: choice, quizRight: choice === rightAnswer },
   };
 }
+
+// --- Campaign (the agency rules live in src/engine/campaign.js) ---
+
+/** Free mission: pick any of the three missions, no agency. */
+export function openFreePlay(state) {
+  return { ...selectScenario(state, state.scenarioId), screen: 'free', mode: 'free', paused: false };
+}
+
+export function openSetup(state) {
+  return { ...state, screen: 'setup', paused: false };
+}
+
+/** Start or continue a campaign: go to the command center. */
+export function enterCampaign(state, campaign) {
+  return { ...state, mode: 'campaign', campaign, screen: 'hub', paused: false };
+}
+
+/** Replace the agency (after a side job, research, a launch or an event). */
+export function setCampaign(state, campaign) {
+  return campaign === state.campaign ? state : { ...state, campaign };
+}
+
+/** Plan the main mission of a phase: a fresh design for its scenario, from step 1. */
+export function planMission(state, scenarioId) {
+  return startMission(selectScenario(state, scenarioId));
+}
+
+export function goToHub(state) {
+  return { ...state, screen: 'hub', paused: false };
+}

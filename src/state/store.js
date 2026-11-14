@@ -4,7 +4,11 @@
 /** Fresh state for a new game (PRD section 6.7). */
 export function createInitialState() {
   return {
-    screen: 'menu', // 'menu' | 'objective' | 'spacecraft' | 'launch' | 'simulation' | 'report'
+    // 'menu' (title) | 'free' (pick any mission) | 'setup' (new agency) | 'hub' (campaign command center)
+    // | 'objective' | 'spacecraft' | 'launch' | 'simulation' | 'report'
+    screen: 'menu',
+    mode: 'free', // 'free' (any mission, no agency) or 'campaign'
+    campaign: null, // the agency (src/engine/campaign.js), only in campaign mode
     scenarioId: 'earth-observation',
     design: { partIds: [], orbitId: null, rocketId: null },
     confirmedSteps: [],

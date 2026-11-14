@@ -1,7 +1,12 @@
 // Best score per scenario in localStorage. Every access is wrapped in try/catch:
 // in private windows or with blocked storage the game keeps working, it just does not save.
 
+import { isCampaign } from '../engine/campaign.js';
+import { createProfile, isProfile } from '../engine/achievements.js';
+
 export const BEST_KEY = 'space-mission-design-game:best-v1';
+export const CAMPAIGN_KEY = 'space-mission-design-game:campaign-v1';
+export const PROFILE_KEY = 'space-mission-design-game:profile-v1';
 
 function defaultStorage() {
   try {
@@ -48,7 +53,7 @@ export const PROGRESS_KEY = 'space-mission-design-game:progress-v1';
 let memoryProgress = null;
 
 function isProgress(value) {
-  return Boolean(value) && value.version === 1 && typeof value.byScenario === 'object' && typeof value.achievements === 'object';
+  return Boolean(value) && value.version === 1 && typeof value.byScenario === 'object';
 }
 
 /** @returns {object|null} saved progress, or null when there is none yet */
@@ -74,4 +79,42 @@ export function saveProgress(progress, storage = defaultStorage()) {
 /** Only for tests: forget the in-memory copy. */
 export function resetMemoryProgress() {
   memoryProgress = null;
+}
+
+/** The saved campaign, or null (nothing saved, an old version, or blocked storage). */
+export function loadCampaign(storage = defaultStorage()) {
+  try {
+    const parsed = JSON.parse(storage?.getItem(CAMPAIGN_KEY) ?? 'null');
+    return isCampaign(parsed) ? parsed : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Save the campaign (or remove it with null). Fails silently: the game keeps working. */
+export function saveCampaign(campaign, storage = defaultStorage()) {
+  try {
+    if (campaign) storage?.setItem(CAMPAIGN_KEY, JSON.stringify(campaign));
+    else storage?.removeItem(CAMPAIGN_KEY);
+  } catch {
+    // blocked or full storage
+  }
+}
+
+/** The player's achievements profile (shared by Free mission and the campaign). */
+export function loadProfile(storage = defaultStorage()) {
+  try {
+    const parsed = JSON.parse(storage?.getItem(PROFILE_KEY) ?? 'null');
+    return isProfile(parsed) ? parsed : createProfile();
+  } catch {
+    return createProfile();
+  }
+}
+
+export function saveProfile(profile, storage = defaultStorage()) {
+  try {
+    storage?.setItem(PROFILE_KEY, JSON.stringify(profile));
+  } catch {
+    // blocked or full storage: badges still work for this session
+  }
 }

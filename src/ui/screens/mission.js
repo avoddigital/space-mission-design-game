@@ -7,8 +7,47 @@ import { learnBox } from '../components/overlays.js';
 import { icon } from '../components/icons.js';
 import { gameLayout } from './design.js';
 import { reportRewards } from '../components/rewards.js';
+import { libraryMissions, libraryTopics } from '../../data/library.js';
+import { phases, agencyEvents } from '../../data/campaign.js';
+import { t, localizeList } from '../../i18n/index.js';
+import { ACHIEVEMENTS } from '../../engine/achievements.js';
+import { patch } from './badges.js';
 
-const PHASE_NAMES = { launch: 'Launch', transfer: 'Transfer', operations: 'Operations', data: 'Data return' };
+const libraryName = (id) => {
+  const entry = [...localizeList(libraryMissions, 'library.missions'), ...localizeList(libraryTopics, 'library.topics')].find((item) => item.id === id);
+  return entry?.name ?? entry?.title ?? id;
+};
+
+/** Campaign only: money spent, rewards, unlocks and the agency event after this mission. */
+function agencyBlock(result, campaign) {
+  if (!result || !campaign) return '';
+  const lines = [];
+  const phase = localizeList(phases, 'campaign.phases').find((item) => item.id === result.phaseId);
+  if (result.success) {
+    if (result.firstSuccess) lines.push(`<li>${icon('flag', 16)}<span><strong>${t('agency.phaseComplete', { phase: esc(phase?.name ?? '') })}</strong> ${result.finished ? t('agency.allDone') : t('agency.nextOpen')}</span></li>`);
+    if (result.fundsMUsd) lines.push(`<li>${icon('budget', 16)}<span>${t('agency.reward')} <strong>+${fmt(result.fundsMUsd)} M USD</strong></span></li>`);
+    lines.push(`<li>${icon('science', 16)}<span>${t('agency.sciencePoints')} <strong>+${fmt(result.science)}</strong> ${t('agency.scienceWhy')}</span></li>`);
+  } else {
+    lines.push(`<li>${icon('cross', 16)}<span>${t('agency.lost')}</span></li>`);
+  }
+  if (result.unlocked?.length) lines.push(`<li>${icon('book', 16)}<span>${t('agency.newInLibrary')} <strong>${result.unlocked.map((id) => esc(libraryName(id))).join(', ')}</strong></span></li>`);
+  const event = result.event ? localizeList(agencyEvents, 'campaign.agencyEvents').find((item) => item.id === result.event.id) : null;
+  const eventBlock = event
+    ? `<div class="agency-event">${icon(event.icon, 18)}<span><strong>${esc(event.name)}.</strong> ${esc(event.text)} ${[
+        event.reward.fundsMUsd ? `${event.reward.fundsMUsd > 0 ? '+' : ''}${fmt(event.reward.fundsMUsd)} M USD` : '',
+        event.reward.science ? t('agency.plusScience', { n: event.reward.science }) : '',
+      ].filter(Boolean).join(', ')}</span></div>`
+    : '';
+  return `
+    <section class="agency-result" aria-labelledby="agency-title">
+      <h3 id="agency-title">${icon('flag', 16)} ${t('agency.title')}</h3>
+      <ul class="lessons">${lines.join('')}</ul>
+      ${eventBlock}
+      <p class="agency-totals">${t('agency.totals', { funds: `<b>${fmt(campaign.fundsMUsd)} M USD</b>`, science: `<b>${fmt(campaign.science)}</b>` })}</p>
+    </section>`;
+}
+
+const PHASE_NAMES = { launch: 'phase.launch', transfer: 'phase.transfer', operations: 'phase.operations', data: 'phase.data' };
 const PHASE_ICONS = { launch: 'rocket', transfer: 'orbit', operations: 'science', data: 'comms' };
 
 /** How many phases the timeline has to show (it stops at the failed phase). */
@@ -26,15 +65,15 @@ function phaseText(phase, ctx) {
   const instruments = mission.parts.filter((part) => part.type === 'instrument').length;
   switch (phase.id) {
     case 'launch':
-      return `Liftoff! The ${mission.rocket?.name ?? 'rocket'} carried your ${fmt(simulation.budget.mass.usedKg)} kg spacecraft to space.`;
+      return t('phase.launchText', { rocket: mission.rocket?.name ?? t('phase.theRocket'), kg: fmt(simulation.budget.mass.usedKg) });
     case 'transfer':
       return mission.orbit?.transferDays
-        ? `Your spacecraft traveled for ${fmt(mission.orbit.transferDays)} days to reach ${mission.orbit.name}.`
-        : `Your spacecraft reached ${mission.orbit?.name ?? 'its orbit'} right after launch.`;
+        ? t('phase.transferText', { days: fmt(mission.orbit.transferDays), orbit: mission.orbit.name })
+        : t('phase.directText', { orbit: mission.orbit?.name ?? t('phase.itsOrbit') });
     case 'operations':
-      return `Science time: ${instruments} instrument${instruments === 1 ? '' : 's'} working for ${fmt(scenario.operationDays)} days.`;
+      return t(instruments === 1 ? 'phase.opsTextOne' : 'phase.opsText', { n: instruments, days: fmt(scenario.operationDays) });
     case 'data':
-      return `Your antenna sent ${fmt(simulation.scienceDelivered)} science points home. The goal was ${fmt(scenario.minScience)}.`;
+      return t('phase.dataText', { sent: fmt(simulation.scienceDelivered), goal: fmt(scenario.minScience) });
     default:
       return '';
   }
@@ -51,7 +90,7 @@ function eventCard(simEvent, data) {
       <span class="event-body">
         <strong>${esc(event.name)}</strong>
         <p>${esc(text)}</p>
-        ${simEvent.harmed ? `<p class="event-loss">−${simEvent.scienceLossPct}% science</p>` : ''}
+        ${simEvent.harmed ? `<p class="event-loss">${t('event.loss', { n: simEvent.scienceLossPct })}</p>` : ''}
       </span>
     </div>`;
 }
@@ -61,17 +100,17 @@ function eventCard(simEvent, data) {
 export function simulationScreen(ctx) {
   const { simulation, ui, data } = ctx;
   if (!simulation) {
-    return gameLayout({ ...ctx, title: 'Flight', cards: '<p>Launch from step 3 to start the simulation.</p>', stage: '', footer: `<button type="button" class="btn" data-action="go-step" data-value="3">${icon('back', 16)} Back</button>` });
+    return gameLayout({ ...ctx, title: t('steps.flight'), cards: `<p>${t('flight.none')}</p>`, stage: '', footer: `<button type="button" class="btn" data-action="go-step" data-value="3">${icon('back', 16)} ${t('common.back')}</button>` });
   }
   const total = phasesToShow(simulation);
   const shown = Math.min(ui.simShown, total);
   const done = shown >= total;
   const timeline = simulation.phases
     .map((phase, index) => {
-      const name = `<span class="phase-name">${icon(PHASE_ICONS[phase.id], 18)} ${PHASE_NAMES[phase.id]}</span>`;
+      const name = `<span class="phase-name">${icon(PHASE_ICONS[phase.id], 18)} ${t(PHASE_NAMES[phase.id])}</span>`;
       if (index >= shown) {
         const waiting = index === shown && !done;
-        return `<li class="phase ${waiting ? 'phase-running' : 'phase-waiting'}">${name}<span class="phase-text">${waiting ? 'In progress…' : index >= total ? 'Not reached.' : 'Waiting…'}</span></li>`;
+        return `<li class="phase ${waiting ? 'phase-running' : 'phase-waiting'}">${name}<span class="phase-text">${waiting ? t('flight.inProgress') : index >= total ? t('flight.notReached') : t('flight.waiting')}</span></li>`;
       }
       const status = phase.ok === false ? 'phase-failed' : 'phase-ok';
       return `<li class="phase ${status}">${name}<span class="phase-text">${esc(phaseText(phase, ctx))}</span></li>`;
@@ -80,35 +119,35 @@ export function simulationScreen(ctx) {
 
   const operationsShown = shown > simulation.phases.findIndex((phase) => phase.id === 'operations');
   const events = operationsShown && simulation.events.length
-    ? `<h3>${icon('storm', 18)} Surprises during the mission</h3>${simulation.events.map((event) => eventCard(event, data)).join('')}`
+    ? `<h3>${icon('storm', 18)} ${t('flight.surprises')}</h3>${simulation.events.map((event) => eventCard(event, data)).join('')}`
     : '';
   const success = simulation.outcome === 'success';
   const result = done
-    ? `<p class="sim-result ${success ? 'is-success' : 'is-failure'}">${icon(success ? 'check' : 'cross', 22)} ${success ? 'Mission complete!' : 'Mission failed.'}</p>`
+    ? `<p class="sim-result ${success ? 'is-success' : 'is-failure'}">${icon(success ? 'check' : 'cross', 22)} ${success ? t('flight.complete') : t('flight.failed')}</p>`
     : '';
 
   const failedAtLaunch = simulation.phases[0]?.ok === false;
   const caption = !done
-    ? 'Your mission is underway…'
+    ? t('flight.underway')
     : simulation.outcome === 'success'
-      ? 'Mission complete. Open the report to see your score.'
+      ? t('flight.captionSuccess')
       : failedAtLaunch
-        ? 'The mission ended at launch. Open the report to see why.'
-        : 'The mission failed. Open the report to see why.';
+        ? t('flight.captionLaunchFail')
+        : t('flight.captionFail');
 
   return gameLayout({
     ...ctx,
-    title: 'Mission in flight',
+    title: t('flight.title'),
     results: true,
     hero: true,
     cards: `<ol class="timeline" aria-live="polite">${timeline}</ol>${result}${learnBox(ctx.content.learn?.simulation)}`,
     stage: `<div class="sim-stage${done && !success ? ' is-failed' : ''}">
       <div class="stage-sky" aria-hidden="true"></div>
-      <div class="view3d-slot" data-view3d="flight"><p class="view3d-note">Loading 3D view…</p></div>
+      <div class="view3d-slot" data-view3d="flight"><p class="view3d-note">${t('common.loading3d')}</p></div>
       ${events || `<p class="hint">${caption}</p>`}</div>`,
     footer: done
-      ? `<button type="button" class="btn btn-primary" data-action="see-report">See the report ${icon('next', 16)}</button>`
-      : `<button type="button" class="btn" data-action="skip">Skip animation ${icon('next', 16)}</button>`,
+      ? `<button type="button" class="btn btn-primary" data-action="see-report">${t('flight.seeReport')} ${icon('next', 16)}</button>`
+      : `<button type="button" class="btn" data-action="skip">${t('flight.skip')} ${icon('next', 16)}</button>`,
   });
 }
 
@@ -116,9 +155,9 @@ export function simulationScreen(ctx) {
 
 function scoreBlock(score) {
   const parts = [
-    { name: 'Science', value: score.breakdown.science, max: 50 },
-    { name: 'Efficiency', value: score.breakdown.efficiency, max: 30 },
-    { name: 'Objective', value: score.breakdown.objective, max: 20 },
+    { name: t('score.science'), value: score.breakdown.science, max: 50 },
+    { name: t('score.efficiency'), value: score.breakdown.efficiency, max: 30 },
+    { name: t('score.objective'), value: score.breakdown.objective, max: 20 },
   ];
   return `
     <div class="score">
@@ -141,23 +180,23 @@ function quizBlock(quiz, report) {
     })
     .join('');
   const feedback = answered
-    ? `<p class="quiz-feedback">${report.quizRight ? `${icon('star', 16)} Correct! You earned the <strong>Mission expert</strong> badge.` : 'Not quite.'} ${esc(quiz.why)}</p>`
+    ? `<p class="quiz-feedback">${report.quizRight ? `${icon('star', 16)} ${t('quiz.right', { badge: `<strong>${t('badge.expert')}</strong>` })}` : t('quiz.wrong')} ${esc(quiz.why)}</p>`
     : '';
-  return `<section class="quiz" aria-labelledby="quiz-title"><h3 id="quiz-title">${icon('bulb', 18)} Quick question</h3><p>${esc(quiz.q)}</p><div class="quiz-options">${options}</div>${feedback}</section>`;
+  return `<section class="quiz" aria-labelledby="quiz-title"><h3 id="quiz-title">${icon('bulb', 18)} ${t('quiz.title')}</h3><p>${esc(quiz.q)}</p><div class="quiz-options">${options}</div>${feedback}</section>`;
 }
 
 function realMissions(missions = []) {
   if (!missions.length) return '';
   return `
-    <section aria-labelledby="real-title"><h3 id="real-title">${icon('planet', 18)} Real missions like yours</h3>
+    <section aria-labelledby="real-title"><h3 id="real-title">${icon('planet', 18)} ${t('report.realMissions')}</h3>
       ${missions
         .map(
           (mission) => `
         <div class="real-mission">
-          <strong>${esc(mission.name)}</strong> <span class="note">(launched ${esc(mission.launchYear)})</span>
+          <strong>${esc(mission.name)}</strong> <span class="note">${t('report.launched', { year: esc(mission.launchYear) })}</span>
           <p>${esc(mission.summary)}</p>
           ${mission.lesson ? `<p class="note">${esc(mission.lesson)}</p>` : ''}
-          ${mission.url ? `<a href="${esc(mission.url)}" target="_blank" rel="noopener noreferrer">Learn more at NASA ↗</a>` : ''}
+          ${mission.url ? `<a href="${esc(mission.url)}" target="_blank" rel="noopener noreferrer">${t('report.learnMore')} ↗</a>` : ''}
         </div>`,
         )
         .join('')}
@@ -183,47 +222,58 @@ export function reportScreen(ctx) {
 
   const header = `
     <div class="report-head ${success ? 'is-success' : 'is-failure'}${report.isNewBest ? ' is-best' : ''}">
-      <h2 class="report-title">${success ? 'Mission success' : 'Mission failed'}</h2>
+      <h2 class="report-title">${success ? t('report.success') : t('report.failure')}</h2>
       ${scoreBlock(score)}
       <div class="badges">
-        ${report.isNewBest ? `<span class="badge badge-gold">${icon('star', 12)} Best mission so far</span>` : ''}
-        ${tight ? '<span class="badge badge-tight">Tight but valid · Efficient design</span>' : ''}
-        ${report.quizRight ? `<span class="badge badge-gold">${icon('bulb', 12)} Mission expert</span>` : ''}
+        ${report.isNewBest ? `<span class="badge badge-gold">${icon('star', 12)} ${t('badge.best')}</span>` : ''}
+        ${tight ? `<span class="badge badge-tight">${t('badge.tight')}</span>` : ''}
+        ${report.quizRight ? `<span class="badge badge-gold">${icon('bulb', 12)} ${t('badge.expert')}</span>` : ''}
       </div>
+      ${(ctx.ui.reportBadges ?? []).length ? `<div class="report-patches"><span>${t('badges.thisMission')}</span>${ctx.ui.reportBadges.map((id) => {
+        const item = ACHIEVEMENTS.find((entry) => entry.id === id);
+        return `<button type="button" class="report-patch" data-action="badges" title="${esc(t(`ach.${id}.desc`))}">${patch(id, item?.icon ?? 'star', true, 'small')}${esc(t(`ach.${id}.name`))}</button>`;
+      }).join('')}</div>` : ''}
     </div>`;
 
   const why = failure
-    ? `<section class="report-why is-failure"><h3>What went wrong</h3><p><strong>${esc(failure.title)}.</strong> ${esc(failure.text)}</p>
-        ${harmed.length && simulation.failedIssue.code === 'LOW_SCIENCE' ? `<p>Random events took away science: ${harmed.map((event) => `${esc(data.events.find((item) => item.id === event.id)?.name ?? event.id)} (−${event.scienceLossPct}%)`).join(', ')}. More margin would have protected you.</p>` : ''}
-        ${failure.tip ? `<p><strong>Try this:</strong> ${esc(failure.tip)}</p>` : ''}</section>`
-    : `<section class="report-why is-success"><h3>Why it worked</h3><p>Your spacecraft reached ${esc(ctx.mission.orbit?.name ?? 'its orbit')}, stayed powered and sent ${fmt(simulation.scienceDelivered)} science points home. The goal was ${fmt(scenario.minScience)}.</p></section>`;
+    ? `<section class="report-why is-failure"><h3>${t('report.wrong')}</h3><p><strong>${esc(failure.title)}.</strong> ${esc(failure.text)}</p>
+        ${harmed.length && simulation.failedIssue.code === 'LOW_SCIENCE' ? `<p>${t('report.eventsTook', { list: harmed.map((event) => `${esc(data.events.find((item) => item.id === event.id)?.name ?? event.id)} (−${event.scienceLossPct}%)`).join(', ') })}</p>` : ''}
+        ${failure.tip ? `<p><strong>${t('report.tryThis')}</strong> ${esc(failure.tip)}</p>` : ''}</section>`
+    : `<section class="report-why is-success"><h3>${t('report.why')}</h3><p>${t('report.whyText', { orbit: esc(ctx.mission.orbit?.name ?? t('phase.itsOrbit')), sent: fmt(simulation.scienceDelivered), goal: fmt(scenario.minScience) })}</p></section>`;
 
   const learn = failure?.learn ? { text: failure.learn, rule: content.learn?.report?.rule } : content.learn?.report;
 
+  const campaignMode = state.mode === 'campaign';
   const cards = `
     ${header}
     ${reportRewards(report)}
+    ${campaignMode ? agencyBlock(ctx.ui.campaignResult, state.campaign) : ''}
     ${why}
-    ${lessons ? `<section><h3>${icon('storm', 18)} Surprises and what engineers do about them</h3><ul class="lessons">${lessons}</ul></section>` : ''}
+    ${lessons ? `<section><h3>${icon('storm', 18)} ${t('report.surprises')}</h3><ul class="lessons">${lessons}</ul></section>` : ''}
     ${learnBox(learn)}
     ${quizBlock(scenarioText.quiz, report)}`;
 
   const stage = `
-    <h3>${icon('flag', 18)} Mission checklist</h3>
+    <h3>${icon('flag', 18)} ${t('report.checklist')}</h3>
     ${checklist({ budget: simulation.budget, issues: simulation.issues }, content, data)}
     ${realMissions(scenarioText.realMissions)}`;
 
   const layout = gameLayout({
     ...ctx,
-    title: `Mission report · attempt ${state.runCount}`,
+    title: t('report.title', { n: state.runCount }),
     results: true,
     cards,
     stage,
-    footer: `
-      <button type="button" class="btn btn-primary" data-action="redesign">${icon('wrench', 16)} Redesign mission</button>
-      <button type="button" class="btn" data-action="new-conditions">${icon('dice', 16)} Try again with new conditions</button>
-      <button type="button" class="btn" data-action="next-mission">Next mission ${icon('next', 16)}</button>
-      <button type="button" class="btn" data-action="menu">${icon('home', 16)} Main menu</button>`,
+    footer: campaignMode
+      ? `
+      <button type="button" class="btn btn-primary" data-action="hub">${icon('home', 16)} ${t('common.commandCenter')}</button>
+      <button type="button" class="btn" data-action="redesign">${icon('wrench', 16)} ${t('report.redesign')}</button>
+      <button type="button" class="btn" data-action="new-conditions">${icon('dice', 16)} ${t('report.launchAgain')}</button>`
+      : `
+      <button type="button" class="btn btn-primary" data-action="redesign">${icon('wrench', 16)} ${t('report.redesign')}</button>
+      <button type="button" class="btn" data-action="new-conditions">${icon('dice', 16)} ${t('report.newConditions')}</button>
+      <button type="button" class="btn" data-action="next-mission">${t('report.nextMission')} ${icon('next', 16)}</button>
+      <button type="button" class="btn" data-action="menu">${icon('home', 16)} ${t('common.mainMenu')}</button>`,
   });
   return layout;
 }

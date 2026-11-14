@@ -2,12 +2,14 @@
 
 Guia interno da equipe Tupi Orbit, em português. O código, os textos do jogo, os comentários e os commits continuam em **inglês**, como diz o [CLAUDE.md](CLAUDE.md).
 
-**Concluído:** tabelas `parts.js`, `rockets.js`, `orbits.js` e `scenarios.js`, com o equilíbrio de orçamentos ajustado. Os 50 testes passam no `main`. 🎉
+**Concluído:** tabelas `parts.js`, `rockets.js`, `orbits.js` e `scenarios.js`, com o equilíbrio de orçamentos ajustado. Os 50 testes passavam no `main` em 13/11; hoje (14/11) são 198 testes, incluindo campanha, conquistas, Biblioteca e traduções. 🎉
 
 **PRD:** o seu PRD virou a versão 0.3, juntando o que ele propôs com o que já estava pronto. Leia a **seção 0.1** do [PRD](prd-space-mission-design-game.md): ela resume o que vale. Em resumo:
 - **Mantidos** o motor, as suas tabelas e a pontuação de 0 a 100.
 - **Entram do seu PRD** a experiência e a educação: Learn, quiz, GO/NO-GO, 5 medidores, eventos com semente, 4 fases, 3D e roadmap.
 - **Ficam para o P1** os campos de física (sol, sinal, RTG, arrasto).
+
+**Novidades de 14/11 (v0.5 do PRD, seção 15):** campanha, Biblioteca de Missões, conquistas, nova identidade visual, sons e três idiomas. O que muda para você está na **seção 6** deste guia: há tabelas novas e todo texto agora existe em inglês, português e espanhol.
 
 ---
 
@@ -289,3 +291,32 @@ O Claude lê o `CLAUDE.md` sozinho e segue as regras do projeto. Para cada taref
 | `scenarios.js` | `id`, `name`, `description`, `difficulty`, `budgetMUsd`, `maxDays`, `operationDays`, `allowedOrbits`, `requiredTypes`, `minScience` |
 
 **Regras gerais:** `id` curto, em minúsculas, com hífen e sem espaço. Valores simplificados marcados com `// simplified` e a missão de referência.
+
+---
+
+## 6. Arquivos novos (14/11) e textos em três idiomas
+
+### `src/data/campaign.js` (valores de jogo, simplificados)
+- `countries`: os países parceiros do Space Apps 2026 (`id` = código da bandeira, `name`). Só país, nunca nome de agência.
+- `focuses`: os 3 focos da agência e o bônus de cada um (`scienceMultiplier`, `transferMultiplier`, `researchMultiplier`).
+- `phases`: as 3 fases em ordem (`scenarioId`, `rewardMUsd`, `unlocks` = ids da Biblioteca liberados na primeira vitória).
+- `sideJobs`: missões secundárias (`phase`, `costMUsd`, `chance` de 0 a 1, `reward` com `fundsMUsd` e/ou `science`, `usesPerPhase`, `unlocks` opcional). **Mantenha pelo menos uma grátis e sem chance de falha na fase da Terra**: é o que impede a agência de ficar travada sem dinheiro (um teste confere).
+- `research`: pesquisas (`costScience`, `effect` com `partMass`, `powerGen`, `downlink`, `rocketCost` ou `instrumentScience`).
+- `agencyEvents`: eventos entre missões (`reward`, `weight`, `unlocks` opcional) e `EVENT_CHANCE`.
+- Pode ajustar números à vontade; rode `npm test` depois. Os testes de `tests/campaign.test.js` conferem que todos os ids existem.
+
+### `src/data/library.js` (fatos reais, **nunca simplificados**)
+- `libraryMissions` e `libraryTopics`: cada item tem `facts` (frase + `source`, a página oficial de onde a frase saiu), `image` (da NASA Image and Video Library, com `alt`, `caption` e `credit`) e, nas missões, `url`.
+- Só escreva um fato depois de **abrir a fonte e conferir**. Atualize `CHECKED_ON` com a data.
+- `tests/library.test.js` exige fonte oficial (nasa.gov, spaceappschallenge.org...) e imagem da NASA com crédito.
+
+### Textos em três idiomas (`src/i18n/`)
+- `en.js` é a referência. `pt.js` e `es.js` têm a mesma lista de chaves (`ui`) e as traduções das tabelas por id (`data`).
+- **Mudou um texto em inglês?** Mude também em `pt.js` e `es.js`.
+- **Acrescentou um item numa tabela** (peça, evento, missão secundária, fato da Biblioteca)? Acrescente a tradução com o mesmo `id` em `pt.js` e `es.js`.
+- Tradução muda **só palavras**: nunca troque números, ids, links ou a quantidade de fatos. Mantenha os `{marcadores}` iguais.
+- `tests/i18n.test.js` aponta exatamente a chave que falta ou o marcador diferente.
+
+### Conquistas (`src/engine/achievements.js`)
+- Os nomes e descrições ficam em `src/i18n/*.js` (chaves `ach.<id>.name` e `ach.<id>.desc`). Para mudar uma regra (por exemplo, a nota mínima de "Engenharia de ponta"), fale com o Silvio.
+

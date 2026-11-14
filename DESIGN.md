@@ -71,8 +71,11 @@ Small labels (section names, captions) are B612 Mono uppercase with wide letter 
 
 ## 5. Layout
 
+- Title and new agency screens: the viewscreen shows Earth from space on one side, the controls on the other. Flags are small framed plates, never the only label (the country name is always written).
+- Command center (campaign): agency plate on top (flag, funds, science, month as amber readouts), mission phases on the left (lamp: green done, amber next, dark locked), the globe in the middle (the Moon and Mars light up as they unlock, an amber ring marks the next destination), operations on the right (side jobs and research).
 - Top bar: the mission name in a display window, then the 5 steps as a row of annunciator lamps (amber = current step, green = done, dark = not yet).
 - Left: the choice panel. Middle: the viewscreen. Right: the gauge panel.
+- Mission Library and Badges are full screens over the game (Esc or the back button returns): a plate on top, tabs or a progress bar, and a grid of cards that scrolls inside its own area.
 - On screens 861px and wider the game fills the window and the page never scrolls; only a long list scrolls inside its own panel. On phones the page scrolls normally, in this order: steps, gauges, viewscreen, choices, footer. Touch targets are at least 44px.
 
 ## 6. Motion
@@ -81,6 +84,7 @@ Small labels (section names, captions) are B612 Mono uppercase with wide letter 
 - Lamps switch on with a quick flicker (`lamp-on`). A running phase and a "Risky" gauge blink slowly.
 - The Launch button pulses softly only when everything is GO.
 - Countdown numbers drop in like a range clock; liftoff shakes the console.
+- A new badge slides in at the top right ("badge-in"), stays about 5 seconds and fades.
 - `prefers-reduced-motion` turns all animations off.
 
 ## 7. Sound
@@ -101,10 +105,12 @@ All sounds are **synthesized at runtime with the Web Audio API** (`src/ui/sound.
 | Mission success | four-note rising arpeggio |
 | Mission failure | slow falling tone |
 | Quiz right / wrong | chime / buzz |
+| Side job worked / failed | success arpeggio / falling tone |
+| Agency founded, badge earned | success arpeggio |
 
 Rules:
 - Sound starts only after the first click or key press (browser rule).
-- **Mute** button in the top bar and on the main menu, plus the `M` key. The choice is saved in `localStorage` (if storage is blocked, the game just does not remember it).
+- **Mute** button in the top bar, the title screen, the command center, the Library and Badges, plus the `M` key. The choice is saved in `localStorage` (if storage is blocked, the game just does not remember it).
 - Master volume is low (0.18). No sound is longer than about 2 seconds, and nothing loops.
 - Every sound has a visual equivalent, so the game is fully playable muted.
 
@@ -113,7 +119,21 @@ Rules:
 - Line icons in `src/ui/components/icons.js`, 2px stroke, `currentColor`.
 - The emblem (menu and favicon) is a planet with its orbit and a small spacecraft with amber body, drawn in SVG.
 
-## 9. Checklist for new screens
+## 9. Components added for the campaign
+
+- **Readout:** a caption in small mono letters over an amber number in a recessed window (funds, science, month, discovered).
+- **Phase card:** a module with the status lamp (green done, amber next and blinking, dark locked) and a stamped tag.
+- **Mission patch (badge):** a round patch with a stitched edge. Earned: blue fabric, amber ring, amber icon, soft glow. Not earned: dark recessed circle, dim icon, the card stays readable with the description of how to earn it.
+- **Locked Library entry:** hazard-striped dark window instead of the photo, "Not discovered yet" and the way to discover it.
+- **Part badges:** small stamped tags on part and rocket cards: green for a strength ("High science", "Light"), amber for the price to pay ("Heavy", "Lots of data").
+- **Language button:** globe icon plus the current language code (EN, PT, ES); it switches to the next language. Next to the sound button everywhere.
+
+## 10. Languages and text length
+
+- Portuguese and Spanish texts are often 20–30% longer than English. Buttons and tags must wrap or ellipsize, never overflow; test every new screen in all three languages.
+- Numbers follow the language (decimal comma in Portuguese and Spanish); units stay SI.
+
+## 11. Checklist for new screens
 
 - Uses the tokens, not new hex values.
 - A new panel is a plate (`--screws`, `--raised`); a new value is shown in a recessed display with `--digits`.
@@ -121,3 +141,4 @@ Rules:
 - Titles in the stencil font, numbers in B612 Mono.
 - New interactions call `play(...)` with an existing sound name before inventing a new one.
 - Works at 360px wide, with reduced motion, and without page scroll on a 1366×768 laptop.
+- Every text comes from `t()` and exists in English, Portuguese and Spanish.

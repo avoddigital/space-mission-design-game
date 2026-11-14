@@ -2,32 +2,27 @@
 import { describe, it, expect } from 'vitest';
 import { menuScreen } from '../src/ui/screens/menu.js';
 import { reportScreen } from '../src/ui/screens/mission.js';
-import { starRow, rankCard, badgeGallery, reportRewards } from '../src/ui/components/rewards.js';
-import { emptyProgress, recordMission, ACHIEVEMENTS } from '../src/engine/progress.js';
+import { starRow, rankCard, reportRewards } from '../src/ui/components/rewards.js';
+import { emptyProgress, recordMission } from '../src/engine/progress.js';
 import { createInitialState } from '../src/state/store.js';
 import { launch, showReport, togglePart, setPower, setComms, setOrbit, setRocket } from '../src/state/actions.js';
 import { gameData, runSimulation, selectScore, selectScenario, selectMission, selectEvaluation } from '../src/state/selectors.js';
 
-const win = (scenarioId, total) => ({
-  scenarioId, outcome: 'success', total, events: [], budgetLeftRatio: 0.1, tight: false, scienceDelivered: 12, minScience: 12,
-});
+const win = (scenarioId, total) => ({ scenarioId, outcome: 'success', total });
 
 describe('menu rewards', () => {
-  it('shows rank, stars per mission and the badge gallery', () => {
-    const progress = recordMission(emptyProgress(), win('moon-exploration', 92), { scenarioCount: 3 }).progress;
+  it('shows rank and stars per mission', () => {
+    const progress = recordMission(emptyProgress(), win('moon-exploration', 92), {}).progress;
     const html = menuScreen({ state: createInitialState(), data: gameData, best: { byScenario: {} }, progress });
     expect(html).toContain('Engineer'); // 3 stars
     expect(html).toContain('3 of 3 stars earned');
     expect(html).toContain('0 of 3 stars earned');
-    expect(html).toContain(`Badges <small>3 / ${ACHIEVEMENTS.length}</small>`);
-    expect(html).toContain('🔒');
   });
 
-  it('starts as a Cadet with nothing unlocked', () => {
-    const html = rankCard(emptyProgress()) + badgeGallery(emptyProgress());
+  it('starts as a Cadet', () => {
+    const html = rankCard(emptyProgress());
     expect(html).toContain('Cadet');
     expect(html).toContain('Next: <strong>Engineer</strong> in 3 more ★');
-    expect(html).toContain(`0 / ${ACHIEVEMENTS.length}`);
   });
 
   it('draws filled and empty stars', () => {
@@ -38,11 +33,9 @@ describe('menu rewards', () => {
 });
 
 describe('report rewards', () => {
-  it('lists new badges, stars and a promotion', () => {
-    const outcome = recordMission(emptyProgress(), win('earth-observation', 95), { scenarioCount: 3 });
+  it('shows stars and a promotion', () => {
+    const outcome = recordMission(emptyProgress(), win('earth-observation', 95), {});
     const html = reportRewards({ rewards: outcome });
-    expect(html).toContain('Badge unlocked: First Launch');
-    expect(html).toContain('Badge unlocked: Top Score');
     expect(html).toContain('Promoted to <strong>Engineer</strong>');
     expect(html.match(/is-pop/g)).toHaveLength(3);
   });
@@ -54,7 +47,7 @@ describe('report rewards', () => {
     state = setRocket(setOrbit(state, 'sso-700'), 'small-lifter');
     state = launch(state, runSimulation(state, gameData));
     const score = selectScore(state, gameData);
-    const rewards = recordMission(emptyProgress(), { ...win('earth-observation', score.total), events: state.simulation.events }, { scenarioCount: 3 });
+    const rewards = recordMission(emptyProgress(), { ...win('earth-observation', score.total), events: state.simulation.events }, {});
     state = showReport(state, { score, isNewBest: true, best: score.total, rewards });
     const ctx = {
       state, data: gameData, content: gameData.content, ui: { celebrateUntil: Date.now() + 1000, shake: new Set() }, shake: new Set(),
@@ -63,7 +56,7 @@ describe('report rewards', () => {
     const html = reportScreen(ctx);
     expect(html).toContain('Mission success');
     expect(html).toContain(`data-count-to="${score.total}"`);
-    expect(html).toContain('Badge unlocked: First Launch');
+    expect(html).toContain('class="rewards"');
   });
 });
 

@@ -1,4 +1,4 @@
-# Demo video script: Space Mission Design Game (30 seconds)
+# Demo video script: Tupi Orbit · Space Mission Design Game (30 seconds)
 
 **Rules from the São José do Rio Preto opening slides (2026-11-13):**
 - The Project Demo is **one** public link: a **30-second video** or a **7-slide** presentation (a title slide counts as one of the 7).
@@ -8,6 +8,8 @@
 - Submission closes **Sunday 15/11 at 17:00** (local). The pitch talk is Sunday at 9:00.
 
 **Before recording:** record only after the game screens are on `main`. Play this exact path once and check that the numbers on screen match the ones below. They come from the rules engine and the data tables on 2026-11-13; update them if the tables change after playtesting.
+
+**Record in Free mission, in English.** On the title screen, check that the language button shows **EN** (press **L** to switch), click **Free mission**, then choose **Observe Earth** and **Start mission**. Free mission uses the full mission budget; in the campaign the budget depends on the agency's funds, so the numbers below would change.
 
 **Starting ship (set it up before you start recording):**
 - Mission: **Observe Earth**
@@ -24,11 +26,11 @@
 
 | Time | Screen and action | Narration (spoken and subtitled) |
 |---|---|---|
-| 0–4 s | Menu: click **Observe Earth**. | "Design a real space mission, from the science goal to the launch." |
+| 0–4 s | Free mission: click **Observe Earth**, then **Start mission**. | "Design a real space mission, from the science goal to the launch." |
 | 4–11 s | Spacecraft: add the **High-Resolution Camera**. Launch step: pick the **Small Lifter**. The checklist shows NO-GO: 310 kg, but the rocket carries 300 kg. | "I added the best camera. Too heavy: ten kilograms over what my rocket can carry." |
 | 11–16 s | Switch to the **Medium Lifter**. Mass turns green, budget turns red: 20 million USD over. | "A bigger rocket? Now I'm twenty million dollars over budget." |
 | 16–23 s | Swap the camera for the **Thermal Infrared Imager**, back to the **Small Lifter**. All green. Click Launch. A solar storm card appears in green. | "A lighter design fits, with enough margin to survive a solar storm." |
-| 23–30 s | Report: SUCCESS, **73/100**, the Landsat 9 card. End card: game name, team, link. | "Every choice has a consequence, and the game explains why. Space Mission Design Game, by Team Tupi Orbit." |
+| 23–30 s | Report: SUCCESS, **73/100**, the Landsat 9 card, the badges earned (they appear only the first time on that browser, so record on a fresh browser profile). End card: game name, team, link. | "Every choice has a consequence, and the game explains why. Tupi Orbit, by Team Tupi Orbit." |
 
 **Recording tips:** record the screen at 1280×720 or larger, speed up the clicks in editing, and keep each subtitle on screen for at least 2 seconds.
 
@@ -44,7 +46,7 @@ All three attempts use the Sun-Synchronous Orbit, the Multispectral Imager, the 
 | High-Resolution Camera | Medium Lifter | Fails: over budget |
 | Thermal Infrared Imager | Small Lifter | Success |
 
-The numbers in the narration (10 kg, 20 million USD, 73/100, solar storm in green) were checked in the live game on 2026-11-14. The tables are the source of truth: if a number in `src/data/` changes after playtesting, tell Silvio so he can check the script again, and read the numbers on screen when recording.
+The numbers in the narration (310 kg on a 300 kg rocket, 170 of 150 million USD, 73/100, solar storm in green) were checked in the live game on 2026-11-14 and checked again against the rules engine after the campaign, translations and badges were added (same day): they did not change. The tables are the source of truth: if a number in `src/data/` changes after playtesting, tell Silvio so he can check the script again, and read the numbers on screen when recording.
 
 ---
 
@@ -52,10 +54,10 @@ The numbers in the narration (10 kg, 20 million USD, 73/100, solar storm in gree
 
 Use this only if the game screens are not ready to record on Sunday morning.
 
-1. **Title:** Space Mission Design Game, Team Tupi Orbit, NASA Space Apps 2026.
+1. **Title:** Tupi Orbit · Space Mission Design Game, Team Tupi Orbit, NASA Space Apps 2026.
 2. **The problem:** every mission is a puzzle of trade-offs; students rarely see a whole mission.
-3. **The game:** the five steps (goal, spacecraft, launch, simulation, report).
+3. **The game:** the five steps (goal, spacecraft, launch, simulation, report), inside a campaign from Earth to the Moon and Mars.
 4. **A failure that teaches:** 310 kg on a 300 kg rocket, then 20 million USD over budget.
 5. **The fix:** a lighter design, margin, success with 73/100.
-6. **Learning built in:** Learn boxes, plain-language reports, real NASA missions, quiz.
+6. **Learning built in:** Learn boxes, plain-language reports, quiz, Mission Library with real NASA facts and images, badges, three languages.
 7. **Links and team:** game link, repository link, team names.

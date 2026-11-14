@@ -1,6 +1,6 @@
 # PRD: Space Mission Design Game (Tupi Orbit)
 
-> **Versão:** 0.3 (MVP de hackathon, junção com o que já está no repositório)
+> **Versão:** 0.5 (14/11: campanha, Biblioteca, conquistas, identidade visual, sons e idiomas implementados, seção 15) · 0.4 (14/11: público-alvo, aprendizagem, unidades e idiomas, seção 14) · 0.3 (MVP de hackathon, junção com o que já está no repositório)
 > **Data:** 13/11/2026 (véspera do evento, 14 e 15/11/2026)
 > **Autores:** Carlos (versão 0.2) e Silvio (junção 0.3), equipe Tupi Orbit
 > **Stack:** Vite + JavaScript puro (ES modules) + HTML/CSS + Three.js como camada visual + Vitest. Sem backend, `localStorage`, deploy estático no GitHub Pages.
@@ -19,7 +19,7 @@ Este PRD **não recomeça o projeto**. Ele parte do que já está no repositóri
 | Three.js é só camada visual (`view3d/` lê o estado e nunca decide regra) | `CLAUDE.md` › 3D layer |
 | Fluxo de 5 etapas: objetivo → nave/instrumentos → foguete/órbita → simulação → relatório | `CLAUDE.md` › Product |
 | Formato dos dados (`parts`, `rockets`, `orbits`, `scenarios`, unidades no nome do campo) | `Carlos.md` |
-| Tudo que vai para o jogador em **inglês**; conversa da equipe em pt-BR | `CLAUDE.md` › Language rules |
+| Textos escritos primeiro em **inglês** e traduzidos para português e espanhol (desde a 0.5); conversa da equipe em pt-BR | `CLAUDE.md` › Language rules e Translations |
 | Sem `Co-Authored-By` nem atribuição de IA em commits | `CLAUDE.md` › Working agreements |
 
 O que este PRD **acrescenta ou ajusta**, com base no feedback do protótipo ("ficou complexo demais; precisa ser mais educativo e 3D"):
@@ -91,6 +91,12 @@ Um simulador de decisões com cara de jogo:
 - Joga no celular ou no Chromebook da escola.
 - **Dor:** "Eu não entendo por que a NASA não coloca todas as câmeras num satélite só."
 - **Comportamento:** abandona qualquer coisa que pareça planilha. Aprende fazendo e errando.
+
+### 2.1b Persona primária adulta: Lucas, 24 anos, universitário e fã de espaço
+- Geração Z (nascidos de 1997 em diante, segundo a Pew Research Center; usamos 1997–2012 como faixa de trabalho, ou seja, de 14 a 29 anos em 2026).
+- Acompanha lançamentos e notícias de exploração espacial, já tem noção de física e orçamento.
+- **Dor:** "Os simuladores ou são infantis demais ou são ferramentas profissionais que exigem curso."
+- **Comportamento:** quer autonomia, ir direto aos números ("Show numbers"), checar as fontes e testar estratégias diferentes. Joga em sessões curtas, no celular ou no notebook.
 
 ### 2.2 Persona secundária: Prof. Marcos, 38 anos, professor de física/ciências
 - Quer uma atividade de 20 a 40 minutos para a turma, em dupla ou em grupo de 4.
@@ -711,8 +717,8 @@ Todas desligam com `prefers-reduced-motion`.
 - Multiplayer em rede (o modo equipe é no mesmo aparelho).
 - Sandbox (US-025) e modo competitivo entre equipes.
 - Física orbital real, Δv explícito, bateria e eclipse como recursos separados (estavam no protótipo e deixaram o jogo complexo demais).
-- Modelos 3D importados (GLTF), som e música.
-- Mais de 3 cenários, salvar e compartilhar designs por link.
+- Modelos 3D importados (GLTF) e música. (Efeitos sonoros entraram na 0.5, sintetizados no navegador.)
+- Mais de 3 cenários, salvar e compartilhar designs por link. (A campanha é salva no navegador desde a 0.5; compartilhar por link continua fora.)
 - Tradução da UI para o português.
 
 ---
@@ -1022,3 +1028,96 @@ Não corrigir nada sem me perguntar.
 | Até 4 participantes com papéis | US-024 (P1) |
 | Níveis de dificuldade e cenários | 3 cenários com rótulo easy, medium, hard (6.3) |
 | Eventos aleatórios, relatório, visualização interativa | US-014, US-016, US-007, US-015 |
+
+---
+
+## 14. Público-alvo, aprendizagem, unidades e idiomas (v0.4, 14/11/2026)
+
+O texto completo, em inglês e com as fontes conferidas, está em [`docs/learning-design.md`](docs/learning-design.md). Aqui fica o resumo das decisões.
+
+### 14.1 Público-alvo (recorte)
+- **Adolescentes e adultos da Geração Z.** A Pew Research Center define o início da geração em quem nasceu de 1997 em diante e não fixou um ano final; usamos 1997–2012 (14 a 29 anos em 2026).
+- Dois grupos: **estudantes de 14 a 17 anos** (persona Ana) e **jovens adultos de 18 a 29** (persona Lucas, 2.1b). Professores continuam como público secundário (modo Missão livre).
+- Requisitos que saem desse recorte (testáveis, sem estereótipos): navegador sem instalação e sem login, sessões curtas com salvamento, aprender fazendo antes de ler, autonomia de escolha, fontes reais checáveis, jogável sem som e com movimento reduzido.
+
+### 14.2 O que fazer em cada missão
+- **Fase 1 · Terra:** satélite que observa a Terra por um ano. Desafio: caber num foguete pequeno e num orçamento pequeno. Erro comum: câmera melhor = pesado demais ou dados demais para a antena.
+- **Fase 2 · Lua:** mapear a Lua da órbita. Desafio: foguete maior, porque a capacidade até a Lua é bem menor que até a órbita baixa. Erro comum: manter o foguete pequeno.
+- **Fase 3 · Marte:** estudar Marte depois de meses de viagem. Desafio: tempo, orçamento e dados apertados; a antena limita a ciência que chega. Erro comum: instrumentos demais para a antena.
+- **Entre missões:** verba paga cada lançamento (mesmo com falha), missões secundárias dão verba ou ciência, pesquisas melhoram peças, eventos ajudam ou atrapalham, a Biblioteca libera conteúdo real.
+
+### 14.3 O que o jogador aprende em cada etapa
+Objetivo (a missão começa por uma pergunta científica) → Nave (cada peça custa massa, energia, dinheiro e dados) → Órbita e foguete (a órbita define o que se vê e o quanto custa chegar; a capacidade do foguete depende do destino) → Voo (margem protege contra imprevistos) → Relatório (por que deu certo ou errado e quais missões reais tiveram o mesmo problema) → Redesenho (não existe uma única resposta certa). A tabela completa, com os níveis da taxonomia de Bloom revisada, está no documento.
+
+### 14.4 Pedagogia e andragogia
+Referências usadas e onde aparecem no jogo: Kolb (ciclo da aprendizagem experiencial = laço projetar, lançar, refletir, redesenhar), Knowles (andragogia: saber o porquê, autonomia, experiência prévia, foco em problemas), Vygotsky e Wood, Bruner & Ross (andaimes: Terra → Lua → Marte, dicas que vão sumindo), Papert (construcionismo: construir a nave em 3D), Gee (informação "na hora certa" em jogos), Kapur (falha produtiva), Paulo Freire (diálogo e autonomia em aula) e Black & Wiliam (feedback formativo durante a atividade).
+
+### 14.5 Democratização dos dados da NASA
+- Política SPD-41a da NASA: informação de pesquisa financiada pela diretoria científica é pública; publicações sem embargo; dados de missão liberados o quanto antes.
+- Imagens da NASA em geral sem direito autoral nos EUA, com crédito à NASA, sem logotipo e sem sugerir endosso.
+- No jogo: texturas e imagens reais com crédito, fatos com link para a fonte, recursos do desafio na Biblioteca. O jogador aprende a checar informação e descobre que os mesmos dados e ferramentas dos profissionais estão abertos.
+
+### 14.6 Aprender com os erros
+Limite exato nomeado com números; link "Fix in step N"; redesenho mantendo as escolhas; mesma nave = mesmos eventos (comparação justa); relatório explica a margem; exemplo real da Mars Climate Orbiter (perdida em 1999 por um erro de conversão de unidades inglesas para métricas, segundo a NASA); falha custa verba na campanha, mas não encerra o jogo.
+- **Risco conhecido:** uma agência que gasta quase toda a verba pode demorar a se recuperar (a missão secundária gratuita tem 3 usos por fase). Avaliar no playtest; se for problema, criar um "auxílio do governo" quando a verba ficar abaixo do custo da missão mais barata.
+
+### 14.7 Unidades de medida
+- **Decisão: Sistema Internacional (SI) em tudo** (kg, W, km, dias, GB/dia); dinheiro em milhões de dólares (M USD).
+- **Conferido:** a diretiva NPD 7120.4E da NASA manda usar o SI em novos projetos espaciais, especialmente com parceiros internacionais (vigente até 26/06/2027). O NIST diz que todos os países reconheceram e adotaram o SI, inclusive os EUA, mas que o uso é obrigatório em alguns países e voluntário em outros.
+- Nos EUA, no dia a dia, ainda se usam libras (lb). **Proposta (não feita):** mostrar a massa também em libras como opção, sem mudar as regras (que continuam em SI).
+
+### 14.8 Idiomas
+- **Feito (14/11):** inglês (padrão), português e espanhol. Botão de idioma (ícone de globo) no título, centro de comando, barra da missão, Missão livre e Biblioteca, e tecla **L**. Primeira visita segue o idioma do navegador; a escolha fica salva.
+- Textos da interface em `src/i18n/` (en, pt, es); tabelas, conteúdo, Biblioteca e campanha traduzidos por id sobre o inglês. A tradução só muda palavras: ids, números, links e quantidade de fatos ficam iguais (`tests/i18n.test.js`). Números no formato do idioma (vírgula decimal em pt/es); unidades continuam SI.
+
+---
+
+## 15. O que entrou em 14/11/2026 (v0.5)
+
+Tudo abaixo está implementado e coberto por testes (198 testes passando em 14/11). Detalhes de visual em `DESIGN.md`; de aprendizagem em `docs/learning-design.md`.
+
+### 15.1 Campanha (decisões tomadas pela equipe em perguntas e respostas)
+| Tema | Decisão |
+|---|---|
+| Escopo | **Campanha enxuta:** 3 fases em ordem (Terra → Lua → Marte), usando os 3 cenários existentes |
+| País | Os 16 países parceiros do Space Apps 2026 **+ Europa** (ESA), sem EUA (anfitrião, não parceiro). Só o país e a bandeira; **nunca o nome da agência** |
+| Efeito do país | **Só identidade.** A diferença de jogo vem do **foco da agência**: Observação da Terra (+30% de ciência), Exploração (viagens 15% mais curtas) ou Tecnologia (pesquisa 25% mais barata) |
+| Recursos da agência | **Verba** e **pontos de ciência**, separados do orçamento de cada missão |
+| Orçamento da missão | Limitado pela verba da agência; o lançamento paga o custo real, **mesmo se falhar** |
+| Falha | Perde a verba gasta e pode tentar de novo; **sem fim de jogo** |
+| Novas fontes de recursos | Missões secundárias (podem falhar, uma é grátis), pesquisas (gastam ciência e melhoram peças) e eventos entre missões |
+| Modo antigo | Vira **Missão livre**, no título |
+| Salvamento | Automático no navegador (`localStorage`), com "Continuar" e "Nova campanha" |
+| Menu | Tela de título com a **Terra vista do espaço em 3D**; centro de comando com o globo, que acende a Lua e Marte conforme as fases são liberadas |
+| Bandeiras | Pacote **flag-icons** (MIT), aprovado pela equipe |
+
+Regras em `src/engine/campaign.js` (funções puras), tabelas em `src/data/campaign.js`, testes em `tests/campaign.test.js`. **Risco conhecido:** uma agência que gasta quase tudo pode demorar a se recuperar; avaliar no playtest (seção 14.6).
+
+### 15.2 Biblioteca de Missões
+- Repositório separado de conhecimento: 7 missões reais, 7 temas e os 8 recursos oficiais do desafio.
+- **Só fatos reais e conferidos**, cada um com link para a página oficial; imagens da NASA Image and Video Library com crédito. `tests/library.test.js` garante fonte oficial e imagem da NASA.
+- Desbloqueio **por fase e por descobertas** (pesquisas, missões secundárias, eventos); itens bloqueados mostram como descobrir.
+- As imagens carregam dos servidores da NASA: precisam de internet.
+
+### 15.3 Conquistas (badges)
+- 16 emblemas de missão em 5 grupos: primeiros passos, destinos, engenharia, aprendizado e agência.
+- Valem na campanha e na Missão livre; ficam salvos no navegador. Aviso ao ganhar, lista no relatório e tela de coleção.
+- Premiam hábitos de aprendizado, não só vencer (ex.: "Lição aprendida": ter sucesso depois de falhar na mesma missão).
+- Regras em `src/engine/achievements.js`, testes em `tests/achievements.test.js`.
+
+### 15.4 Identidade visual, sons e tela
+- Estilo **"Console Tupi"** (console de controle de missão dos anos 60): placas de metal, lâmpadas, visores âmbar, botão de lançamento com faixas de perigo, fontes B612 e Big Shoulders Stencil. Substitui a paleta da seção 8.2.
+- **Sons** sintetizados com a Web Audio API, com botão e tecla M para desligar.
+- Em telas a partir de 861 px, o jogo **ocupa a janela sem rolagem de página**; listas longas rolam dentro do próprio painel.
+- Título em destaque: **Tupi Orbit**, com "Space Mission Design Game" como subtítulo.
+- Selos nos cartões de peças e foguetes ("High science", "Heavy"...), calculados a partir das tabelas.
+
+### 15.5 Idiomas
+Inglês, português e espanhol (seção 14.8): textos em `src/i18n/`, tabelas traduzidas por id, `tests/i18n.test.js` garante que a tradução não muda regras, números nem links.
+
+### 15.6 Pendências
+- Juntar a branch no `main` para publicar no GitHub Pages e conferir de novo no site publicado.
+- Revisão das traduções por falantes nativos (principalmente o espanhol).
+- Playtest do equilíbrio da campanha (verba, recompensas, chances).
+- Opcional: mostrar a massa também em libras (seção 14.7) e baixar as imagens da Biblioteca para funcionar offline.
+
