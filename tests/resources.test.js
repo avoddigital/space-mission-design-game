@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { sumResources, computeBudget, launchCapacityKg, SPACECRAFT_BUS } from '../src/engine/resources.js';
-import { goodMission, earthScenario, antenna, camera, solarPanel, mediumRocket, leo, mars } from './fixtures.js';
+import { sumResources, computeBudget, launchCapacityKg, statusForRatio, SPACECRAFT_BUS } from '../src/engine/resources.js';
+import { goodMission, earthScenario, antenna, camera, solarPanel, mediumRocket, leo, mars, spectrometer } from './fixtures.js';
 
 describe('sumResources', () => {
   it('returns zeros for an empty list', () => {
@@ -39,11 +39,11 @@ describe('computeBudget', () => {
   it('computes all six resources for a valid mission', () => {
     const budget = computeBudget(goodMission(), earthScenario);
 
-    expect(budget.mass).toEqual({ usedKg: 250, limitKg: 1000, marginKg: 750, ok: true });
-    expect(budget.power).toEqual({ consumedW: 180, generatedW: 300, marginW: 120, ok: true });
-    expect(budget.budget).toEqual({ usedMUsd: 150, limitMUsd: 300, marginMUsd: 150, ok: true });
-    expect(budget.data).toEqual({ producedGbPerDay: 60, downlinkGbPerDay: 100, marginGbPerDay: 40, ok: true });
-    expect(budget.comms).toEqual({ commsParts: 1, ok: true });
+    expect(budget.mass).toMatchObject({ usedKg: 250, limitKg: 1000, marginKg: 750, ok: true });
+    expect(budget.power).toMatchObject({ consumedW: 180, generatedW: 300, marginW: 120, ok: true });
+    expect(budget.budget).toMatchObject({ usedMUsd: 150, limitMUsd: 300, marginMUsd: 150, ok: true });
+    expect(budget.data).toMatchObject({ producedGbPerDay: 60, downlinkGbPerDay: 100, marginGbPerDay: 40, ok: true });
+    expect(budget.comms).toMatchObject({ commsParts: 1, ok: true });
     expect(budget.time).toMatchObject({ totalDays: 365, limitDays: 400, marginDays: 35, ok: true });
     expect(budget.scienceValue).toBe(14);
   });
@@ -90,5 +90,59 @@ describe('computeBudget', () => {
     const budget = computeBudget(goodMission({ orbit: mars }), earthScenario);
     expect(budget.time.totalDays).toBe(575);
     expect(budget.time.ok).toBe(false);
+  });
+});
+
+describe('statusForRatio', () => {
+  it('is ok up to 95%, tight up to 100% and over above 100%', () => {
+    expect(statusForRatio(0.5)).toBe('ok');
+    expect(statusForRatio(0.95)).toBe('ok');
+    expect(statusForRatio(0.96)).toBe('tight');
+    expect(statusForRatio(1)).toBe('tight');
+    expect(statusForRatio(1.01)).toBe('over');
+  });
+});
+
+describe('computeBudget meter status', () => {
+  it('gives ratio and status to every limited resource', () => {
+    const budget = computeBudget(goodMission(), earthScenario);
+    expect(budget.mass).toMatchObject({ ratio: 0.25, status: 'ok' });
+    expect(budget.power).toMatchObject({ ratio: 0.6, status: 'ok' });
+    expect(budget.budget).toMatchObject({ ratio: 0.5, status: 'ok' });
+    expect(budget.data).toMatchObject({ ratio: 0.6, status: 'ok' });
+    expect(budget.comms).toMatchObject({ status: 'ok' });
+    expect(budget.time.status).toBe('ok');
+  });
+
+  it('marks a budget at 96% as tight and at 101% as over', () => {
+    // The good mission costs 150.
+    expect(computeBudget(goodMission(), { ...earthScenario, budgetMUsd: 156 }).budget.status).toBe('tight');
+    expect(computeBudget(goodMission(), { ...earthScenario, budgetMUsd: 148.5 }).budget.status).toBe('over');
+  });
+
+  it('is pending while a choice is missing', () => {
+    const budget = computeBudget({ parts: [camera] }, earthScenario);
+    expect(budget.mass.status).toBe('pending');
+    expect(budget.power.status).toBe('pending');
+    expect(budget.data.status).toBe('pending');
+    expect(budget.comms.status).toBe('pending');
+    expect(budget.time.status).toBe('pending');
+    expect(budget.budget.status).toBe('ok');
+  });
+
+  it('is over when the rocket cannot reach the orbit', () => {
+    const budget = computeBudget(goodMission({ orbit: mars }), earthScenario);
+    expect(budget.mass).toMatchObject({ limitKg: 0, ratio: null, status: 'over' });
+  });
+
+  it('is over when power parts produce less than needed', () => {
+    const weak = { ...solarPanel, powerGenW: 100 };
+    const budget = computeBudget(goodMission({ parts: [camera, spectrometer, weak, antenna] }), earthScenario);
+    expect(budget.power.status).toBe('over');
+  });
+
+  it('compares science with the scenario goal', () => {
+    expect(computeBudget(goodMission(), earthScenario).science).toMatchObject({ value: 14, goal: 7, ratio: 2, status: 'ok' });
+    expect(computeBudget({ parts: [camera] }, earthScenario).science).toMatchObject({ value: 6, status: 'low' });
   });
 });

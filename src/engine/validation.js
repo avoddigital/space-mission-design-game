@@ -5,6 +5,23 @@
 import { computeBudget } from './resources.js';
 import { checkLaunch } from './compatibility.js';
 
+/** Every issue code the engine can return (including the launch codes from checkLaunch). */
+export const ISSUE_CODES = Object.freeze([
+  'NO_ROCKET',
+  'NO_ORBIT',
+  'MISSING_REQUIRED_TYPE',
+  'ORBIT_NOT_ALLOWED',
+  'ROCKET_CANNOT_REACH_ORBIT',
+  'PAYLOAD_TOO_HEAVY',
+  'LOW_MASS_MARGIN',
+  'POWER_DEFICIT',
+  'OVER_BUDGET',
+  'OVER_TIME',
+  'NO_COMMS',
+  'DATA_BACKLOG',
+  'LOW_SCIENCE',
+]);
+
 /**
  * @param {{ parts: object[], rocket?: object, orbit?: object }} mission resolved objects, not ids
  * @param {object} scenario
