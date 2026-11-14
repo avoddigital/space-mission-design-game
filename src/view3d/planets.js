@@ -1,11 +1,24 @@
-// Earth, Moon and Mars with colors drawn in code (no image files to download).
-// Simplified look, not real maps. Option to test later: NASA public-domain textures.
+// Earth, Moon and Mars for the 3D scenes.
+// Uses small public-domain images (credits below and in the README). While an image loads,
+// or if it fails, the planet shows colors drawn in code, so the scene never breaks.
+// Add ?planets=drawn to the address to force the drawn look (useful to compare).
+//
+// Texture credits (public domain):
+// - Earth: NASA/Goddard Space Flight Center Scientific Visualization Studio, Blue Marble (svs.gsfc.nasa.gov/3615), resized to 1024x512.
+// - Moon: NASA's Scientific Visualization Studio, CGI Moon Kit, LRO data (svs.gsfc.nasa.gov/4720).
+// - Mars: NASA/JPL/USGS, Viking global color mosaic (USGS Astrogeology).
 
 import * as THREE from 'three';
+import earthUrl from '../assets/textures/earth_1k.jpg';
+import moonUrl from '../assets/textures/moon_1k.jpg';
+import marsUrl from '../assets/textures/mars_1k.jpg';
 
-const textures = new Map();
+const PHOTO_URLS = { earth: earthUrl, moon: moonUrl, mars: marsUrl };
 
-/** Small seeded generator so the planets look the same every time. */
+const drawn = new Map(); // kind -> texture drawn in code
+const photos = new Map(); // kind -> { texture, loaded, failed, waiting: Set<material> }
+
+/** Small seeded generator so the drawn planets look the same every time. */
 function seeded(seed) {
   let value = seed;
   return () => {
@@ -46,18 +59,61 @@ function drawTexture(kind) {
   return texture;
 }
 
-/** A planet sphere. Textures are drawn once and reused. */
+function drawnTexture(kind) {
+  if (!drawn.has(kind)) drawn.set(kind, drawTexture(kind));
+  return drawn.get(kind);
+}
+
+function photosDisabled() {
+  try {
+    return new URLSearchParams(globalThis.location?.search ?? '').get('planets') === 'drawn';
+  } catch {
+    return false;
+  }
+}
+
+/** Start loading the photo once; materials waiting for it switch when it arrives. */
+function photoFor(kind) {
+  if (!photos.has(kind)) {
+    const entry = { texture: null, loaded: false, failed: false, waiting: new Set() };
+    photos.set(kind, entry);
+    entry.texture = new THREE.TextureLoader().load(
+      PHOTO_URLS[kind],
+      () => {
+        entry.loaded = true;
+        entry.waiting.forEach((material) => {
+          material.map = entry.texture;
+          material.needsUpdate = true;
+        });
+        entry.waiting.clear();
+      },
+      undefined,
+      () => {
+        entry.failed = true; // keep the drawn look
+        entry.waiting.clear();
+      },
+    );
+    entry.texture.colorSpace = THREE.SRGBColorSpace;
+  }
+  return photos.get(kind);
+}
+
+/** A planet sphere. Textures are loaded or drawn once and reused. */
 export function createPlanet(kind, radius) {
-  if (!textures.has(kind)) textures.set(kind, drawTexture(kind));
-  const planet = new THREE.Mesh(
-    new THREE.SphereGeometry(radius, 40, 24),
-    new THREE.MeshStandardMaterial({ map: textures.get(kind), roughness: 0.9, metalness: 0 }),
-  );
+  const material = new THREE.MeshStandardMaterial({ map: drawnTexture(kind), roughness: 0.9, metalness: 0 });
+  if (!photosDisabled() && PHOTO_URLS[kind]) {
+    const photo = photoFor(kind);
+    if (photo.loaded) material.map = photo.texture;
+    else if (!photo.failed) photo.waiting.add(material);
+  }
+  const planet = new THREE.Mesh(new THREE.SphereGeometry(radius, 48, 32), material);
   planet.userData.kind = kind;
   return planet;
 }
 
 export function disposePlanetTextures() {
-  textures.forEach((texture) => texture.dispose());
-  textures.clear();
+  drawn.forEach((texture) => texture.dispose());
+  drawn.clear();
+  photos.forEach((entry) => entry.texture?.dispose());
+  photos.clear();
 }

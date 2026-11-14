@@ -60,6 +60,11 @@ All game values (mass, power, cost, data, rocket capacity, travel time) are **si
 
 **Reference material:** NASA Design and Develop Science Missions, Mission Design Lab, GMAT and CubeSat 101 (linked on the challenge Resources tab).
 
-**Images and textures:** NASA media used in the game is in the public domain. Sources will be listed here when the 3D view is added.
+**Planet textures in the 3D view** (public domain, reduced to 1024×512 for fast loading):
+- Earth: Blue Marble, NASA/Goddard Space Flight Center Scientific Visualization Studio ([svs.gsfc.nasa.gov/3615](https://svs.gsfc.nasa.gov/3615/))
+- Moon: CGI Moon Kit (LRO data), NASA's Scientific Visualization Studio ([svs.gsfc.nasa.gov/4720](https://svs.gsfc.nasa.gov/4720/))
+- Mars: Viking global color mosaic, NASA/JPL/USGS ([USGS Astrogeology](https://astrogeology.usgs.gov/search/map/mars_viking_global_color_mosaic_925m))
+
+The spacecraft, rockets, icon and link preview image were made for this project from simple shapes. No NASA logos or insignia are used.
 
 AI assistance (Claude) was used during development.
