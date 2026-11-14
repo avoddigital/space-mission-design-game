@@ -3,6 +3,7 @@
 // Loaded on demand with import(), so the game starts fast and works without it.
 
 import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { buildSpacecraft, disposeShared } from './spacecraft.js';
 import { createFlight } from './flight.js';
 import { createGlobe } from './globe.js';
@@ -27,6 +28,7 @@ let dragging = null;
 let lastDragAt = 0;
 let flight = null;
 let globe = null;
+let environment = null; // soft studio reflections, so metal and foil look like metal (made in code, no image)
 let mode = 'spacecraft'; // 'spacecraft' (steps 1 and 2), 'flight' (simulation) or 'globe' (menus)
 
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
@@ -55,15 +57,29 @@ export async function mount(container) {
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(globalThis.devicePixelRatio ?? 1, MAX_PIXEL_RATIO));
+  // Filmic tone mapping keeps bright foil and flames from turning into flat white.
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.05;
   renderer.domElement.className = 'view3d-canvas';
   renderer.domElement.setAttribute('aria-label', 'Your spacecraft in 3D. Drag to rotate.');
   renderer.domElement.setAttribute('role', 'img');
 
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const room = new RoomEnvironment();
+  environment = pmrem.fromScene(room, 0.04).texture;
+  room.dispose?.();
+  pmrem.dispose();
+
   scene = new THREE.Scene();
-  scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x1a2233, 1.1));
-  const sun = new THREE.DirectionalLight(0xffffff, 2.2);
+  scene.environment = environment;
+  scene.environmentIntensity = 0.55;
+  scene.add(new THREE.HemisphereLight(0xcfe8ff, 0x1a2233, 0.5));
+  const sun = new THREE.DirectionalLight(0xfff4e0, 2.6);
   sun.position.set(5, 6, 4);
   scene.add(sun);
+  const rim = new THREE.DirectionalLight(0x8ec5ff, 0.9); // cool light from behind outlines the craft
+  rim.position.set(-4, 2, -6);
+  scene.add(rim);
 
   camera = new THREE.PerspectiveCamera(38, 4 / 3, 0.1, 100);
   camera.position.set(5.5, 3.2, 6.5);
@@ -130,6 +146,8 @@ export function showFlight(params) {
   if (!renderer || !params?.simulation) return;
   if (!flight) {
     flight = createFlight();
+    flight.scene.environment = environment;
+    flight.scene.environmentIntensity = 0.35;
     resize();
   }
   mode = 'flight';
@@ -164,6 +182,8 @@ export function dispose() {
   globe?.dispose();
   disposeShared();
   disposePlanetTextures();
+  environment?.dispose();
+  environment = null;
   renderer = scene = camera = craft = flight = globe = null;
   lastKey = '';
 }
@@ -199,21 +219,39 @@ function startLoop() {
 function setupDrag(canvas) {
   canvas.style.touchAction = 'none';
   canvas.addEventListener('pointerdown', (event) => {
-    if (mode !== 'spacecraft') return; // the flight has its own camera
+    if (mode !== 'spacecraft' && mode !== 'globe') return; // the flight has its own camera
     dragging = { x: event.clientX, y: event.clientY };
+    if (mode === 'globe') {
+      // Which body is under the pointer: the Earth, the Moon or Mars
+      const rect = canvas.getBoundingClientRect();
+      globe?.grab(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+    }
     canvas.setPointerCapture(event.pointerId);
   });
   canvas.addEventListener('pointermove', (event) => {
-    if (!dragging || !craft) return;
+    if (!dragging) return;
+    if (mode === 'globe') {
+      globe?.drag(event.clientX - dragging.x, event.clientY - dragging.y);
+      dragging = { x: event.clientX, y: event.clientY };
+      return;
+    }
+    if (!craft) return;
     craft.rotation.y += (event.clientX - dragging.x) * 0.01;
     craft.rotation.x = Math.max(-1, Math.min(1, craft.rotation.x + (event.clientY - dragging.y) * 0.01));
     dragging = { x: event.clientX, y: event.clientY };
     lastDragAt = performance.now();
   });
   const stop = () => {
+    if (dragging && mode === 'globe') globe?.release();
     dragging = null;
     lastDragAt = performance.now();
   };
   canvas.addEventListener('pointerup', stop);
   canvas.addEventListener('pointercancel', stop);
+  // Mouse wheel zooms the globe (only there, so the page still scrolls over the other 3D views)
+  canvas.addEventListener('wheel', (event) => {
+    if (mode !== 'globe' || !globe) return;
+    event.preventDefault();
+    globe.zoomBy(event.deltaY);
+  }, { passive: false });
 }

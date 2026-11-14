@@ -107,3 +107,38 @@ describe('checklist risky lines', async () => {
     expect(html).not.toContain('CHECK');
   });
 });
+
+describe('meters during the flight', async () => {
+  const { scienceMeter, flightStatus } = await import('../src/ui/components/meter.js');
+  const budget = { science: { value: 15, goal: 15, ok: true } };
+  const phases = (failAt) => ['launch', 'transfer', 'operations', 'data'].map((id, index) => ({ id, ok: failAt === undefined ? true : index < failAt ? true : index === failAt ? false : null }));
+
+  it('shows the planned science while the flight is underway', () => {
+    const html = scienceMeter(budget, null, { simulation: { phases: phases(), scienceDelivered: 15, outcome: 'success' }, done: false });
+    expect(html).toContain('Planned');
+    expect(html).not.toContain('Goal reached');
+  });
+
+  it('shows the science after the surprises once the flight is over', () => {
+    const simulation = { phases: phases(3), scienceDelivered: 12.8, outcome: 'failure', failedPhase: 'data' };
+    const html = scienceMeter(budget, null, { simulation, done: true });
+    expect(html).toContain('12.8');
+    expect(html).toContain('Below goal');
+    expect(html).toContain('vs. planned');
+    expect(html).toContain('tone-bad');
+  });
+
+  it('counts no science when the mission failed before sending data', () => {
+    const simulation = { phases: phases(0), scienceDelivered: 15, outcome: 'failure', failedPhase: 'launch' };
+    expect(scienceMeter(budget, null, { simulation, done: true })).toContain('0 / goal 15');
+  });
+
+  it('replaces "GO for launch" with the flight status', () => {
+    const failed = flightStatus({ simulation: { phases: phases(3), outcome: 'failure' }, done: true, shown: 4 });
+    expect(failed).toContain('Mission failed');
+    expect(failed).toContain('3<small>/4');
+    expect(failed).not.toContain('GO for launch');
+    const flying = flightStatus({ simulation: { phases: phases(), outcome: 'success' }, done: false, shown: 1 });
+    expect(flying).toContain('In flight');
+  });
+});

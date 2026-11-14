@@ -72,20 +72,65 @@ export function meter(key, budget, meta, { shake = false, baseline = null } = {}
     </button>`;
 }
 
-/** Science line: more is better, so it fills toward the goal. */
-export function scienceMeter(budget, baseline = null) {
-  const { value, goal, ok } = budget.science;
-  const delta = baseline ? change(value, baseline.science.value) : '';
+/**
+ * Science line: more is better, so it fills toward the goal.
+ * With `flight` (simulation and report screens), it follows the flight: while it is underway it shows the
+ * planned science; once it is over, the science that really reached Earth (after a full antenna and the surprises).
+ * @param {{ simulation: object, done: boolean }|null} [flight]
+ */
+export function scienceMeter(budget, baseline = null, flight = null) {
+  const { goal } = budget.science;
+  let { value, ok } = budget.science;
+  let delta = baseline ? change(value, baseline.science.value) : '';
+  let tag = ok ? t('meter.goalReached') : t('meter.belowGoal');
+  let toneName = ok ? 'good' : 'pending';
+  if (flight && !flight.done) {
+    tag = t('meter.planned');
+    toneName = 'pending';
+  } else if (flight) {
+    const planned = value;
+    const { failedPhase, scienceDelivered } = flight.simulation;
+    // Nothing reaches Earth if the mission failed before sending its data
+    value = failedPhase && failedPhase !== 'data' ? 0 : scienceDelivered;
+    ok = value >= goal && (goal === 0 || value > 0);
+    const lost = change(value, planned);
+    delta = lost ? t('meter.afterSurprises', { change: lost }) : '';
+    tag = ok ? t('meter.goalReached') : t('meter.belowGoal');
+    toneName = ok ? 'good' : 'bad';
+  }
   const width = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 100;
   return `
-    <div class="meter tone-${ok ? 'good' : 'pending'}" aria-label="${t('meter.scienceAria', { value, goal })}">
+    <div class="meter tone-${toneName}" aria-label="${t('meter.scienceAria', { value, goal })}">
       <span class="meter-icon">${icon('science', 18)}</span>
       <span class="meter-head">
         <span class="meter-name">${t('stat.science')}</span>
-        <span class="tag">${ok ? t('meter.goalReached') : t('meter.belowGoal')}</span>
+        <span class="tag">${tag}</span>
       </span>
       <span class="meter-bar"><span class="meter-fill" style="width:${width}%"></span></span>
-      <span class="meter-value">${t('meter.scienceValue', { value: fmt(value), goal: fmt(goal) })}${delta ? ` <span class="meter-delta">(${delta})</span>` : ''}</span>
+      <span class="meter-value${flight ? ' meter-value-wrap' : ''}">${t('meter.scienceValue', { value: fmt(value), goal: fmt(goal) })}${delta ? ` <span class="meter-delta">(${esc(delta)})</span>` : ''}</span>
+    </div>`;
+}
+
+/**
+ * Flight status, in place of the launch readiness once the rocket has left: phases done,
+ * then the final verdict. Display only: it reads the simulation result.
+ * @param {{ simulation: object, done: boolean, shown: number }} flight
+ */
+export function flightStatus({ simulation, done, shown }) {
+  const total = simulation.phases.length;
+  const passed = simulation.phases.slice(0, shown).filter((phase) => phase.ok === true).length;
+  let label = t('flightStatus.flying');
+  let toneName = 'pending';
+  if (done) {
+    const success = simulation.outcome === 'success';
+    label = success ? t('flightStatus.success') : t('flightStatus.failure');
+    toneName = success ? 'good' : 'bad';
+  }
+  const angle = Math.round((passed / total) * 360);
+  return `
+    <div class="readiness tone-${toneName}" role="status" aria-label="${t('flightStatus.aria', { done: passed, total, label })}">
+      <span class="ring" style="--angle:${angle}deg"><span class="ring-value">${passed}<small>/${total}</small></span></span>
+      <span class="readiness-text"><strong>${label}</strong><span>${t('flightStatus.phases')}</span></span>
     </div>`;
 }
 

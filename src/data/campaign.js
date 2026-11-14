@@ -1,7 +1,8 @@
 // Campaign tables: the agency, its phases, side jobs, research and events.
 // All numbers here are GAME VALUES, tuned for play. They are simplified and not real costs.
 // The countries are the 2026 NASA Space Apps Space Agency Partners
-// (spaceappschallenge.org/2026/space-agency-partners, checked 2026-11-14), plus "Europe" for ESA.
+// (spaceappschallenge.org/2026/space-agency-partners, checked 2026-11-14), plus "Europe" for ESA
+// and the United States, the host country (team decision of 2026-11-14).
 // The game shows only the country (or Europe) and its flag, never an agency name.
 
 export const countries = [
@@ -22,6 +23,7 @@ export const countries = [
   { id: 'tr', name: 'Türkiye' },
   { id: 'ae', name: 'United Arab Emirates' },
   { id: 'gb', name: 'United Kingdom' },
+  { id: 'us', name: 'United States' },
 ];
 
 /** Agency focus: the only gameplay difference the player picks. One small bonus each. */

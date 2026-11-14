@@ -1,6 +1,6 @@
 # PRD: Space Mission Design Game (Tupi Orbit)
 
-> **Versão:** 0.5 (14/11: campanha, Biblioteca, conquistas, identidade visual, sons e idiomas implementados, seção 15) · 0.4 (14/11: público-alvo, aprendizagem, unidades e idiomas, seção 14) · 0.3 (MVP de hackathon, junção com o que já está no repositório)
+> **Versão:** 0.6 (14/11, noite: modo equipe em vários aparelhos e celular, seção 16) · 0.5 (14/11: campanha, Biblioteca, conquistas, identidade visual, sons e idiomas implementados, seção 15) · 0.4 (14/11: público-alvo, aprendizagem, unidades e idiomas, seção 14) · 0.3 (MVP de hackathon, junção com o que já está no repositório)
 > **Data:** 13/11/2026 (véspera do evento, 14 e 15/11/2026)
 > **Autores:** Carlos (versão 0.2) e Silvio (junção 0.3), equipe Tupi Orbit
 > **Stack:** Vite + JavaScript puro (ES modules) + HTML/CSS + Three.js como camada visual + Vitest. Sem backend, `localStorage`, deploy estático no GitHub Pages.
@@ -46,6 +46,8 @@ A versão 0.2 foi escrita antes de o motor de regras e as tabelas do Carlos entr
 | Física extra (sol e sinal por distância, RTG, arrasto) | **P1**, com valor padrão neutro (seção 6.3) | Boa lição, mas mexe no equilíbrio. Só depois do jogo pronto |
 | Combustível automático, bônus de ciência por órbita | **Fora do MVP** | Complexidade que o feedback pediu para evitar |
 | Experiência e educação (Learn, GO/NO-GO, 5 medidores, fases, 3D, controles, recorde, modo equipe P1) | **Mantidas do PRD** (seções 3, 4, 8 e 9) | É o ponto forte da 0.2 |
+
+**Desde a 0.6:** para o modo equipe (vários aparelhos, vez de cada papel) e para o layout no celular, vale a **seção 16**. Ela substitui o "pass-and-play" com "priority cards" (US-024, fluxo 4.4, prompt 10.10), a linha "Tela em pé no celular" da tabela 4.5 e o item 5 do prompt das telas.
 
 **Números nos fluxos e histórias:** os exemplos com números nas seções 3 e 4 (US$ 200M, Light Lifter, LEO 300 km, 594 kg) são **ilustrativos** e vêm da 0.2. Os números reais estão nas tabelas. O roteiro final da demo sai dos testes de jogo (tarefa do Carlos).
 
@@ -327,7 +329,7 @@ Prioridade: **P0** = sem isso não tem demo. **P1** = entra se o P0 fechar até 
 |---|---|
 | WebGL indisponível ou erro ao criar o renderer | Esconde o canvas 3D, mostra diagrama 2D estático e o aviso "3D view unavailable on this device". O jogo segue. |
 | `localStorage` bloqueado | `try/catch` em toda leitura e escrita. Recorde só na memória. |
-| Tela em pé no celular | Painel de cartões vira gaveta inferior (até 44% da altura), medidores em grade 2×3 no topo, 3D no meio. |
+| Tela em pé no celular | Ver seção 16.2 (faixa de medidores fixa no topo, escolhas logo abaixo, botão principal fixo no rodapé). |
 | Avançar sem escolha obrigatória | Painel treme 160 ms e toast âmbar com o que falta. |
 | Foguete não chega ao destino | Cartão desabilitado com motivo. Toque mostra a explicação. |
 | Aba do navegador em segundo plano | `dt` limitado a 100 ms por quadro para animações não "pularem". |
@@ -714,7 +716,7 @@ Todas desligam com `prefers-reduced-motion`.
 
 ### O que fica FORA do MVP (explicitamente)
 - Leaderboard online, contas, login e qualquer backend.
-- Multiplayer em rede (o modo equipe é no mesmo aparelho).
+- ~~Multiplayer em rede (o modo equipe é no mesmo aparelho).~~ Entrou na 0.6 (seção 16.1): cada jogador no próprio aparelho, com código de sala, sem servidor nosso.
 - Sandbox (US-025) e modo competitivo entre equipes.
 - Física orbital real, Δv explícito, bateria e eclipse como recursos separados (estavam no protótipo e deixaram o jogo complexo demais).
 - Modelos 3D importados (GLTF) e música. (Efeitos sonoros entraram na 0.5, sintetizados no navegador.)
@@ -1080,7 +1082,7 @@ Tudo abaixo está implementado e coberto por testes (198 testes passando em 14/1
 | Tema | Decisão |
 |---|---|
 | Escopo | **Campanha enxuta:** 3 fases em ordem (Terra → Lua → Marte), usando os 3 cenários existentes |
-| País | Os 16 países parceiros do Space Apps 2026 **+ Europa** (ESA), sem EUA (anfitrião, não parceiro). Só o país e a bandeira; **nunca o nome da agência** |
+| País | Os 16 países parceiros do Space Apps 2026 **+ Europa** (ESA) **+ Estados Unidos** (país anfitrião; incluído por decisão da equipe em 14/11/2026). Só o país e a bandeira; **nunca o nome da agência** |
 | Efeito do país | **Só identidade.** A diferença de jogo vem do **foco da agência**: Observação da Terra (+30% de ciência), Exploração (viagens 15% mais curtas) ou Tecnologia (pesquisa 25% mais barata) |
 | Recursos da agência | **Verba** e **pontos de ciência**, separados do orçamento de cada missão |
 | Orçamento da missão | Limitado pela verba da agência; o lançamento paga o custo real, **mesmo se falhar** |
@@ -1118,6 +1120,35 @@ Inglês, português e espanhol (seção 14.8): textos em `src/i18n/`, tabelas tr
 ### 15.6 Pendências
 - Juntar a branch no `main` para publicar no GitHub Pages e conferir de novo no site publicado.
 - Revisão das traduções por falantes nativos (principalmente o espanhol).
+- Testar o modo equipe em vários aparelhos e o layout novo em celulares de verdade (Android e iPhone), numa rede de escola.
 - Playtest do equilíbrio da campanha (verba, recompensas, chances).
 - Opcional: mostrar a massa também em libras (seção 14.7) e baixar as imagens da Biblioteca para funcionar offline.
+
+---
+
+## 16. O que entrou em 14/11/2026 à noite (v0.6)
+
+Pedidos da equipe durante o teste do modo equipe com vários aparelhos. Em caso de dúvida sobre modo equipe ou celular, vale esta seção.
+
+### 16.1 Modo equipe em vários aparelhos
+- **Como entra:** o aparelho principal (projetor da sala ou notebook) escolhe 2 a 4 jogadores e abre uma sala. Aparece um código de 5 caracteres e um link (`?sala=CODIGO`). Cada jogador abre o link (ou "Join a room" no título), digita o código e escolhe quem é.
+- **Fonte da verdade:** só o aparelho principal roda o jogo e salva. Depois de cada mudança ele manda um retrato do jogo (`snapshot`, campo `mirror`: estado, aba aberta, voo, avisos, nota do voo). Os outros aparelhos só desenham e mandam intenções (`src/net/protocol.js`).
+- **Tela própria:** cada jogador vê o mesmo jogo (nave, medidores, voo, relatório), no próprio idioma, desenhado com as mesmas funções de tela (`src/ui/mirror.js`). A aba aberta, "Show numbers", a aba de Operações e os detalhes dos medidores são só daquele aparelho e não mudam a tela de ninguém. Fora da vez, a tela da nave abre na aba do papel do jogador.
+- **Ação só na vez:** quem joga é o papel da etapa (`roleForStep`: diretor nas etapas 1 e 3; na etapa 2, cientista em Instrumentos, engenheiro em Energia, comunicações em Antena). Nas telas sem papel (centro de comando, menus, voo, relatório), quem decide é o **diretor da missão**. Ninguém escolhe durante a votação e a contagem. Na etapa 2, quem está na vez e troca de aba passa a vez para o papel daquela aba.
+- **O aparelho principal confere a vez** (`handleMessage` com `actor`): escolha de quem não está na vez é ignorada. Quem toca fora da vez vê o aviso "Not your turn" com o nome de quem está escolhendo.
+- **O aparelho principal não joga pelos outros:** na vez de um jogador que entrou pelo próprio aparelho, cliques e teclas do aparelho principal não fazem as escolhas daquele papel, e ele não vota por esse jogador. Pausar, fechar mensagens, Biblioteca e detalhes continuam funcionando. Jogadores sem aparelho próprio continuam jogando no aparelho principal.
+- **Votação GO / NO-GO:** cada jogador vê os consoles dos seus papéis e vota no próprio aparelho, numa faixa compacta.
+- **Relatório para todos:** quando o voo termina, cada jogador pode abrir o relatório no próprio aparelho, sem esperar o diretor. O resultado da agência (verba, fase liberada) aparece quando o diretor abre o relatório.
+- **Tela do jogador:** uma barra curta no topo (número, nome e papéis, de quem é a vez, código da sala, idioma) e o jogo abaixo. Em telas largas o jogo ocupa o resto da janela, sem corte.
+- **Limitação conhecida:** mensagens do aparelho principal (por exemplo, o resultado de um trabalho extra) aparecem no idioma dele.
+- Testes: `tests/protocol.test.js` (vez, ações permitidas, retrato do jogo).
+
+### 16.2 Celular (até 860 px)
+- Uma rolagem só: nenhum painel rola dentro da página.
+- Etapas de projeto: barra de cima, **faixa de medidores fixa no topo** (6 medidores só com ícone e barra; tocar abre o detalhe), escolhas, depois a nave ou o checklist.
+- **Botão principal fixo no rodapé** em todas as telas (Back/Next, Launch, Skip/See report, Plan mission, Found agency, Start mission). No relatório, que é leitura longa, os 4 botões ficam no fim, em 2 linhas.
+- Checklist de lançamento: linhas GO mostram só o nome; as outras mantêm a explicação.
+- Globo e 3D menores; barra de cima mais baixa; em celulares estreitos (até 360 px) a barra mostra só as estrelas da missão e o nome da etapa atual.
+- Avisos aparecem acima do rodapé; janelas mais altas que a tela começam no topo e rolam.
+- Verificado no navegador em 375 px e 320 px (sem rolagem lateral) e em 768 px e 1280×720 (sem mudança no notebook). **Falta testar em celular de verdade** (Android e iPhone).
 

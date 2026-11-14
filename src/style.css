@@ -681,6 +681,7 @@ kbd {
 
 .scenario-card {
   grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr; /* porthole, then the text takes the rest: titles line up across cards */
   gap: 0;
   padding: 16px 0 0;
   overflow: hidden;
@@ -702,6 +703,20 @@ kbd {
 
 .scenario-card .card-main {
   padding: 12px 18px 16px;
+}
+
+/* Stars and best score share the last line, inside the card's padding. */
+.scenario-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 12px;
+  margin-top: auto;
+  padding-top: 4px;
+}
+
+.scenario-foot .best {
+  align-self: center;
 }
 
 .scenario-card .card-title {
@@ -784,6 +799,56 @@ kbd {
     radial-gradient(20px 12px at 45% 55%, #a63f20 60%, transparent 62%),
     radial-gradient(14px 8px at 68% 40%, #b8482a 60%, transparent 62%),
     radial-gradient(circle at 35% 35%, #ffc08f 0%, #e0602f 45%, #6e1f0c 90%);
+}
+
+/*
+ * With the NASA map loaded (--planet-map), the drawn planet above is replaced by the real surface:
+ * the map wraps around the disc and slowly turns, with sunlight from the upper left, a dark night side
+ * and a thin glow of air. The drawn look stays as the fallback (no image, or old browsers).
+ */
+.scenario-card .planet[style*='--planet-map']::before {
+  background-color: #1b2733;
+  background-image:
+    radial-gradient(circle at 30% 26%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0) 38%),
+    radial-gradient(circle at 36% 30%, rgba(0, 0, 0, 0) 52%, rgba(0, 0, 0, 0.35) 74%, rgba(0, 0, 0, 0.8) 100%),
+    var(--planet-map);
+  background-size: 100% 100%, 100% 100%, auto 100%;
+  background-repeat: no-repeat, no-repeat, repeat-x;
+  background-position: 0 0, 0 0, var(--planet-lon, 50%) 0;
+  animation: planet-turn 90s linear infinite;
+}
+
+/* Center each world on a recognizable face: the Americas, the Moon's near side, Valles Marineris on Mars. */
+.scenario-card[data-mission='earth-observation'] .planet { --planet-lon: 6%; }
+.scenario-card[data-mission='moon-exploration'] .planet { --planet-lon: 50%; }
+.scenario-card[data-mission='mars-study'] .planet { --planet-lon: 17%; }
+
+.scenario-card[data-mission='earth-observation'] .planet[style*='--planet-map']::before {
+  box-shadow:
+    inset 0 0 6px 1px rgba(120, 190, 255, 0.75),
+    0 0 14px 2px rgba(80, 160, 255, 0.45);
+}
+
+.scenario-card[data-mission='mars-study'] .planet[style*='--planet-map']::before {
+  box-shadow:
+    inset 0 0 6px 1px rgba(255, 170, 120, 0.4),
+    0 0 10px 1px rgba(230, 120, 70, 0.3);
+}
+
+.scenario-card[data-mission='moon-exploration'] .planet[style*='--planet-map']::before {
+  filter: saturate(0.6) brightness(1.08);
+}
+
+@keyframes planet-turn {
+  from { background-position: 0 0, 0 0, var(--planet-lon, 50%) 0; }
+  /* The map is twice as wide as the disc, so -200% moves it exactly one turn (surface drifts west to east) */
+  to { background-position: 0 0, 0 0, calc(var(--planet-lon, 50%) - 200%) 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scenario-card .planet[style*='--planet-map']::before {
+    animation: none;
+  }
 }
 
 .how-to {
@@ -1488,6 +1553,11 @@ div.meter {
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis; /* one line always, so previews never change the height */
+}
+
+/* After the flight there are no previews, so the science result may take a second line */
+.meter-value.meter-value-wrap {
+  white-space: normal;
 }
 
 .tone-ok .meter-fill { background: var(--lamp-on); box-shadow: 0 0 6px rgba(142, 197, 255, 0.5); }
@@ -3897,6 +3967,22 @@ button.check:hover {
   white-space: nowrap;
 }
 
+/* A long stat text ("8,300 kg to high Earth orbit") takes the whole row and wraps instead of leaving the card. */
+.stats .stat-wide,
+.cards-panel .stats .stat-wide {
+  grid-column: 1 / -1;
+  white-space: normal;
+}
+
+.stat-wide .stat-label {
+  flex-shrink: 0;
+}
+
+.stat-wide .stat-text {
+  white-space: normal;
+  min-width: 0;
+}
+
 /* --- Language button and title tools --- */
 
 .btn-lang {
@@ -4105,4 +4191,1122 @@ button.check:hover {
 
 .title-row .title-badges {
   grid-column: 1 / -1;
+}
+
+/* --- Team play: who is playing, whose turn, GO / NO-GO poll, debrief --- */
+
+.team-picker {
+  margin: 16px 0 4px;
+  padding: 12px 14px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+  text-align: left;
+}
+
+.team-picker h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+}
+
+.team-sizes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.team-size {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console);
+  box-shadow: var(--raised);
+  color: var(--label);
+  cursor: pointer;
+}
+
+.team-size b {
+  font-family: var(--font-data);
+  font-size: 1.1rem;
+}
+
+.team-size small {
+  color: var(--label-sub);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.team-size.is-selected {
+  border-color: var(--lamp-go);
+  box-shadow: 0 0 0 1px var(--lamp-go), var(--raised);
+}
+
+.team-picker .hint {
+  margin: 8px 0 0;
+}
+
+.team-players {
+  display: grid;
+  gap: 6px;
+  margin: 10px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.team-player {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+}
+
+.team-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 0 1 220px;
+}
+
+.team-name input {
+  width: 100%;
+  min-height: 34px;
+  padding: 4px 8px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-1);
+  background: var(--bezel);
+  color: var(--label);
+  font: inherit;
+}
+
+.team-name input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.team-badge {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--digits);
+  color: var(--placard-ink);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.team-roles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.role-chip {
+  padding: 2px 8px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  color: var(--label);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.role-director { --role: var(--digits); }
+.role-scientist { --role: var(--lamp-go); }
+.role-engineer { --role: var(--lamp-on); }
+.role-comms { --role: #c79bff; }
+
+.role-chip {
+  border-color: var(--role, var(--rule));
+  color: var(--role, var(--label));
+}
+
+.turn-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 8px;
+  padding: 6px 10px;
+  border-left: 3px solid var(--role, var(--digits));
+  border-radius: var(--r-1);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--label);
+  font-size: 0.8rem;
+}
+
+.turn-chip b {
+  color: var(--role, var(--digits));
+}
+
+/* Poll */
+.modal.poll {
+  width: min(760px, calc(100vw - 32px));
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+}
+
+.poll-rows,
+.debrief-rows {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0;
+  padding: 0;
+  list-style: none;
+}
+
+.poll-row {
+  display: grid;
+  grid-template-columns: minmax(110px, 160px) 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+}
+
+.poll-row.voted-go { border-color: var(--lamp-go); }
+.poll-row.voted-no-go { border-color: var(--lamp-alert); }
+
+.poll-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.poll-consoles {
+  display: grid;
+  gap: 4px;
+}
+
+.console {
+  display: grid;
+  gap: 2px;
+  font-size: 0.78rem;
+}
+
+.console-role {
+  color: var(--label-sub);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-size: 0.68rem;
+}
+
+.console-resources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 10px;
+}
+
+.console-resources span,
+.debrief-call,
+.debrief-notes span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.call-go { color: var(--lamp-go); }
+.call-risky { color: var(--lamp-caution); }
+.call-no-go { color: var(--lamp-alert); }
+
+.console-advice {
+  color: var(--label-sub);
+}
+
+.poll-vote {
+  display: flex;
+  gap: 6px;
+}
+
+.btn-go.is-selected {
+  border-color: var(--lamp-go);
+  background: rgba(92, 207, 134, 0.2);
+  color: var(--lamp-go);
+}
+
+.btn-nogo.is-selected {
+  border-color: var(--lamp-alert);
+  background: rgba(228, 115, 63, 0.2);
+  color: var(--lamp-alert);
+}
+
+@media (max-width: 640px) {
+  .poll-row {
+    grid-template-columns: 1fr;
+  }
+
+  .team-sizes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Debrief on the report */
+.team-debrief {
+  margin: 12px 0;
+}
+
+.debrief-row {
+  display: grid;
+  gap: 4px;
+  padding: 8px 10px;
+  border-left: 3px solid currentColor;
+  border-radius: var(--r-1);
+  background: rgba(255, 255, 255, 0.03);
+  font-size: 0.82rem;
+}
+
+.debrief-row .poll-who,
+.debrief-notes {
+  color: var(--label);
+}
+
+.debrief-notes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  color: var(--label-sub);
+}
+
+/* Free mission screen on laptops and desktops: the team picker is a compact band, so the whole menu
+   still fits on one screen. Left: title and player count. Right: the hint, then names and roles side by side. */
+@media (min-width: 861px) {
+  .menu .team-picker {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 6px 18px;
+    margin: clamp(6px, 1.4vh, 14px) 0 0;
+    padding: 8px 12px;
+  }
+
+  .menu .team-picker h3 {
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+    font-size: 0.8rem;
+  }
+
+  .menu .team-sizes {
+    grid-column: 1;
+    grid-row: 2;
+    grid-template-columns: repeat(4, auto);
+    gap: 6px;
+  }
+
+  .menu .team-size {
+    min-height: 34px;
+    padding: 2px 10px;
+  }
+
+  .menu .team-picker .hint {
+    grid-column: 2;
+    grid-row: 1;
+    margin: 0;
+    font-size: 0.76rem;
+  }
+
+  .menu .team-players {
+    grid-column: 2;
+    grid-row: 2;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 6px 10px;
+    margin: 0;
+  }
+
+  .menu .team-player {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 3px;
+  }
+
+  .menu .team-name {
+    flex: none;
+  }
+
+  .menu .team-name input {
+    min-height: 28px;
+    padding: 2px 6px;
+  }
+
+  .menu .role-chip {
+    padding: 1px 6px;
+    font-size: 0.66rem;
+  }
+
+  /* Solo: just the title, the four buttons and the hint on one band */
+  .menu .team-picker:not(:has(.team-players)) .team-sizes {
+    grid-column: 1;
+  }
+}
+
+/* Free mission on shorter laptop screens (for example 1366×768, or a large screen with 125% scaling):
+   save height so the missions, the team and the buttons fit without cutting the title. */
+@media (min-width: 861px) {
+  .menu {
+    justify-content: safe center; /* if it still does not fit, start at the top instead of cutting it */
+    overflow-y: auto;
+  }
+}
+
+@media (min-width: 861px) and (max-height: 900px) {
+  .free-head .lead {
+    display: none;
+  }
+
+  .menu .rank-card {
+    margin: 4px 0 10px;
+    padding: 6px 14px;
+  }
+
+  .menu .rank-icon {
+    font-size: 1.4rem;
+  }
+
+  .menu .planet {
+    width: clamp(64px, 10.5vh, 132px);
+    height: clamp(64px, 10.5vh, 132px);
+  }
+
+  .menu .planet::before {
+    width: clamp(62px, 10vh, 128px);
+    height: clamp(62px, 10vh, 128px);
+    bottom: clamp(-34px, -3.6vh, -20px);
+  }
+
+  .menu .scenario-card .card-text {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .menu .btn-big {
+    margin-top: clamp(8px, 1.6vh, 16px);
+  }
+
+  .how-to {
+    margin-top: 8px;
+    padding: 4px 22px;
+  }
+}
+
+/* --- Team play on several devices: the room on the main screen, the player console --- */
+
+.room-panel {
+  grid-column: 1 / -1;
+  margin-top: 8px;
+}
+
+.room-open,
+.room-status,
+.room-open-info {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.room-open-info {
+  padding: 4px 10px;
+  border: 1px dashed var(--lamp-on);
+  border-radius: var(--r-2);
+}
+
+.room-code {
+  color: var(--digits);
+  font-family: var(--font-data);
+  font-size: 1.2rem;
+  letter-spacing: 0.18em;
+}
+
+.room-link {
+  color: var(--label-sub);
+}
+
+.room-error {
+  color: var(--lamp-caution);
+}
+
+.device-on {
+  border-color: var(--lamp-on);
+  color: var(--lamp-on);
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Player console on another device (?sala=CODE) */
+.remote {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(480px, 100%);
+  height: 100%;
+  margin: 0 auto;
+  padding: 4px 0 24px;
+  overflow-y: auto;
+}
+
+.remote-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.remote-brand {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  letter-spacing: 0.06em;
+}
+
+.remote-brand b {
+  color: var(--digits);
+}
+
+.remote-room b {
+  color: var(--digits);
+  font-family: var(--font-data);
+  letter-spacing: 0.15em;
+}
+
+.remote-code {
+  display: grid;
+  gap: 6px;
+}
+
+.remote-code input {
+  min-height: 56px;
+  padding: 6px 12px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--bezel);
+  color: var(--digits);
+  font-family: var(--font-data);
+  font-size: 2rem;
+  letter-spacing: 0.3em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.remote-status,
+.remote-error,
+.remote-stage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.remote-error {
+  color: var(--lamp-caution);
+}
+
+.remote-seat {
+  grid-template-columns: 28px 1fr;
+  align-items: center;
+}
+
+.remote-seat[disabled] {
+  opacity: 0.5;
+}
+
+.remote-me {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+}
+
+.remote-me > span:nth-child(2) {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+
+.remote-turn {
+  padding: 12px 14px;
+  border-left: 4px solid var(--role, var(--digits));
+  border-radius: var(--r-2);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.remote-turn.is-mine {
+  display: grid;
+  gap: 4px;
+  background: rgba(255, 190, 85, 0.12);
+  animation: remote-pulse 1.4s ease-in-out infinite;
+}
+
+.remote-turn.is-mine b {
+  color: var(--role, var(--digits));
+  font-family: var(--font-display);
+  font-size: 2rem;
+  letter-spacing: 0.04em;
+}
+
+@keyframes remote-pulse {
+  50% { box-shadow: 0 0 0 3px rgba(255, 190, 85, 0.35); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remote-turn.is-mine { animation: none; }
+}
+
+/* GO / NO-GO poll on a player's device: one short strip, what my consoles say on the left, the vote on the right */
+.remote-poll {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding: 8px 12px;
+  border: 1px solid var(--lamp-on);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+}
+
+.remote-poll h3 {
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.remote-poll-info {
+  display: grid;
+  flex: 1 1 280px;
+  gap: 2px;
+  min-width: 0;
+}
+
+.remote-poll-console {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 10px;
+  margin: 0;
+  font-size: 0.82rem;
+}
+
+.remote-poll-console b {
+  color: var(--label-sub);
+  font-size: 0.7rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.remote-poll-console > span:not(.console-advice) {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.remote-poll-act {
+  display: grid;
+  flex: 0 1 300px;
+  gap: 4px;
+}
+
+.remote-poll-act .hint {
+  margin: 0;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+.remote-vote {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.remote-vote .btn {
+  min-height: 44px;
+  margin: 0;
+  padding: 6px 12px;
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  letter-spacing: 0.08em;
+}
+
+/* Phones: the vote takes the whole width, still one finger tall */
+@media (max-width: 560px) {
+  .remote-poll-act {
+    flex-basis: 100%;
+  }
+}
+
+.remote-result {
+  margin: 0;
+  padding: 12px 14px;
+  border: 1px solid currentColor;
+  border-radius: var(--r-2);
+  font-weight: 700;
+}
+
+.title-join {
+  text-decoration: none;
+}
+
+/* Player's device while playing: a short bar on top and the game below it */
+.remote-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 12px;
+  padding: 6px 10px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+}
+
+.remote-bar .remote-brand {
+  font-size: 1.15rem;
+}
+
+.remote-who {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 6px;
+  border: 1px solid transparent;
+  border-radius: var(--r-2);
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.remote-who:hover,
+.remote-who:focus-visible {
+  border-color: var(--seam);
+}
+
+.remote-who-text {
+  display: grid;
+  gap: 2px;
+  line-height: 1.1;
+}
+
+.remote-bar .role-chip {
+  font-size: 0.7rem;
+}
+
+.remote-bar-status {
+  display: flex;
+  flex: 1 1 260px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  min-width: 0;
+  margin: 0;
+  padding: 4px 10px;
+  border-left: 3px solid var(--seam);
+  font-size: 0.9rem;
+}
+
+.remote-bar.is-my-turn {
+  border-color: var(--lamp-on);
+  animation: remote-pulse 1.4s ease-in-out infinite;
+}
+
+.remote-bar.is-my-turn .remote-bar-status {
+  border-left-color: var(--role, var(--lamp-on));
+}
+
+.remote-bar.is-my-turn .remote-bar-status b {
+  color: var(--role, var(--digits));
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  letter-spacing: 0.04em;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .remote-bar.is-my-turn { animation: none; }
+}
+
+.remote-mirror {
+  margin-top: 8px;
+}
+
+/* Phones: brand and room code give their place to the turn */
+@media (max-width: 560px) {
+  .remote-bar .remote-brand,
+  .remote-bar .remote-room {
+    display: none;
+  }
+
+  .remote-bar-status {
+    flex-basis: 100%;
+    order: 3;
+  }
+}
+
+/*
+ * Wide screens (laptops, tablets in landscape): the game fits the window without page scroll (see the 861px rules
+ * above). The bar keeps its one line and the game takes the rest of the window, so nothing is cut off.
+ */
+@media (min-width: 861px) {
+  #app.is-remote-live {
+    gap: 8px;
+  }
+
+  #app.is-remote-live > .remote-bar,
+  #app.is-remote-live > .remote-poll {
+    flex: none;
+  }
+
+  #app.is-remote-live > .remote-poll {
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+
+  #app.is-remote-live > .remote-mirror {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+    margin: 0;
+  }
+
+  #app.is-remote-live .remote-mirror-screen {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+  }
+}
+
+/* =====================================================================================================
+ * Phones and small tablets in portrait (860px and less). The page scrolls as one column, so:
+ * - the choices come first and the main button (Next, Launch, See report, Plan mission...) stays at the
+ *   bottom of the screen while scrolling, instead of being thousands of pixels down;
+ * - no panel scrolls inside the page (two scrolls at once are hard to use with a thumb);
+ * - the 3D view, the globe and the top bar take less height.
+ * ===================================================================================================== */
+@media (max-width: 860px) {
+  /* Design steps: a thin strip of meters stays on top while choosing, then the choices, then the
+     spacecraft or the launch checklist */
+  .game,
+  .game.layout-hero {
+    grid-template-areas:
+      'top'
+      'meters'
+      'cards'
+      'stage'
+      'footer';
+    gap: 10px;
+  }
+
+  /* Command center: the globe, the mission phases, then side jobs and research */
+  .hub,
+  .hub.layout-hero {
+    grid-template-areas:
+      'top'
+      'stage'
+      'cards'
+      'meters'
+      'footer';
+  }
+
+  /* Report: a long read, so its four buttons wait at the end in two rows instead of covering the text */
+  .footer:has([data-action="redesign"]) {
+    position: static;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    box-shadow: none;
+  }
+
+  .footer:has([data-action="redesign"]) > .btn {
+    min-width: 0;
+    font-size: 0.82rem;
+  }
+
+  .game:not(.layout-results) > .meters {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 4px;
+    padding: 6px;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+  }
+
+  .game:not(.layout-results) > .meters > :not(.meter) {
+    display: none; /* the readiness dial, the score projection and the preview label: on bigger screens */
+  }
+
+  .game:not(.layout-results) > .meters .meter {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      'icon'
+      'bar';
+    justify-items: center;
+    gap: 4px;
+    min-height: 44px;
+    padding: 4px;
+  }
+
+  .game:not(.layout-results) > .meters .meter-icon {
+    display: grid;
+  }
+
+  .game:not(.layout-results) > .meters .meter-head,
+  .game:not(.layout-results) > .meters .meter-value {
+    display: none;
+  }
+
+  .game:not(.layout-results) > .meters .meter-bar {
+    width: 100%;
+  }
+
+  .tone-warn .meter-icon { color: var(--lamp-caution); }
+
+  .game.layout-results {
+    grid-template-areas:
+      'top'
+      'cards'
+      'stage'
+      'meters'
+      'footer';
+  }
+
+  .cards-panel,
+  .layout-results .cards-panel,
+  .setup-panel,
+  .hub-ops {
+    max-height: none;
+    overflow: visible;
+  }
+
+  /* Top bar: mission and rank on the first line, then the steps, then small tool buttons */
+  .topbar {
+    gap: 8px;
+    padding: 6px 10px;
+  }
+
+  .topbar .btn-icon,
+  .topbar .btn-lang {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 6px;
+  }
+
+  .mission-name {
+    min-width: 0;
+    font-size: 0.92rem;
+  }
+
+  /* One column that never grows wider than the phone, whatever a line inside it wants */
+  .game,
+  .game.layout-hero,
+  .hub,
+  .hub.layout-hero {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .topbar > * {
+    min-width: 0;
+  }
+
+  .topbar-rewards {
+    padding: 3px 8px;
+    font-size: 0.82rem;
+  }
+
+  /* The main buttons stay at the bottom of the screen */
+  .footer,
+  .setup-actions,
+  .menu-actions {
+    position: sticky;
+    bottom: 0;
+    z-index: 5; /* under the modals and the poll (.overlay is 10) */
+    margin: 0;
+    padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--seam);
+    background: rgba(18, 21, 20, 0.94);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 -8px 18px rgba(0, 0, 0, 0.35);
+  }
+
+  .footer {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .footer > .btn {
+    flex: 1 1 auto;
+    padding: 8px 12px;
+  }
+
+  .footer > .btn-primary,
+  .footer > .btn-launch,
+  .footer > .btn-launch-plan {
+    flex: 2 1 60%;
+  }
+
+  /* Free mission: Start is the big button; Library and Badges become two small ones beside it */
+  .menu-actions {
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .menu-actions .btn-big {
+    min-height: 52px;
+    margin: 0;
+    padding: 8px 12px;
+    font-size: 1.25rem;
+  }
+
+  .menu-actions .btn-big[data-action="start"] {
+    flex: 1;
+  }
+
+  .menu-actions .btn-big:not([data-action="start"]) {
+    flex: none;
+    width: 52px;
+    padding: 8px;
+    font-size: 0;
+    gap: 0;
+  }
+
+  .setup-actions {
+    margin-top: 12px;
+  }
+
+  .setup-actions .btn {
+    flex: 1;
+  }
+
+  .setup-actions .btn-primary {
+    flex: 2;
+  }
+
+  /* Messages sit above the bottom buttons, not on them */
+  .toast {
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    width: calc(100% - 24px);
+    max-width: 480px;
+  }
+
+  /* Smaller 3D views and globe: the game is the choices, the picture is a reward */
+  .stage {
+    margin: 4px;
+  }
+
+  .title-stage {
+    min-height: 200px;
+  }
+
+  .hub-stage {
+    min-height: 0;
+  }
+
+  .hub .view3d-slot,
+  .title-stage .view3d-slot {
+    max-height: 220px;
+  }
+
+  /* Launch checklist: lines that are fine show only their name; lines to check keep their explanation */
+  .check {
+    padding: 7px 10px;
+  }
+
+  .check.check-go {
+    grid-template-columns: auto 1fr;
+    align-items: center;
+  }
+
+  .check.check-go .check-text {
+    display: none;
+  }
+
+  /* Modals and the poll fit the screen and scroll inside themselves */
+  .overlay {
+    align-items: start;
+    padding: 12px;
+    overflow-y: auto;
+  }
+
+  /* Centered when it fits, starting at the top when it is taller than the screen (never cut off above) */
+  .overlay > * {
+    margin-block: auto;
+  }
+}
+
+/* Very narrow phones (320–360px, for example older iPhones and small Android phones) */
+@media (max-width: 360px) {
+  #app {
+    padding: 6px;
+  }
+
+  .footer > .btn,
+  .setup-actions .btn {
+    font-size: 0.85rem;
+  }
+
+  .btn-big {
+    font-size: 1.3rem;
+  }
+
+  .layout-results > .meters {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .remote-bar .role-chip {
+    display: none;
+  }
+
+  /* The rank name goes, the stars of this mission stay */
+  .topbar-rewards {
+    font-size: 0;
+    gap: 0;
+  }
+
+  .topbar-rewards .stars {
+    font-size: 0.9rem;
+  }
+
+  .mission-name {
+    padding: 4px 8px;
+  }
+
+  /* Five steps in one line: smaller number boxes, only the current step keeps its name */
+  .steps {
+    gap: 4px;
+  }
+
+  .step {
+    gap: 4px;
+    padding: 3px;
+  }
+
+  .step.is-current {
+    padding-right: 6px;
+  }
+
+  .step-num {
+    width: 24px;
+    height: 24px;
+  }
+
+  .step.is-current .step-label {
+    font-size: 0.64rem;
+  }
 }

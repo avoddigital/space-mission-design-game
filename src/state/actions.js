@@ -142,6 +142,13 @@ export function planMission(state, scenarioId) {
   return startMission(selectScenario(state, scenarioId));
 }
 
+// --- Team play (roles live in src/engine/team.js) ---
+
+/** Set the team (1 to 4 players). It applies to free missions and to the campaign. */
+export function setTeam(state, team) {
+  return team === state.team ? state : { ...state, team };
+}
+
 export function goToHub(state) {
   return { ...state, screen: 'hub', paused: false };
 }

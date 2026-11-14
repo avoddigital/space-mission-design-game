@@ -3,12 +3,13 @@
 import { esc, fmt, stars, targetName } from '../format.js';
 import { t } from '../../i18n/index.js';
 import { card, dots } from '../components/card.js';
-import { meter, scienceMeter, readiness } from '../components/meter.js';
+import { meter, scienceMeter, readiness, flightStatus } from '../components/meter.js';
 import { checklist } from '../components/checklist.js';
 import { learnBox, legend, soundToggle, langToggle } from '../components/overlays.js';
 import { icon, partIconKey, orbitIconKey } from '../components/icons.js';
 import { nextStep, hintLine } from '../components/hint.js';
 import { projectionCard, topbarRewards } from '../components/rewards.js';
+import { turnChip } from '../components/team.js';
 
 const STEPS = [
   { step: 1, screen: 'objective', label: 'steps.objective', icon: 'flag' },
@@ -67,19 +68,19 @@ function craftStage(mission) {
  * The 5 meters and the science line. With `baseline`, it is a preview:
  * the meters show the values after a possible choice, with the change from now.
  */
-export function metersPanel(evaluation, content, shake = new Set(), baseline = null, previewLabel = t('preview.label'), projection = null) {
+export function metersPanel(evaluation, content, shake = new Set(), baseline = null, previewLabel = t('preview.label'), projection = null, flight = null) {
   return `
     <section class="meters${baseline ? ' is-preview' : ''}" aria-label="${t('aria.resources')}">
       ${baseline ? `<p class="preview-label">${esc(previewLabel)}</p>` : ''}
-      ${readiness(evaluation)}
+      ${flight ? flightStatus(flight) : readiness(evaluation)}
       ${['budget', 'mass', 'power', 'data', 'time'].map((key) => meter(key, evaluation.budget, content.meters?.[key], { shake: shake.has(key), baseline: baseline?.budget })).join('')}
-      ${scienceMeter(evaluation.budget, baseline?.budget)}
+      ${scienceMeter(evaluation.budget, baseline?.budget, flight)}
       ${projection ? projectionCard(projection.score, projection.baseline) : ''}
     </section>`;
 }
 
 /** Shared layout: header with steps, cards on the left, stage in the middle, meters on the right. */
-export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false, hero = false, hint = '', progress = null, projected = null }) {
+export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false, hero = false, hint = '', progress = null, projected = null, flight = null, ui = null }) {
   // On phones, result screens (simulation and report) show the left panel first.
   return `
     <div class="game${results ? ' layout-results' : ''}${hero ? ' layout-hero' : ''}" data-mission="${esc(scenario.id)}">
@@ -95,11 +96,12 @@ export function gameLayout({ state, scenario, evaluation, content, shake, title,
       </header>
       <section class="panel cards-panel" aria-labelledby="panel-title">
         <h2 id="panel-title">${esc(title)}</h2>
+        ${turnChip(state.team, state.screen, ui?.tab)}
         ${hint}
         ${cards}
       </section>
       <section class="stage" aria-label="${t('aria.missionView')}">${stage}</section>
-      ${metersPanel(evaluation, content, shake, null, undefined, projected && ['spacecraft', 'launch'].includes(state.screen) ? { score: projected } : null)}
+      ${metersPanel(evaluation, content, shake, null, undefined, projected && ['spacecraft', 'launch'].includes(state.screen) ? { score: projected } : null, flight)}
       <footer class="footer">${footer}${legend()}</footer>
     </div>`;
 }
@@ -300,7 +302,7 @@ export function launchScreen(ctx) {
       const stats = [{ key: 'budget', label: t('stat.cost'), level: dots(rocket.costMUsd, maxCost, 'log'), value: `${fmt(rocket.costMUsd)} M USD` }];
       if (orbit) {
         const carries = capacity > 0 ? t('launch.carriesTo', { kg: fmt(capacity), target: targetName(orbit.target) }) : '—';
-        stats.push({ key: 'mass', label: t('stat.carries'), text: carries, value: carries, good: true });
+        stats.push({ key: 'mass', label: t('stat.carries'), text: carries, value: carries, good: true, wide: true });
       } else {
         const carries = `${fmt(rocket.payloadKg.LEO)} kg`;
         stats.push({ key: 'mass', label: t('stat.toLeo'), text: carries, value: carries, good: true });

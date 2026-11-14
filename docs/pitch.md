@@ -11,13 +11,13 @@ Every space mission is a puzzle of trade-offs. A better camera means more scienc
 Tupi Orbit is a free browser game. You found a space agency for your country and design real missions, from Earth orbit to the Moon and Mars. Every launch costs money, even when it fails.
 
 **Who it is for.**
-Teenagers and young adults, and their teachers. No install, no login, in English, Portuguese or Spanish.
+Teenagers and young adults, and their teachers. No install, no login, in English, Portuguese or Spanish. A class can play as a mission team: each student takes a role on their own phone and makes the choices of that role on their turn.
 
 **What players learn.**
 Every choice has a consequence, and the game explains why. Your spacecraft is ten kilograms too heavy? The report tells you, in plain words, and shows a real NASA mission that faced the same problem. Badges reward trying again after a failure, and a Mission Library opens real NASA facts and images as you grow.
 
 **What's next.**
-Team mode for classrooms, more destinations and more languages.
+More destinations, more languages and a sandbox mode with no limits.
 
 ---
 

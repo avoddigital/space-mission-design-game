@@ -77,6 +77,13 @@ export function simulateMission(mission, scenario, events = [], seed = 0) {
   const keep = simulatedEvents.reduce((share, event) => share * (1 - event.scienceLossPct / 100), 1);
   const scienceDelivered = Math.round(effectiveScience(budget) * keep * 10) / 10;
 
+  // When the design was already below the goal, report the science that really arrived (after the surprises),
+  // so the flight text and the final numbers agree.
+  const dataPhaseResult = phases.find((phase) => phase.id === 'data');
+  if (dataPhaseResult.ok === false) {
+    dataPhaseResult.issues = dataPhaseResult.issues.map((issue) => (issue.code === 'LOW_SCIENCE' ? { ...issue, scienceValue: scienceDelivered } : issue));
+  }
+
   // With no earlier failure, the mission still fails if the science goal is not reached.
   const minScience = scenario.minScience ?? 0;
   if (failedPhaseIndex === PHASES.length && scienceDelivered < minScience) {

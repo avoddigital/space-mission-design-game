@@ -60,6 +60,13 @@ describe('simulateMission', () => {
     expect(result.failedIssue).toMatchObject({ code: 'LOW_SCIENCE', scienceValue: 7, minScience: 10 });
   });
 
+  it('cites the science that arrived after the surprises when the design was already below the goal', () => {
+    // 14 points designed against a goal of 16 fails already in validation; the event then halves it to 7
+    const result = simulateMission(goodMission(), { ...earthScenario, minScience: 16 }, [timeEvent], 7);
+    expect(result).toMatchObject({ outcome: 'failure', failedPhase: 'data', scienceDelivered: 7 });
+    expect(result.failedIssue).toMatchObject({ code: 'LOW_SCIENCE', scienceValue: 7, minScience: 16 });
+  });
+
   it('only uses events of this scenario', () => {
     const marsOnly = event('dust-storm', 'time', 20, ['mars-study']);
     expect(simulateMission(goodMission(), earthScenario, [marsOnly], 1).events).toEqual([]);

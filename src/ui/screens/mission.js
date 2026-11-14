@@ -6,6 +6,8 @@ import { checklist } from '../components/checklist.js';
 import { learnBox } from '../components/overlays.js';
 import { icon } from '../components/icons.js';
 import { gameLayout } from './design.js';
+import { teamDebriefSection } from '../components/team.js';
+import { teamDebrief, isTeamPlay } from '../../engine/team.js';
 import { reportRewards } from '../components/rewards.js';
 import { libraryMissions, libraryTopics } from '../../data/library.js';
 import { phases, agencyEvents } from '../../data/campaign.js';
@@ -140,6 +142,8 @@ export function simulationScreen(ctx) {
     title: t('flight.title'),
     results: true,
     hero: true,
+    // After liftoff the right panel follows the flight, not the launch checklist
+    flight: { simulation, done, shown },
     cards: `<ol class="timeline" aria-live="polite">${timeline}</ol>${result}${learnBox(ctx.content.learn?.simulation)}`,
     stage: `<div class="sim-stage${done && !success ? ' is-failed' : ''}">
       <div class="stage-sky" aria-hidden="true"></div>
@@ -249,6 +253,7 @@ export function reportScreen(ctx) {
     ${reportRewards(report)}
     ${campaignMode ? agencyBlock(ctx.ui.campaignResult, state.campaign) : ''}
     ${why}
+    ${isTeamPlay(state.team) ? teamDebriefSection(state.team, teamDebrief(state.team, simulation), data) : ''}
     ${lessons ? `<section><h3>${icon('storm', 18)} ${t('report.surprises')}</h3><ul class="lessons">${lessons}</ul></section>` : ''}
     ${learnBox(learn)}
     ${quizBlock(scenarioText.quiz, report)}`;
@@ -262,6 +267,7 @@ export function reportScreen(ctx) {
     ...ctx,
     title: t('report.title', { n: state.runCount }),
     results: true,
+    flight: { simulation, done: true, shown: phasesToShow(simulation) },
     cards,
     stage,
     footer: campaignMode

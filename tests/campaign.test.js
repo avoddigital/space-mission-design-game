@@ -12,10 +12,10 @@ const fresh = (focus = 'technology') => createCampaign('br', focus);
 const win = (campaign, phaseId) => finishMission(campaign, phaseId, { success: true, scienceDelivered: 20 }).campaign;
 
 describe('campaign data', () => {
-  it('lists the 16 partner countries plus Europe, with flag codes and no United States', () => {
-    expect(countries).toHaveLength(17);
-    expect(countries.map((country) => country.id)).not.toContain('us');
-    expect(new Set(countries.map((country) => country.id)).size).toBe(17);
+  it('lists the 16 partner countries plus Europe and the United States, with flag codes', () => {
+    expect(countries).toHaveLength(18);
+    expect(countries.map((country) => country.id)).toContain('us');
+    expect(new Set(countries.map((country) => country.id)).size).toBe(18);
   });
 
   it('uses only existing scenarios, library entries and focus ids', () => {

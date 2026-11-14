@@ -76,7 +76,17 @@ Small labels (section names, captions) are B612 Mono uppercase with wide letter 
 - Top bar: the mission name in a display window, then the 5 steps as a row of annunciator lamps (amber = current step, green = done, dark = not yet).
 - Left: the choice panel. Middle: the viewscreen. Right: the gauge panel.
 - Mission Library and Badges are full screens over the game (Esc or the back button returns): a plate on top, tabs or a progress bar, and a grid of cards that scrolls inside its own area.
-- On screens 861px and wider the game fills the window and the page never scrolls; only a long list scrolls inside its own panel. On phones the page scrolls normally, in this order: steps, gauges, viewscreen, choices, footer. Touch targets are at least 44px.
+- On screens 861px and wider the game fills the window and the page never scrolls; only a long list scrolls inside its own panel.
+- On phones (860px and less) the page scrolls as one column and no panel scrolls inside the page:
+  - Design steps: top bar, then a **gauge strip** that stays on top while scrolling (six small gauges: icon and bar only; tap one for its details), then the choices, then the viewscreen or the launch checklist.
+  - Flight and report: the phases or the report first, then the viewscreen, then the gauges.
+  - Command center: agency plate, globe, mission phases, operations.
+  - The **main buttons stay at the bottom of the screen** (Back / Next, Launch, Skip / See report, Plan mission, Found agency, Start mission). The report is the exception: it is a long read, so its four buttons wait at the end, in two rows.
+  - The launch checklist shows only the name of the lines that are GO; lines to check keep their explanation.
+  - On narrow phones (360px and less) the top bar keeps only this mission's stars and the current step's name.
+  - Messages (toasts) appear above the bottom buttons; a message box taller than the screen starts at the top and scrolls.
+- Touch targets are at least 40px (44px for the main buttons).
+- **A player's own device in team play** (`?sala=CODE`): one short bar on top (brand, the player's number, name and roles, whose turn it is, room code, language), then the same game screen as the main device. On the player's turn the bar glows amber and says "Your turn!". The GO / NO-GO poll opens as one strip under the bar: the player's consoles on the left, GO and NO-GO on the right. On wide screens the bar keeps one line and the game fills the rest of the window, so nothing is cut off.
 
 ## 6. Motion
 

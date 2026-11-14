@@ -4,13 +4,17 @@
 import {
   selectScenario, startMission, confirmStep, goToStep, goToMenu, togglePart, setPower, setComms,
   setOrbit, setRocket, launch, togglePause, newConditions, showReport, redesign, answerQuiz,
-  openFreePlay, openSetup, enterCampaign, setCampaign, planMission, goToHub,
+  openFreePlay, openSetup, enterCampaign, setCampaign, planMission, goToHub, setTeam,
 } from '../state/actions.js';
 import {
   gameData, selectScenario as selectScenarioData, selectMission, selectEvaluation, runSimulation, selectScore,
   selectProjectedScore,
 } from '../state/selectors.js';
-import { loadBest, saveBest, loadProgress, saveProgress, loadCampaign, saveCampaign, loadProfile, saveProfile } from '../state/persistence.js';
+import { loadBest, saveBest, loadProgress, saveProgress, loadCampaign, saveCampaign, loadProfile, saveProfile, loadTeam, saveTeam } from '../state/persistence.js';
+import { createTeam, resizeTeam, renamePlayer, isTeamPlay, pollConsoles, pollPassed, roleForStep, playerFor } from '../engine/team.js';
+import { pollOverlay, playerName } from './components/team.js';
+import { hostRoom, errorKey } from '../net/room.js';
+import { snapshot, handleMessage, REMOTE_ACTIONS } from '../net/protocol.js';
 import { recordMission, progressFromBest } from '../engine/progress.js';
 import { track } from '../engine/achievements.js';
 import { badgesScreen, badgeNotice } from './screens/badges.js';
@@ -147,9 +151,19 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     badges: false, // the Badges screen is open
     badgeNotice: [], // badge ids just earned (shown for a few seconds)
     reportBadges: [], // badge ids earned by the last report (shown on the report)
+    poll: null, // { votes: [] } while the team votes GO / NO-GO before launch
+    quiet: false, // skip the next render (a typed name is already on screen; re-rendering would steal focus)
+    room: null, // other devices: { status: 'opening'|'open'|'error', code, claims: Map<peerId, player>, errorKey }
+    pollResult: null, // 'go' or 'held': the last poll's result, shown on the players' devices
   };
+  let roomApi = null; // the open room (src/net/room.js), if any
+  let lastBroadcast = null; // the last snapshot sent to the devices (JSON), to skip repeats
+  let fromRemote = false; // true while a player's device choice runs here (remoteTap)
   // Achievements profile: what the player did across all modes (src/engine/achievements.js).
   let profile = loadProfile(storage);
+  // The team from last time (players and names); roles are recomputed from the rules
+  const savedTeam = loadTeam(storage);
+  if (savedTeam) store.update(setTeam, createTeam(savedTeam.players.length, savedTeam.players.map((player) => player.name)));
   let noticeTimer = null;
   let toastTimer = null;
   let phaseTimer = null;
@@ -164,6 +178,10 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
   const currentProgress = () => loadProgress(storage) ?? progressFromBest(loadBest(storage));
 
   function render() {
+    if (ui.quiet) {
+      ui.quiet = false;
+      return;
+    }
     syncData();
     const state = store.getState();
     const focusKey = document.activeElement?.dataset?.action
@@ -181,9 +199,9 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     } else if (state.screen === 'menu') {
       html = titleScreen({ saved: loadCampaign(storage) });
     } else if (state.screen === 'free') {
-      html = menuScreen({ state, data, best: loadBest(storage), progress: currentProgress() });
+      html = menuScreen({ state, data, best: loadBest(storage), progress: currentProgress(), room: roomView() });
     } else if (state.screen === 'setup') {
-      html = setupScreen({ setup: ui.setup });
+      html = setupScreen({ setup: ui.setup, team: store.getState().team, room: roomView() });
     } else if (state.screen === 'hub' && state.campaign) {
       html = hubScreen({ campaign: state.campaign, data, ui });
     } else {
@@ -203,6 +221,7 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
       html = (SCREENS[state.screen] ?? objectiveScreen)(ctx);
     }
     if (ui.modal) html += modal(ui.modal);
+    if (ui.poll && state.team) html += pollOverlay(state.team, pollConsoles(state.team, evaluate(state).budget), ui.poll.votes, roomView()?.connected);
     if (state.paused && !ui.library) html += pauseOverlay();
     if (ui.toast) html += toast(ui.toast);
     if (ui.banner) html += `<div class="stage-banner" role="status">${ui.banner}</div>`;
@@ -224,11 +243,13 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
       syncView3d(root, { parts: [] }, { paused: true, onReady: render });
     } else if (GLOBE_SCREENS.has(state.screen)) {
       const agency = state.screen === 'menu' ? loadCampaign(storage) : state.screen === 'hub' ? state.campaign : null;
-      syncView3d(root, { parts: [], globe: globeView(agency) }, { paused: Boolean(ui.modal), onReady: render });
+      syncView3d(root, { parts: [], globe: globeView(agency, state.screen === 'setup' ? ui.setup.countryId : null) }, { paused: Boolean(ui.modal), onReady: render });
     } else {
       const mission = selectMission(state, data);
       syncView3d(root, { ...mission, simulation: state.simulation, shown: ui.simShown }, { paused: state.paused || Boolean(ui.modal), onReady: render });
     }
+
+    broadcastRoom(); // the players' devices follow the game
 
     // Score counts up once per report (skipped when the system asks for reduced motion).
     const counter = root.querySelector('.score-number[data-count-to]');
@@ -385,6 +406,166 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     syncData();
   }
 
+  // --- Players' own devices (multi-device team play, src/net) ---
+
+  /** What the screens need to draw the room: status, code, link, connected players. */
+  function roomView() {
+    if (!ui.room) return null;
+    const link = `${location.origin}${location.pathname}?sala=${ui.room.code ?? ''}`;
+    return { ...ui.room, link, connected: new Set(ui.room.claims?.values() ?? []) };
+  }
+
+  /**
+   * The player who may make choices on their own device now: the one whose role leads this step (see roleForStep),
+   * and the mission director everywhere else (menus, command center, flight, report). Nobody during the poll or countdown.
+   */
+  function roomActor() {
+    const state = store.getState();
+    if (!state.team || ui.poll || ui.countdown !== null) return null;
+    const role = roleForStep(state.screen, ui.tab) ?? 'director';
+    return playerFor(state.team, role);
+  }
+
+  /** Tell every connected device what is happening now. Called after each render. */
+  function broadcastRoom() {
+    if (!roomApi || ui.room?.status !== 'open') return;
+    const state = store.getState();
+    const team = state.team;
+    const role = roleForStep(state.screen, ui.tab);
+    const actor = roomActor();
+    const flightDone = state.screen === 'report' || (state.screen === 'simulation' && state.simulation && ui.simShown >= phasesToShow(state.simulation));
+    // Everything the players' devices need to draw the same screen as this one (src/ui/mirror.js).
+    // Each device draws it in its own language, with its own tab and details open; the choices of the player
+    // whose turn it is come back as 'act' messages (remoteTap).
+    const mirror = {
+      state,
+      ui: {
+        tab: ui.tab, simShown: ui.simShown, opsTab: ui.opsTab, showNumbers: ui.showNumbers, setup: ui.setup,
+        campaignResult: ui.campaignResult, reportBadges: ui.reportBadges, countdown: ui.countdown,
+        banner: ui.banner, toast: ui.toast, celebrate: ui.celebrate, modal: ui.modal,
+      },
+      progress: currentProgress(),
+      best: loadBest(storage),
+      // The score of this launch (saved at launch, see recordRun), so every player can open the report on
+      // their own device as soon as the flight ends, without waiting for "See report" here
+      run: ui.lastRun && ui.lastRun.simulation === state.simulation
+        ? { score: ui.lastRun.score, best: ui.lastRun.best, rewards: ui.lastRun.rewards }
+        : null,
+    };
+    const message = snapshot({
+      team,
+      claims: ui.room.claims,
+      screen: state.screen,
+      turn: role && team ? { role, player: playerFor(team, role) } : null,
+      actor,
+      poll: ui.poll && team ? { votes: ui.poll.votes, consoles: pollConsoles(team, evaluate(state).budget) } : null,
+      pollResult: ui.pollResult,
+      outcome: flightDone ? state.simulation.outcome : null,
+      mirror,
+    });
+    // render() runs often (timers, hover-free clicks): only send when something the devices see changed
+    const text = JSON.stringify(message);
+    if (text === lastBroadcast) return;
+    lastBroadcast = text;
+    roomApi.broadcast(message);
+  }
+
+  async function openRoom() {
+    if (roomApi) return;
+    ui.room = { status: 'opening', claims: new Map() };
+    render();
+    try {
+      roomApi = await hostRoom({
+        onMessage: (message, peerId) => {
+          const state = store.getState();
+          const effect = handleMessage({ claims: ui.room.claims, size: state.team?.players.length ?? 1, pollOpen: Boolean(ui.poll), actor: roomActor() }, peerId, message);
+          if (effect.reply) roomApi.send(peerId, effect.reply);
+          if (effect.claim !== undefined) {
+            ui.room.claims.set(peerId, effect.claim);
+            play('beep');
+          }
+          if (effect.vote) votePoll(effect.vote);
+          else if (effect.act) remoteTap(effect.act);
+          else render();
+        },
+        onJoin: () => {
+          lastBroadcast = null; // the new device has nothing yet: send even if nothing changed
+          render(); // render() also sends the snapshot to every device
+        },
+        onLeave: (peerId) => {
+          ui.room?.claims.delete(peerId);
+          render();
+        },
+      });
+      ui.room = { status: 'open', code: roomApi.code, claims: ui.room.claims };
+    } catch (error) {
+      roomApi = null;
+      ui.room = { status: 'error', errorKey: errorKey(error), claims: new Map() };
+    }
+    render();
+  }
+
+  /**
+   * A player tapped a button on the shared screen on their own device: click the same button here,
+   * so it follows exactly the same rules (disabled cards, countdown, sounds) as a click on this device.
+   */
+  function remoteTap({ action, value }) {
+    const selector = value === undefined
+      ? `[data-action="${CSS.escape(action)}"]`
+      : `[data-action="${CSS.escape(action)}"][data-value="${CSS.escape(value)}"]`;
+    const element = root.querySelector(selector);
+    if (!element) {
+      render(); // the screen changed meanwhile (or the Library is open here): just resend the current one
+      return;
+    }
+    fromRemote = true; // click() runs the handlers right away, so the flag covers exactly this choice
+    try {
+      element.click();
+    } finally {
+      fromRemote = false;
+    }
+  }
+
+  function closeRoom() {
+    roomApi?.close();
+    roomApi = null;
+    ui.room = null;
+    render();
+  }
+
+  /** Team play: every player votes GO / NO-GO before the countdown (like a real mission control poll). */
+  function openPoll() {
+    ui.pollResult = null;
+    ui.poll = { votes: [] };
+    play('beep');
+    render();
+  }
+
+  function votePoll(value) {
+    const state = store.getState();
+    const [index, vote] = String(value).split(':');
+    const votes = [...ui.poll.votes];
+    votes[Number(index)] = vote;
+    ui.poll = { votes };
+    const size = state.team.players.length;
+    if (votes.filter(Boolean).length < size) {
+      render();
+      return;
+    }
+    ui.poll = null;
+    if (pollPassed(votes, size)) {
+      ui.pollResult = 'go';
+      startCountdown();
+      return;
+    }
+    ui.pollResult = 'held';
+    // Someone said NO-GO: the launch is on hold and the team talks it over
+    const held = votes.map((item, at) => (item === 'no-go' ? playerName(state.team, at) : null)).filter(Boolean);
+    play('error');
+    showToast({ title: t('poll.heldTitle'), text: t('poll.held', { names: held.join(', ') }), tone: 'warn' });
+    render();
+  }
+
   /** In a campaign, the agency must be able to pay for the launch. */
   function prepareLaunch() {
     settleLaunch();
@@ -398,7 +579,8 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
         return;
       }
     }
-    startCountdown();
+    if (isTeamPlay(state.team)) openPoll();
+    else startCountdown();
   }
 
   /** T-minus 3, 2, 1, liftoff, then the simulation starts. Reduced motion skips straight to it. */
@@ -506,6 +688,18 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
 
   const handlers = {
     'select-scenario': (value) => store.update(selectScenario, value),
+    'team-size': (value) => {
+      const team = resizeTeam(store.getState().team, Number(value));
+      saveTeam(team, storage);
+      store.update(setTeam, team);
+    },
+    'poll-vote': (value) => votePoll(value),
+    'room-open': () => openRoom(),
+    'room-close': () => closeRoom(),
+    'poll-cancel': () => {
+      ui.poll = null;
+      render();
+    },
     start: () => {
       ui.tab = 'instrument';
       store.update(startMission);
@@ -697,9 +891,36 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     },
   };
 
+  /** Players who joined from their own device (they choose and vote there, not here). */
+  const remotePlayers = () => (ui.room?.status === 'open' ? new Set(ui.room.claims.values()) : new Set());
+
+  /**
+   * On the turn of a player who plays on their own device, this device only shows the game: its clicks and keys
+   * would play in their place. Messages, pause and looking around (Library, numbers, details) still work here.
+   */
+  function blockedHere(action, value) {
+    if (fromRemote) return false;
+    if (action === 'poll-vote') {
+      const player = Number(String(value).split(':')[0]);
+      if (!remotePlayers().has(player)) return false;
+      showToast({ title: t('room.notHereTitle'), text: t('room.voteOnDevice', { name: playerName(store.getState().team, player) }), tone: 'warn' });
+      return true;
+    }
+    if (!REMOTE_ACTIONS.has(action) || action === 'close-modal' || action === 'pause') return false;
+    const actor = roomActor();
+    if (actor === null || !remotePlayers().has(actor)) return false;
+    showToast({ title: t('room.notHereTitle'), text: t('room.turnOnDevice', { name: playerName(store.getState().team, actor) }), tone: 'warn' });
+    return true;
+  }
+
   /** Run an action from a click or a key, with its sound. */
   function run(action, value) {
     if (!handlers[action]) return;
+    if (blockedHere(action, value)) {
+      play('error');
+      render();
+      return;
+    }
     syncData();
     if (ACTION_SOUNDS[action]) play(ACTION_SOUNDS[action]);
     handlers[action](value);
@@ -734,6 +955,12 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
       run('close-modal');
       return;
     }
+    if (key === 'Escape' && ui.poll) {
+      run('poll-cancel');
+      return;
+    }
+    // Typing a player's name: letters, digits and Backspace belong to the text box, not to the game
+    if (event.target.closest?.('input, textarea')) return;
     if ((key === 'm' || key === 'M') && !event.target.closest?.('input, textarea')) {
       run('mute');
       return;
@@ -762,7 +989,7 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
       run('pause');
       return;
     }
-    if (state.paused || ui.modal || ui.countdown !== null) return;
+    if (state.paused || ui.modal || ui.poll || ui.countdown !== null) return;
 
     if (key === 'Enter' && event.target === document.body) {
       event.preventDefault();
@@ -837,6 +1064,17 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     const state = store.getState();
     replaceMeters(metersPanel(evaluate(state), data.content ?? {}, ui.shake, null, undefined, { score: selectProjectedScore(state, data) }));
   }
+
+  // Player names: saved when the text box loses focus or Enter is pressed (no re-render while typing)
+  root.addEventListener('change', (event) => {
+    const input = event.target.closest?.('[data-input="player-name"]');
+    if (!input) return;
+    const team = renamePlayer(store.getState().team, Number(input.dataset.index), input.value);
+    saveTeam(team, storage);
+    ui.quiet = true;
+    store.update(setTeam, team);
+    ui.quiet = false; // in case nothing changed and no render ran
+  });
 
   root.addEventListener('pointerover', showPreview);
   root.addEventListener('focusin', showPreview);

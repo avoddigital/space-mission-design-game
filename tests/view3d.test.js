@@ -65,3 +65,85 @@ describe('3D layer is read-only (CLAUDE.md, 3D layer)', () => {
     }
   });
 });
+
+describe('rockets and launch pad', async () => {
+  const { createRocket, rocketStyle } = await import('../src/view3d/rocket.js');
+  const { createLaunchPad } = await import('../src/view3d/launchPad.js');
+  const { rockets } = await import('../src/data/rockets.js');
+
+  it('gives each rocket in the data its own silhouette', () => {
+    expect(rockets.map(rocketStyle)).toEqual(['small', 'medium', 'heavy', 'super-heavy']);
+    expect(rocketStyle({ id: 'new-rocket', payloadKg: { LEO: 50000 } })).toBe('heavy');
+  });
+
+  it('builds every rocket with a flame and sizes the pad can use', () => {
+    for (const rocket of rockets) {
+      const built = createRocket(rocket);
+      const { flame, height, radius, width, disposables } = built.userData;
+      expect(flame.visible, rocket.id).toBe(false);
+      expect(height).toBeGreaterThan(0);
+      expect(width).toBeGreaterThanOrEqual(radius);
+      expect(disposables.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('builds a pad with swing arms for any rocket size', () => {
+    for (const rocket of rockets) {
+      const pad = createLaunchPad(createRocket(rocket).userData);
+      expect(pad.userData.arms).toHaveLength(3);
+      expect(pad.userData.ground).toBeLessThan(0);
+    }
+  });
+});
+
+describe('launch explosion', async () => {
+  const THREE = await import('three');
+  const { createExplosion } = await import('../src/view3d/explosion.js');
+
+  it('stays hidden until set off, shakes at the blast and calms down after', () => {
+    const blast = createExplosion({ size: 2.5, groundY: -0.7 });
+    expect(blast.group.visible).toBe(false);
+    expect(blast.update(0.1)).toBe(0);
+    blast.start(new THREE.Vector3(0, 2, 0));
+    expect(blast.group.visible).toBe(true);
+    expect(blast.update(0.05)).toBeGreaterThan(0.5);
+    for (let step = 0; step < 60; step += 1) blast.update(0.05);
+    expect(blast.update(0.05)).toBe(0);
+    expect(blast.disposables.length).toBeGreaterThan(0);
+  });
+});
+
+describe('agency home on the globe', async () => {
+  const { PLACES, surfacePoint, turnToFace } = await import('../src/view3d/places.js');
+  const { countries } = await import('../src/data/campaign.js');
+
+  it('has a place for every agency country', () => {
+    expect(Object.keys(PLACES).sort()).toEqual(countries.map((country) => country.id).sort());
+  });
+
+  it('puts latitude and longitude where the Earth map has them', () => {
+    // North pole on top (+y); the equator is a circle of radius 1 around it
+    expect(surfacePoint(90, 0).y).toBeCloseTo(1);
+    const greenwich = surfacePoint(0, 0);
+    expect(greenwich.y).toBeCloseTo(0);
+    expect(Math.hypot(greenwich.x, greenwich.z)).toBeCloseTo(1);
+    // Turning by turnToFace brings the point to the camera side (+z)
+    for (const { lat, lon } of Object.values(PLACES)) {
+      const point = surfacePoint(lat, lon);
+      const turn = turnToFace(lat, lon);
+      const z = -point.x * Math.sin(turn) + point.z * Math.cos(turn);
+      expect(z).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe('event effects', async () => {
+  const { events } = await import('../src/data/events.js');
+  const code = (await import('node:fs')).readFileSync('src/view3d/eventEffects.js', 'utf8');
+
+  it('has its own effect for every special event, and a badge for the rest', () => {
+    const special = ['solar-storm', 'lunar-eclipse', 'mars-dust-storm', 'ground-station-outage', 'solar-conjunction'];
+    for (const id of special) expect(code, id).toContain(`case '${id}'`);
+    for (const { id } of events.filter((event) => !special.includes(event.id))) expect(code, id).toContain(`'${id}'`);
+  });
+});

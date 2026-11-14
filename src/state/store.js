@@ -16,7 +16,7 @@ export function createInitialState() {
     reroll: 0, // changes the random events ("Try again with new conditions")
     simulation: null, // result of simulateMission
     report: null, // { score, isNewBest, best, quizAnswered, quizRight, quizChoice }
-    team: null, // P1
+    team: null, // { players: [{ name, roles }] } from src/engine/team.js; null means one player
     paused: false,
   };
 }

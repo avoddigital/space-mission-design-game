@@ -45,6 +45,29 @@ export function saveBest(scenarioId, score, storage = defaultStorage()) {
   return { isNewBest: true, best: score };
 }
 
+// --- Team: how many players and their names (src/engine/team.js) ---
+
+export const TEAM_KEY = 'space-mission-design-game:team-v1';
+
+/** @returns {{ players: Array<{ name: string, roles: string[] }> }|null} */
+export function loadTeam(storage = defaultStorage()) {
+  try {
+    const parsed = JSON.parse(storage?.getItem(TEAM_KEY) ?? 'null');
+    const ok = Array.isArray(parsed?.players) && parsed.players.length >= 1 && parsed.players.length <= 4;
+    return ok ? parsed : null;
+  } catch {
+    return null; // broken or blocked storage: start with one player
+  }
+}
+
+export function saveTeam(team, storage = defaultStorage()) {
+  try {
+    storage?.setItem(TEAM_KEY, JSON.stringify(team));
+  } catch {
+    // Could not save: the team still works for this session.
+  }
+}
+
 // --- Progress: stars, badges and rank (src/engine/progress.js) ---
 
 export const PROGRESS_KEY = 'space-mission-design-game:progress-v1';

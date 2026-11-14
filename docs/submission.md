@@ -50,7 +50,7 @@ Isso é importante porque estudantes quase nunca conseguem experimentar uma miss
 *Na plataforma: o que faz, como funciona, benefícios, impacto esperado e ferramentas usadas.*
 
 **O que faz.**
-- **Campanha:** o jogador escolhe um país (os países parceiros do Space Apps 2026, mais a Europa) e um foco para a agência, e avança por 3 fases em ordem, cada uma com pergunta científica, orçamento, prazo e meta de ciência:
+- **Campanha:** o jogador escolhe um país (os países parceiros do Space Apps 2026, mais a Europa e os Estados Unidos) e um foco para a agência, e avança por 3 fases em ordem, cada uma com pergunta científica, orçamento, prazo e meta de ciência:
   - Fase 1: Observar a Terra (fácil)
   - Fase 2: Explorar a Lua (média)
   - Fase 3: Estudar Marte (difícil)

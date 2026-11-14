@@ -19,7 +19,9 @@ Game flow (5 steps):
 4. Simulation (random events such as solar storms or component failures).
 5. Final report (score, what worked, what failed, similar real NASA missions).
 
-Optional, only if time allows: 3 difficulty levels, roles for up to 4 players on one device, leaderboard (local), sandbox mode.
+Team play is done: 1 to 4 players with roles, on one device or each on their own device with a room code; each player has their own view and makes choices only on their turn (see `CLAUDE.md` › Product and README › Team play).
+
+Optional, only if time allows: 3 difficulty levels, leaderboard (local), sandbox mode.
 
 ## Source documents
 - `prd-space-mission-design-game.md`: product requirements (v0.3). Section 0.1 lists the decisions that win when documents disagree; sections 6 and 7 are the data and engine contracts.
@@ -40,6 +42,7 @@ src/
   data/        # instruments, rockets, orbits, scenarios (plain JS/JSON tables)
   engine/      # pure functions: resource totals, compatibility checks, simulation, scoring
   state/       # single mission state object and the functions that update it
+  net/         # team play on several devices: room code and messages (protocol.js), connection (room.js)
   ui/          # HTML/CSS screens and components for each of the 5 steps
   view3d/      # Three.js scenes (spacecraft viewer, orbit view); read-only consumer of state
   main.js

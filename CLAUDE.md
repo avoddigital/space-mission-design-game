@@ -21,16 +21,21 @@ Game flow (5 steps):
 5. Final report (score, what worked, what failed, similar real NASA missions).
 
 On top of the 5 steps (decisions of 2026-11-14):
-- **Campaign:** the player founds an agency (a 2026 Space Apps partner country, plus Europe, and a focus), manages funds and science, and unlocks three phases in order: Earth, Moon, Mars. Side jobs, research and agency events between missions. Rules in `src/engine/campaign.js`, tables in `src/data/campaign.js`.
+- **Campaign:** the player founds an agency (a 2026 Space Apps partner country, Europe or the United States, and a focus), manages funds and science, and unlocks three phases in order: Earth, Moon, Mars. Side jobs, research and agency events between missions. Rules in `src/engine/campaign.js`, tables in `src/data/campaign.js`.
 - **Free mission:** the original mode (any mission, no agency) for classes and demos.
 - **Mission Library:** real facts and real NASA images, unlocked as the agency grows (`src/data/library.js`).
 - **Badges:** 16 achievements ("mission patches") in `src/engine/achievements.js`.
 - **Visual identity and sound:** see `DESIGN.md` ("Console Tupi"). Learning design: `docs/learning-design.md`.
 
-Optional, only if time allows: roles for up to 4 players on one device, leaderboard (local), sandbox mode.
+Team play (done): 1 to 4 players with roles (`src/engine/team.js`), on one device or each on their own device with a room code (decision of 2026-11-14):
+- The main device runs the game and is the only source of truth (`src/ui/app.js`). It sends a snapshot of the game after every change (`src/net/protocol.js`, field `mirror`); the players' devices draw the same screens from it (`src/ui/mirror.js`, `src/ui/remote.js`).
+- Each player has their own view (tab, numbers, meter details) and makes choices only on their turn: the role of the step (`roleForStep`), and the Mission Director on screens without a role. The main device checks the turn (`handleMessage` with `actor`) and does not play or vote for a player who has their own device.
+- Every player can open the report on their own device when the flight ends.
+
+Optional, only if time allows: leaderboard (local), sandbox mode.
 
 ## Source documents
-- `prd-space-mission-design-game.md`: product requirements (v0.5). Section 0.1 lists the decisions that win when documents disagree; sections 6 and 7 are the data and engine contracts; sections 14 and 15 cover the audience, learning, units, languages, campaign, Library and badges.
+- `prd-space-mission-design-game.md`: product requirements (v0.6). Section 0.1 lists the decisions that win when documents disagree; sections 6 and 7 are the data and engine contracts; sections 14 and 15 cover the audience, learning, units, languages, campaign, Library and badges; section 16 covers team play on several devices and the phone layout.
 - `DESIGN.md`: visual identity, components, motion and sounds. `docs/learning-design.md`: audience, what players learn, pedagogy, NASA open data, units, languages.
 - `Carlos.md`: Carlos's task list and the exact format of every file in `src/data/`.
 - The numbers live in `src/data/` and are guarded by `tests/data.test.js`. Do not copy numbers into the docs.
@@ -40,7 +45,7 @@ Optional, only if time allows: roles for up to 4 players on one device, leaderbo
 - Tests with Vitest for the rules engine.
 - **Free tools only.** Do not add paid services or API keys.
 - **Three.js (`three`) is approved** as the only 3D library, used as a visual layer (see "3D layer"). No React Three Fiber, no physics engine, no other game engine.
-- Keep other dependencies minimal. Ask before adding a library. Approved so far: `three`, and `flag-icons` (MIT, only the 17 partner flags are imported in `src/ui/flags.js`).
+- Keep other dependencies minimal. Ask before adding a library. Approved so far: `three`, `flag-icons` (MIT, only the 18 flags (partners, Europe and the United States) are imported in `src/ui/flags.js`) and `peerjs` (MIT, team play on several devices, loaded on demand in `src/net/room.js`; the free public PeerJS server only helps the devices find each other).
 - Fonts come from Google Fonts (SIL OFL); sounds are synthesized with the Web Audio API (no audio files).
 - Deploy target: static hosting (GitHub Pages or similar).
 
@@ -50,6 +55,7 @@ src/
   data/        # instruments, rockets, orbits, scenarios, events, content; campaign.js; library.js
   engine/      # pure functions: resources, compatibility, simulation, scoring, campaign, achievements
   state/       # game state (mission + campaign), actions, selectors, localStorage saving
+  net/         # team play on several devices: room code and messages (protocol.js, pure), connection (room.js)
   i18n/        # en.js, pt.js, es.js and t() / localizeData() / localizeList()
   ui/          # HTML/CSS screens and components (steps, title, setup, command center, library, badges), sound.js, flags.js
   view3d/      # Three.js scenes (spacecraft, flight, globe); read-only consumer of state

@@ -15,7 +15,8 @@ export function dots(value, max, scale = 'linear') {
 /**
  * One stat line: icon, label, then 3 dots or the exact number ("Show numbers"), never both,
  * so the line always fits in the card. The exact value is also in the tooltip.
- * @param {{ key: string, label: string, level?: number, text?: string, value: string, good?: boolean }} stat
+ * `wide: true` gives a long text the whole row and lets it wrap (for example "8,300 kg to high Earth orbit").
+ * @param {{ key: string, label: string, level?: number, text?: string, value: string, good?: boolean, wide?: boolean }} stat
  */
 function statRow(stat, showNumbers) {
   let marks;
@@ -26,7 +27,7 @@ function statRow(stat, showNumbers) {
       .map((step) => `<i class="${step <= (stat.level ?? 0) ? 'on' : ''}"></i>`)
       .join('')}</span><span class="sr-only">${esc(stat.value)}</span>`;
   }
-  return `<span class="stat" title="${esc(stat.label)}: ${esc(stat.value)}">
+  return `<span class="stat${stat.wide ? ' stat-wide' : ''}" title="${esc(stat.label)}: ${esc(stat.value)}">
       ${icon(stat.key, 16)}<span class="stat-label">${esc(stat.label)}</span>${marks}
     </span>`;
 }

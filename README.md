@@ -19,9 +19,10 @@ Space mission design is full of trade-offs: a better instrument adds science val
 - **Mission Library:** real missions and topics with real NASA images; every fact links to its official source. Entries unlock as the agency grows.
 - **Badges:** 16 mission patches for first steps, destinations, good engineering, learning and the agency.
 - **Free mission** mode for classes and demos: any mission, no agency.
+- **Team play** for 1 to 4 players: each player leads a role (Mission Director, Science Lead, Spacecraft Engineer, Communications), the game shows whose turn it is, the whole team votes GO / NO-GO before launch, and the report has a team debrief. Play on one device, or open a room with a code: each player then plays the game on their own device (phone, tablet or computer), with their own view, and makes the choices of their role on their turn (see [Team play](#team-play)).
 - **Three languages:** English, Portuguese and Spanish.
 - **Synthesized sounds** (Web Audio) with a mute button; fully playable muted.
-- Fits the screen on laptops and desktops (no page scroll); works on phones; 2D fallback without WebGL.
+- Fits the screen on laptops and desktops (no page scroll); on phones the meters stay in a strip on top and the main button stays at the bottom of the screen; 2D fallback without WebGL.
 
 ## Who it is for
 Teenagers and young adults (Generation Z, about 14 to 29 years old), and teachers who want a short class activity. No install, no account, playable on a phone or a school laptop. The game explains every result in plain words, uses SI units (like NASA's own projects) and links every real fact to its official source.
@@ -33,7 +34,7 @@ English (default), Portuguese and Spanish. Use the globe button or the **L** key
 
 ## Campaign
 Choose **New campaign** on the title screen:
-- **Found your agency.** Pick a country (the 2026 NASA Space Apps partner countries, plus Europe) and an agency focus. The focus gives one small bonus: more science (Earth Observation), shorter trips (Exploration) or cheaper research (Technology).
+- **Found your agency.** Pick a country (the 2026 NASA Space Apps partner countries, plus Europe and the United States) and an agency focus. The focus gives one small bonus: more science (Earth Observation), shorter trips (Exploration) or cheaper research (Technology).
 - **Grow from Earth to Mars.** Three phases unlock in order: Earth, Moon, Mars. Each phase is a full mission (the five steps below). The 3D globe in the command center lights up the Moon and Mars as they unlock.
 - **Manage the agency.** Each mission's budget is limited by the agency's funds, and every launch pays its real cost, even when it fails. A first success pays a government reward; every success gives science points from the science sent home.
 - **Earn more.** Side jobs bring funds or science (they can fail, and the cost is paid anyway), research spends science to improve parts, and agency events can help or hurt between missions.
@@ -55,6 +56,27 @@ There is no single right answer: different combinations of instruments, orbits a
 
 **Controls:** click or tap to choose · **Enter** next · **Backspace** back · **1–8** pick a card · **P** / **Esc** pause · **M** sound on/off · **L** language.
 
+## Team play
+Choose 2, 3 or 4 players on the **Free mission** or **New campaign** screen. Each player gets one or more roles; every role is always covered:
+
+| Role | Leads | Watches |
+|---|---|---|
+| Mission Director | step 1 (objective), step 3 (orbit and rocket), and the screens without a role (command center, menus, flight, report) | budget and time |
+| Science Lead | the Instruments tab of step 2 | science |
+| Spacecraft Engineer | the Power tab of step 2 | mass and power |
+| Communications | the Antenna tab of step 2 | data and communications |
+
+**On one device**, the players pass the device: the game shows whose turn it is and everyone votes GO / NO-GO on the same screen.
+
+**On several devices**, the main device (for example the class projector or a laptop) opens a room and shows a 5-character code and a link. Each player opens the link, or the game with **Join a room**, types the code and picks their player. Then:
+- **Each player has their own screen.** It shows the same game (the same spacecraft, meters, flight and report), in the player's own language. Each player can look around freely: open any tab, show the numbers, read a meter's details. That never changes anyone else's screen.
+- **Choices only on your turn.** The player whose turn it is makes the choices on their own device; the bar at the top says "Your turn!" and the phone vibrates. On step 2, switching to another tab passes the turn to that tab's role. A player who taps a choice out of turn sees whose turn it is.
+- **The main device does not play for them.** While it is the turn of a player who joined from their own device, the main device only shows the game; its clicks and keys do not make that player's choices, and it cannot vote for them. Players without their own device still play on the main device.
+- **GO / NO-GO.** Before launch each player sees their consoles' call and votes on their own device. Nobody can make choices during the poll and the countdown.
+- **Report for everyone.** When the flight ends, every player can open the report on their own device, without waiting for the Mission Director. The agency result (funds, phase unlocked) appears when the Mission Director opens the report.
+
+The devices connect directly to each other (see Credits). The main device runs the game and is the only one that saves it; the other devices only show it and send the player's choices.
+
 ## How to run
 Requires Node 20+ (tested with Node 24, Vite 8, Vitest 5).
 ```
@@ -73,9 +95,10 @@ src/
   engine/    pure rules: resources, validation, simulation, scoring, campaign, achievements
   state/     game state, actions, selectors, saving (localStorage)
   i18n/      languages: en.js, pt.js, es.js and the translation helpers
-  ui/        screens and components (HTML strings), sounds, flags
+  net/       team play on several devices: room codes, messages (protocol.js) and the connection (room.js)
+  ui/        screens and components (HTML strings), sounds, flags; remote.js and mirror.js are the player's own device
   view3d/    Three.js scenes: spacecraft, flight, globe (read-only)
-tests/       Vitest tests (rules, data, campaign, achievements, library, translations)
+tests/       Vitest tests (rules, data, campaign, achievements, library, translations, team play messages)
 docs/        learning design, pitch, demo script, submission draft
 DESIGN.md    visual identity ("Console Tupi") and sound design
 ```
@@ -110,6 +133,8 @@ All game values (mass, power, cost, data, rocket capacity, travel time, and the 
 - Earth: Blue Marble, NASA/Goddard Space Flight Center Scientific Visualization Studio ([svs.gsfc.nasa.gov/3615](https://svs.gsfc.nasa.gov/3615/))
 - Moon: CGI Moon Kit (LRO data), NASA's Scientific Visualization Studio ([svs.gsfc.nasa.gov/4720](https://svs.gsfc.nasa.gov/4720/))
 - Mars: Viking global color mosaic, NASA/JPL/USGS ([USGS Astrogeology](https://astrogeology.usgs.gov/search/map/mars_viking_global_color_mosaic_925m))
+
+**Team play on several devices:** [PeerJS](https://peerjs.com/) (MIT license). The players' devices connect directly to the main device (WebRTC); the free public PeerJS server is only used so they can find each other. No account and no API key.
 
 **Flags** (campaign): [flag-icons](https://github.com/lipis/flag-icons) by Panayiotis Lipiridis, MIT license. The country list comes from the [2026 Space Agency Partners](https://www.spaceappschallenge.org/2026/space-agency-partners/) page (checked 2026-11-14); the game shows countries only, not agency names.
 

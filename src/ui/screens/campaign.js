@@ -2,6 +2,7 @@
 // They only show the campaign and send actions; the rules live in src/engine/campaign.js.
 
 import { esc, fmt } from '../format.js';
+import { teamPicker } from '../components/team.js';
 import { icon } from '../components/icons.js';
 import { soundToggle, legend, langToggle } from '../components/overlays.js';
 import { flag } from '../flags.js';
@@ -26,11 +27,16 @@ const nameIn = (list, id) => list.find((item) => item.id === id)?.name ?? id;
 export const countryName = (id) => nameIn(L.countries(), id);
 const destination = (id) => t(`dest.${id}`);
 
-/** What the 3D globe should show for this campaign: the open destinations and the next one. */
-export function globeView(campaign) {
-  if (!campaign) return { unlocked: ['earth'], target: null }; // title and setup: just Earth, no marker
+/**
+ * What the 3D globe should show for this campaign: the open destinations, the next one,
+ * and the agency's home country (highlighted on the Earth).
+ * @param {object|null} campaign
+ * @param {string|null} [homeId] country being picked on the new agency screen (no campaign yet)
+ */
+export function globeView(campaign, homeId = null) {
+  if (!campaign) return { unlocked: ['earth'], target: null, home: homeId }; // title and setup: just Earth, no marker
   const unlocked = ['earth', ...phases.filter((phase) => phaseStatus(campaign, phase.id) !== 'locked').map((phase) => phase.id)];
-  return { unlocked: [...new Set(unlocked)], target: currentPhase(campaign)?.id ?? null };
+  return { unlocked: [...new Set(unlocked)], target: currentPhase(campaign)?.id ?? null, home: campaign.countryId ?? null };
 }
 
 /** One line of the agency log, in the current language. Old saves kept plain text. */
@@ -87,6 +93,7 @@ export function titleScreen({ saved }) {
             <button type="button" class="btn" data-action="free-play">${icon('rocket', 16)} ${t('title.free')}</button>
             <button type="button" class="btn" data-action="library">${icon('book', 16)} ${t('common.library')}</button>
             <button type="button" class="btn title-badges" data-action="badges">${icon('medal', 16)} ${t('badges.title')}</button>
+            <a class="btn title-join" href="?sala=">${icon('devices', 16)} ${t('room.join')}</a>
           </div>
         </div>
         ${legend()}
@@ -96,7 +103,7 @@ export function titleScreen({ saved }) {
 
 // --- New agency ---
 
-export function setupScreen({ setup }) {
+export function setupScreen({ setup, team = null, room = null }) {
   const country = setup.countryId;
   const focus = setup.focusId;
   const flags = L.countries()
@@ -131,6 +138,7 @@ export function setupScreen({ setup }) {
         <div class="countries">${flags}</div>
         <h3>${icon('bulb', 16)} ${t('setup.focus')}</h3>
         <div class="card-list">${focusCards}</div>
+        ${teamPicker(team, room)}
         <p class="setup-start">${t('setup.start')} ${readout(t('hub.funds'), fmt(START_FUNDS_MUSD), 'M USD')} ${readout(t('hub.science'), fmt(START_SCIENCE), t('unit.ptsWord'))}</p>
         <div class="setup-actions">
           <button type="button" class="btn" data-action="menu">${icon('back', 16)} ${t('common.back')}</button>
