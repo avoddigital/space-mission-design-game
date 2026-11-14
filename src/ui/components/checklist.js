@@ -1,6 +1,7 @@
 import { esc, fmt } from '../format.js';
 import { formatIssue } from '../../engine/messages.js';
 import { issueRoute } from '../../engine/phases.js';
+import { icon } from './icons.js';
 
 /** Which checklist line each issue belongs to. */
 function rowOf(issue) {
@@ -39,8 +40,17 @@ const PENDING_TEXT = {
   time: 'Pick an orbit.',
 };
 
-/** GO / NO-GO list. Every line that is not GO sends the player to the step that fixes it. */
-export function checklist(evaluation, content, data) {
+const LABELS = {
+  go: `${'<span class="check-mark">'}${icon('check', 14)}</span> GO`,
+  check: `<span class="check-mark">${icon('warn', 14)}</span> CHECK`,
+  nogo: `<span class="check-mark">${icon('cross', 14)}</span> NO-GO`,
+};
+
+/**
+ * GO / NO-GO list. Every line that is not GO sends the player to the step that fixes it.
+ * @param {{ currentStep?: number }} [options] the step the player is on, so the fix link reads right
+ */
+export function checklist(evaluation, content, data, { currentStep = 0 } = {}) {
   const { budget, issues } = evaluation;
   const lines = ROWS.map((row) => {
     const rowIssues = issues.filter((issue) => rowOf(issue) === row.key);
@@ -61,11 +71,10 @@ export function checklist(evaluation, content, data) {
       status = 'nogo';
       text = PENDING_TEXT[row.key] ?? 'Not set yet.';
     }
-    const label = { go: '✅ GO', check: '⚠️ CHECK', nogo: '❌ NO-GO' }[status];
-    const body = `<span class="check-label">${label}</span><span class="check-name">${row.name}</span><span class="check-text">${esc(text)}</span>`;
-    return status === 'go'
-      ? `<li class="check check-${status}">${body}</li>`
-      : `<li><button type="button" class="check check-${status}" data-action="go-step" data-value="${step}">${body}<span class="check-fix">Fix in step ${step} →</span></button></li>`;
+    const body = `<span class="check-label">${LABELS[status]}</span><span class="check-name">${icon(row.key, 16)} ${row.name}</span><span class="check-text">${esc(text)}</span>`;
+    if (status === 'go') return `<li class="check check-${status}">${body}</li>`;
+    const fix = step === currentStep ? 'Fix it on this step' : `Fix in step ${step} ${icon('next', 12)}`;
+    return `<li><button type="button" class="check check-${status}" data-action="go-step" data-value="${step}">${body}<span class="check-fix">${fix}</span></button></li>`;
   });
   return `<ul class="checklist" aria-label="Launch checklist">${lines.join('')}</ul>`;
 }

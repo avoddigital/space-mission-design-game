@@ -88,7 +88,12 @@ function resize() {
   const parent = renderer?.domElement.parentElement;
   if (!parent) return;
   const width = Math.max(1, parent.clientWidth);
-  const height = Math.round(Math.min(360, Math.max(200, width * 0.7)));
+  // On wide screens the CSS gives the slot a height (the game fits the window) and the canvas fills it.
+  // On phones the slot has no height of its own, so the canvas picks one from its width.
+  const fillsSlot = getComputedStyle(renderer.domElement).position === 'absolute';
+  const height = fillsSlot
+    ? Math.max(1, parent.clientHeight)
+    : Math.round(Math.min(520, Math.max(220, width * 0.72)));
   renderer.setSize(width, height, true);
   for (const view of [camera, flight?.camera].filter(Boolean)) {
     view.aspect = width / height;

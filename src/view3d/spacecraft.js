@@ -19,17 +19,34 @@ function getShared() {
       panel: new THREE.BoxGeometry(1, 0.03, 0.9),
     },
     material: {
-      gold: new THREE.MeshStandardMaterial({ color: 0xf0b92e, metalness: 0.55, roughness: 0.3, emissive: 0x3a2600 }),
-      silver: new THREE.MeshStandardMaterial({ color: 0xc9ced6, metalness: 0.8, roughness: 0.3 }),
-      dark: new THREE.MeshStandardMaterial({ color: 0x2a2f38, metalness: 0.4, roughness: 0.6 }),
-      cells: new THREE.MeshStandardMaterial({ color: 0x1d3f8a, metalness: 0.3, roughness: 0.4, emissive: 0x0a1a3a }),
-      dish: new THREE.MeshStandardMaterial({ color: 0xf2f2f2, metalness: 0.2, roughness: 0.5, side: THREE.DoubleSide }),
-      lens: new THREE.MeshStandardMaterial({ color: 0x56ccf2, metalness: 0.1, roughness: 0.1, emissive: 0x0d3b4f }),
-      laser: new THREE.MeshStandardMaterial({ color: 0xeb5757, emissive: 0x7a1010 }),
-      generic: new THREE.MeshStandardMaterial({ color: 0x8e9aaf, metalness: 0.5, roughness: 0.5 }),
+      // Toon shading (flat color bands) gives the craft a friendly, illustrated look.
+      gold: toon(0xf2b134, 0x3a2600),
+      silver: toon(0xd8dde6),
+      dark: toon(0x34313d),
+      cells: toon(0x2e46b8, 0x0a1030),
+      dish: toon(0xf1e8d6, 0, { side: THREE.DoubleSide }),
+      lens: toon(0x6fb3e8, 0x0d2b4f),
+      laser: toon(0xb5533a, 0x5a1d10),
+      generic: toon(0x8e9aaf),
     },
   };
   return shared;
+}
+
+let gradientMap = null;
+
+/** Three light steps, so the toon shading reads as a cartoon and not as a flat silhouette. */
+function toonGradient() {
+  if (gradientMap) return gradientMap;
+  gradientMap = new THREE.DataTexture(new Uint8Array([70, 160, 255]), 3, 1, THREE.RedFormat);
+  gradientMap.minFilter = THREE.NearestFilter;
+  gradientMap.magFilter = THREE.NearestFilter;
+  gradientMap.needsUpdate = true;
+  return gradientMap;
+}
+
+function toon(color, emissive = 0, extra = {}) {
+  return new THREE.MeshToonMaterial({ color, emissive, gradientMap: toonGradient(), ...extra });
 }
 
 /** Free the shared GPU resources (call when the 3D view is closed for good). */
@@ -38,6 +55,8 @@ export function disposeShared() {
   Object.values(shared.geometry).forEach((geometry) => geometry.dispose());
   Object.values(shared.material).forEach((material) => material.dispose());
   shared = null;
+  gradientMap?.dispose();
+  gradientMap = null;
 }
 
 function mesh(geometry, material, { position = [0, 0, 0], scale = [1, 1, 1], rotation = [0, 0, 0] } = {}) {

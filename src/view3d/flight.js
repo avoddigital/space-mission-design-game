@@ -81,7 +81,7 @@ export function createFlight() {
     camera.position.set(0, 1.2, 8.5);
     camera.lookAt(0, 1.2, 0);
 
-    const alarm = meshOf(new THREE.CylinderGeometry(1.1, 1.1, 0.02, 32), new THREE.MeshBasicMaterial({ color: 0xeb5757, transparent: true, opacity: 0 }));
+    const alarm = meshOf(new THREE.CylinderGeometry(1.1, 1.1, 0.02, 32), new THREE.MeshBasicMaterial({ color: 0xb5533a, transparent: true, opacity: 0 }));
     alarm.position.set(0, -0.48, 0);
     content.add(alarm);
 
@@ -91,13 +91,13 @@ export function createFlight() {
       const height = rocketHeight(rocket);
       const width = 0.12 + height * 0.05;
       body = new THREE.Group();
-      const tube = meshOf(new THREE.CylinderGeometry(width, width, height * 0.75, 20), new THREE.MeshStandardMaterial({ color: 0xf2f4f7, metalness: 0.2, roughness: 0.5 }));
+      const tube = meshOf(new THREE.CylinderGeometry(width, width, height * 0.75, 20), new THREE.MeshStandardMaterial({ color: 0xf1e8d6, metalness: 0.2, roughness: 0.5 }));
       tube.position.y = height * 0.375;
-      const nose = meshOf(new THREE.ConeGeometry(width, height * 0.25, 20), new THREE.MeshStandardMaterial({ color: 0x2d9cdb }));
+      const nose = meshOf(new THREE.ConeGeometry(width, height * 0.25, 20), new THREE.MeshStandardMaterial({ color: 0xf2b134 }));
       nose.position.y = height * 0.875;
       body.add(tube, nose);
       const finGeometry = own(new THREE.BoxGeometry(0.03, height * 0.18, width * 1.6));
-      const finMaterial = own(new THREE.MeshStandardMaterial({ color: 0x2a2f38 }));
+      const finMaterial = own(new THREE.MeshStandardMaterial({ color: 0x15141a }));
       for (let index = 0; index < 3; index += 1) {
         const fin = new THREE.Mesh(finGeometry, finMaterial);
         const angle = (index / 3) * Math.PI * 2;
@@ -206,7 +206,7 @@ export function createFlight() {
 
     const curve = new THREE.QuadraticBezierCurve3(start, control, end);
     const points = curve.getPoints(80);
-    const trail = new THREE.Line(own(new THREE.BufferGeometry().setFromPoints(points)), own(new THREE.LineBasicMaterial({ color: failure ? 0xeb5757 : 0x56ccf2 })));
+    const trail = new THREE.Line(own(new THREE.BufferGeometry().setFromPoints(points)), own(new THREE.LineBasicMaterial({ color: failure ? 0xb5533a : 0x6fb3e8 })));
     trail.geometry.setDrawRange(0, 0);
     content.add(trail);
     const craft = miniCraft(parts, 0.13);
@@ -234,12 +234,12 @@ export function createFlight() {
     const plane = new THREE.Group();
     plane.rotation.x = Math.PI / 2 - 0.8; // tilted so the orbit reads as an ellipse
     content.add(plane);
-    const ring = meshOf(new THREE.TorusGeometry(ringRadius, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: 0x56ccf2, transparent: true, opacity: 0.55 }));
+    const ring = meshOf(new THREE.TorusGeometry(ringRadius, 0.012, 6, 120), new THREE.MeshBasicMaterial({ color: 0x6fb3e8, transparent: true, opacity: 0.55 }));
     plane.add(ring);
     const craft = miniCraft(parts, 0.17);
     plane.add(craft);
 
-    const warning = meshOf(new THREE.SphereGeometry(0.36, 16, 10), new THREE.MeshBasicMaterial({ color: 0xff4d4d, transparent: true, opacity: 0.7 }));
+    const warning = meshOf(new THREE.SphereGeometry(0.36, 16, 10), new THREE.MeshBasicMaterial({ color: 0xb5533a, transparent: true, opacity: 0.7 }));
     warning.visible = false;
     plane.add(warning);
 
@@ -258,7 +258,7 @@ export function createFlight() {
     const pulses = [];
     if (phaseId === 'data') {
       const pulseGeometry = own(new THREE.SphereGeometry(0.07, 8, 6));
-      const pulseMaterial = own(new THREE.MeshBasicMaterial({ color: 0x56ccf2 }));
+      const pulseMaterial = own(new THREE.MeshBasicMaterial({ color: 0x6fb3e8 }));
       for (let index = 0; index < 14; index += 1) {
         const mesh = new THREE.Mesh(pulseGeometry, pulseMaterial);
         mesh.visible = false;

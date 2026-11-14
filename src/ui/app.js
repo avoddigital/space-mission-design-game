@@ -13,9 +13,11 @@ import { formatIssue } from '../engine/messages.js';
 import { menuScreen } from './screens/menu.js';
 import { objectiveScreen, spacecraftScreen, launchScreen } from './screens/design.js';
 import { simulationScreen, reportScreen, phasesToShow } from './screens/mission.js';
+import { libraryScreen } from './screens/library.js';
 import { meterDetail, METERS } from './components/meter.js';
-import { modal, toast, pauseOverlay } from './components/overlays.js';
+import { modal, toast, pauseOverlay, countdownOverlay, confetti } from './components/overlays.js';
 import { syncView3d } from './view3dHost.js';
+import { play, toggleMute } from './sound.js';
 
 const SCREENS = {
   objective: objectiveScreen,
@@ -41,6 +43,37 @@ const TOAST_MS = 4500;
 /** Time each simulation phase stays on screen before the next one appears. */
 const PHASE_MS = 1500;
 const SHAKE_MS = 400;
+/** Launch countdown: one number every COUNT_MS, then "Liftoff!" for LIFTOFF_MS. */
+const COUNT_MS = 700;
+const LIFTOFF_MS = 900;
+const CELEBRATE_MS = 3500;
+
+/**
+ * Sound for each action (DESIGN.md section 7). Actions missing here choose their own sound
+ * (picking parts, launching, the quiz) or stay silent.
+ */
+const ACTION_SOUNDS = {
+  'select-scenario': 'pick',
+  start: 'pick',
+  confirm: 'tab',
+  'go-step': 'tab',
+  menu: 'click',
+  restart: 'click',
+  pause: 'click',
+  tab: 'tab',
+  skip: 'click',
+  'toggle-numbers': 'click',
+  'see-report': 'open',
+  redesign: 'click',
+  'next-mission': 'pick',
+  meter: 'open',
+  'close-modal': 'close',
+  library: 'open',
+  'library-tab': 'tab',
+  'close-library': 'close',
+};
+
+const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 /**
  * @param {HTMLElement} root
@@ -48,9 +81,17 @@ const SHAKE_MS = 400;
  */
 export function mountApp(root, { store, data = gameData, storage }) {
   // Screen-only state (not part of the game): open tab, modal, toast, shaking meters.
-  const ui = { tab: 'instrument', modal: null, toast: null, shake: new Set(), simShown: 0 };
+  const ui = {
+    tab: 'instrument', modal: null, toast: null, shake: new Set(), simShown: 0,
+    showNumbers: false, // cards show dots by default; exact numbers on demand
+    countdown: null, // 3, 2, 1, 0 while the launch countdown runs
+    celebrate: false, // confetti after a successful simulation
+    library: null, // { tab } while the Mission Library is open (screen-only, the game keeps its state)
+  };
   let toastTimer = null;
   let phaseTimer = null;
+  let countdownTimer = null;
+  let celebrateTimer = null;
   // Keep focus on the same control after re-rendering only for keyboard users.
   // After a mouse click, focus goes back to the page, so Enter means "next step".
   let keyboardFocus = false;
@@ -64,7 +105,9 @@ export function mountApp(root, { store, data = gameData, storage }) {
       : null;
 
     let html;
-    if (state.screen === 'menu') {
+    if (ui.library) {
+      html = libraryScreen({ tab: ui.library.tab, inGame: state.screen !== 'menu' });
+    } else if (state.screen === 'menu') {
       html = menuScreen({ state, data, best: loadBest(storage) });
     } else {
       const ctx = {
@@ -81,12 +124,15 @@ export function mountApp(root, { store, data = gameData, storage }) {
       html = (SCREENS[state.screen] ?? objectiveScreen)(ctx);
     }
     if (ui.modal) html += modal(ui.modal);
-    if (state.paused) html += pauseOverlay();
+    if (state.paused && !ui.library) html += pauseOverlay();
     if (ui.toast) html += toast(ui.toast);
+    if (ui.countdown !== null) html += countdownOverlay(ui.countdown);
+    if (ui.celebrate) html += confetti();
     root.innerHTML = html;
+    root.classList.toggle('is-liftoff', ui.countdown === 0);
 
     // Optional 3D view: only reads the chosen parts and draws them.
-    if (state.screen !== 'menu') {
+    if (state.screen !== 'menu' && !ui.library) {
       const mission = selectMission(state, data);
       syncView3d(root, { ...mission, simulation: state.simulation, shown: ui.simShown }, { paused: state.paused || Boolean(ui.modal), onReady: render });
     } else {
@@ -114,6 +160,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
   /** Run a design action, then warn the player about any limit it broke. */
   function updateDesign(action, ...args) {
     const before = evaluate(store.getState());
+    const partsBefore = store.getState().design.partIds.length;
     store.update(action, ...args);
     const after = evaluate(store.getState());
 
@@ -127,6 +174,9 @@ export function mountApp(root, { store, data = gameData, storage }) {
     );
     const meterIssue = after.issues.find((issue) => broken.some((key) => METER_CODES[key].includes(issue.code)));
     const shown = newError ?? meterIssue;
+    const partsAfter = store.getState().design.partIds.length;
+    if (shown || broken.length) play(shown?.severity === 'warning' ? 'warn' : 'error');
+    else play(partsAfter < partsBefore ? 'unpick' : 'pick');
     if (shown) {
       const message = formatIssue(shown, data.content, data);
       showToast({ title: message.title, text: `${message.text} ${message.tip}`, tone: shown.severity === 'error' ? 'bad' : 'warn' });
@@ -151,20 +201,72 @@ export function mountApp(root, { store, data = gameData, storage }) {
         clearInterval(phaseTimer);
         return;
       }
-      if (state.paused) return;
+      if (state.paused || ui.library) return; // the flight waits while the player reads the library
       if (ui.simShown >= phasesToShow(state.simulation)) {
         clearInterval(phaseTimer);
         return;
       }
       ui.simShown += 1;
+      phaseSound(state.simulation, ui.simShown);
+      if (ui.simShown >= phasesToShow(state.simulation)) celebrate(state.simulation);
       render();
     }, PHASE_MS);
+  }
+
+  /** Chime for each finished phase, a warning when a surprise hurt, and the final verdict. */
+  function phaseSound(simulation, shown) {
+    const phase = simulation.phases[shown - 1];
+    if (!phase) return;
+    if (phase.ok === false) {
+      play('failure');
+      return;
+    }
+    play('phase');
+    if (phase.id === 'operations' && simulation.events.some((event) => event.harmed)) setTimeout(() => play('warn'), 350);
+    if (shown >= phasesToShow(simulation) && simulation.outcome === 'success') setTimeout(() => play('success'), 300);
+  }
+
+  /** Confetti when the simulation ends in success (screen-only, nothing in the game state). */
+  function celebrate(simulation) {
+    if (simulation?.outcome !== 'success' || reducedMotion()) return;
+    ui.celebrate = true;
+    clearTimeout(celebrateTimer);
+    celebrateTimer = setTimeout(() => {
+      ui.celebrate = false;
+      render();
+    }, CELEBRATE_MS);
   }
 
   function launchMission() {
     ui.simShown = 0; // reset before rendering, or a previous "Skip" would show the new run as finished
     store.update(launch, runSimulation(store.getState(), data));
     playTimeline();
+  }
+
+  /** T-minus 3, 2, 1, liftoff, then the simulation starts. Reduced motion skips straight to it. */
+  function startCountdown() {
+    if (ui.countdown !== null) return; // already counting
+    if (reducedMotion()) {
+      launchMission();
+      return;
+    }
+    ui.countdown = 3;
+    play('beep');
+    render();
+    const step = () => {
+      ui.countdown -= 1;
+      play(ui.countdown === 1 ? 'beepHigh' : ui.countdown === 0 ? 'liftoff' : 'beep');
+      render();
+      if (ui.countdown > 0) {
+        countdownTimer = setTimeout(step, COUNT_MS);
+      } else {
+        countdownTimer = setTimeout(() => {
+          ui.countdown = null;
+          launchMission();
+        }, LIFTOFF_MS);
+      }
+    };
+    countdownTimer = setTimeout(step, COUNT_MS);
   }
 
   function openReport() {
@@ -202,10 +304,19 @@ export function mountApp(root, { store, data = gameData, storage }) {
     'set-comms': (value) => updateDesign(setComms, value, data.parts),
     'set-orbit': (value) => updateDesign(setOrbit, value),
     'set-rocket': (value) => updateDesign(setRocket, value),
-    launch: () => launchMission(),
+    launch: () => startCountdown(),
     skip: () => {
+      const simulation = store.getState().simulation;
+      if (simulation && ui.simShown < phasesToShow(simulation)) {
+        setTimeout(() => play(simulation.outcome === 'success' ? 'success' : 'failure'), 80);
+      }
       ui.simShown = Number.MAX_SAFE_INTEGER;
       clearInterval(phaseTimer);
+      celebrate(store.getState().simulation);
+      render();
+    },
+    'toggle-numbers': () => {
+      ui.showNumbers = !ui.showNumbers;
       render();
     },
     'see-report': () => openReport(),
@@ -215,7 +326,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
     },
     'new-conditions': () => {
       store.update(newConditions);
-      launchMission();
+      startCountdown();
     },
     'next-mission': () => {
       const ids = data.scenarios.map((scenario) => scenario.id);
@@ -225,12 +336,33 @@ export function mountApp(root, { store, data = gameData, storage }) {
     },
     quiz: (value) => {
       const quiz = data.content?.scenarios?.[store.getState().scenarioId]?.quiz;
-      if (quiz) store.update(answerQuiz, Number(value), quiz.answer);
+      if (!quiz || store.getState().report?.quizAnswered) return;
+      play(Number(value) === quiz.answer ? 'right' : 'wrong');
+      store.update(answerQuiz, Number(value), quiz.answer);
     },
     meter: (value) => {
       const meta = data.content?.meters?.[value];
       const budget = evaluate(store.getState()).budget;
       ui.modal = { title: meta?.name ?? value, paragraphs: [meta?.text, meterDetail(value, budget)] };
+      render();
+    },
+    library: () => {
+      ui.library = { tab: 'missions' };
+      ui.modal = null;
+      if (store.getState().paused) store.update(togglePause);
+      render();
+      root.querySelector('.lib-scroll')?.focus();
+    },
+    'library-tab': (value) => {
+      ui.library = { tab: value };
+      render();
+    },
+    'close-library': () => {
+      ui.library = null;
+      render();
+    },
+    mute: () => {
+      toggleMute();
       render();
     },
     'close-modal': () => {
@@ -239,7 +371,15 @@ export function mountApp(root, { store, data = gameData, storage }) {
     },
   };
 
+  /** Run an action from a click or a key, with its sound. */
+  function run(action, value) {
+    if (!handlers[action]) return;
+    if (ACTION_SOUNDS[action]) play(ACTION_SOUNDS[action]);
+    handlers[action](value);
+  }
+
   root.addEventListener('click', (event) => {
+    if (ui.countdown !== null) return; // nothing can be changed during the countdown
     const element = event.target.closest('[data-action]');
     if (!element || !root.contains(element)) return;
     // event.detail is 0 when the click comes from the keyboard (Enter or Space on a button).
@@ -249,12 +389,13 @@ export function mountApp(root, { store, data = gameData, storage }) {
     if (element.getAttribute('aria-disabled') === 'true') {
       const reason = element.querySelector('.card-reason')?.textContent;
       element.classList.add('shake');
+      play('error');
       if (reason) showToast({ title: 'Not possible', text: reason, tone: 'warn' });
       setTimeout(() => element.classList.remove('shake'), SHAKE_MS);
       render();
       return;
     }
-    handlers[element.dataset.action]?.(element.dataset.value);
+    run(element.dataset.action, element.dataset.value);
   });
 
   document.addEventListener('keydown', (event) => {
@@ -263,31 +404,42 @@ export function mountApp(root, { store, data = gameData, storage }) {
     const key = event.key;
 
     if (key === 'Escape' && ui.modal) {
-      ui.modal = null;
-      render();
+      run('close-modal');
+      return;
+    }
+    if ((key === 'm' || key === 'M') && !event.target.closest?.('input, textarea')) {
+      run('mute');
+      return;
+    }
+    // The library is its own screen: Esc or Backspace closes it, other game keys do nothing there.
+    if (ui.library) {
+      if (key === 'Escape' || key === 'Backspace') {
+        event.preventDefault();
+        run('close-library');
+      }
       return;
     }
     if ((key === 'p' || key === 'P' || key === 'Escape') && state.screen !== 'menu') {
       event.preventDefault();
-      store.update(togglePause);
+      run('pause');
       return;
     }
-    if (state.paused || ui.modal) return;
+    if (state.paused || ui.modal || ui.countdown !== null) return;
 
     if (key === 'Enter' && event.target === document.body) {
       event.preventDefault();
-      if (state.screen === 'menu') handlers.start();
-      else if (state.screen === 'launch') handlers.launch();
+      if (state.screen === 'menu') run('start');
+      else if (state.screen === 'launch') run('launch');
       else if (state.screen === 'simulation') {
-        if (state.simulation && ui.simShown >= phasesToShow(state.simulation)) handlers['see-report']();
-        else handlers.skip();
+        if (state.simulation && ui.simShown >= phasesToShow(state.simulation)) run('see-report');
+        else run('skip');
       }
-      else if (STEP_OF[state.screen]) handlers.confirm(STEP_OF[state.screen]);
+      else if (STEP_OF[state.screen]) run('confirm', STEP_OF[state.screen]);
     } else if (key === 'Backspace') {
       event.preventDefault();
       const step = STEP_OF[state.screen];
-      if (step === 1) handlers.menu();
-      else if (step) handlers['go-step'](step - 1);
+      if (step === 1) run('menu');
+      else if (step) run('go-step', step - 1);
     } else if (/^[1-8]$/.test(key)) {
       const cards = root.querySelectorAll('[data-card]');
       cards[Number(key) - 1]?.click();

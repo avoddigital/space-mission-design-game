@@ -1,0 +1,123 @@
+# DESIGN.md — "Console Tupi" visual identity
+
+The look and sound of Tupi Orbit (Space Mission Design Game).
+This file is the source of truth for colors, type, shapes, motion and sound.
+Tokens live in `src/style.css` (`:root`) and sounds in `src/ui/sound.js`. If you change a value there, change it here too.
+
+## 1. The idea
+
+**The player sits at a 1960s mission control console.** Every screen is a piece of hardware:
+
+- **Metal plates** with four screws hold the panels (choices, meters, top bar).
+- **Plug-in modules** are the choices. Each module has a small status lamp that lights green when you pick it.
+- **Indicator lamps** say the state of things: GO (green), CAUTION (amber), NO-GO (orange alert). The checklist is an annunciator panel, like the warning lights in a real control room.
+- **Amber digit displays** show every number (budget, mass, days, score).
+- **The viewscreen** in the middle is a dark monitor in a thick bezel, with faint scan lines. The 3D spacecraft and the flight appear there.
+- **Portholes** show the planets on the main menu: round windows with a metal ring and glass reflection.
+- **The Launch button is guarded**: it has a yellow and black hazard-stripe frame, like a real arming switch.
+- **Placards**: the "Learn" boxes and fun facts are cream instruction plates riveted to the panel, like the instruction labels on real consoles.
+
+Why it fits: the game is about designing and flying a real mission, so the interface is the tool a mission team would use. Every decoration is a real console part with a job; nothing is there only to look nice.
+
+What we avoid: generic "AI space UI" (navy with neon cyan, glass with blur, purple gradients, glowing outlines everywhere), and also the "neobrutalist" look (thick black borders, hard offset shadows, flat sticker colors).
+
+## 2. Color
+
+One dark theme. The hardware is gray-green and neutral; **color only comes from lamps, displays and planets**, so anything colored means something.
+
+| Token | Name | Hex | Job |
+| --- | --- | --- | --- |
+| `--room` | Room | `#121514` | Page background (the room behind the console) |
+| `--console` | Console | `#2D3331` | Panel face |
+| `--console-hi` | Console highlight | `#3A423F` | Top of panels and modules (light from above) |
+| `--console-lo` | Recess | `#222725` | Recessed areas: gauges, inputs, readiness |
+| `--bezel` | Bezel | `#0C0E0D` | Display windows, lamp sockets, unlit LEDs |
+| `--label` | Label | `#E8E4D6` | Main text (engraved white) |
+| `--label-sub` | Label dim | `#9BA39D` | Secondary text |
+| `--placard` | Placard | `#E3DCC6` | Instruction plates (Learn, facts), with `--placard-ink` `#23211B` text |
+| `--lamp-go` | GO lamp | `#5CCF86` | GO, picked, success, power made |
+| `--lamp-caution` | Caution lamp | `#F2B33D` | Caution, the current step, the main lit button |
+| `--lamp-alert` | Alert lamp | `#E4733F` | NO-GO, over the limit, failure. A warm orange, not a bright red. |
+| `--lamp-on` | Info lamp | `#8EC5FF` | Normal level on a gauge, links, information |
+| `--digits` | Digits | `#FFBE55` | Numbers on displays, the "ORBIT" in the title |
+
+**Mission accents** (`--accent`, set by `[data-mission]`): Earth `#5C9AE6`, Moon `#B7B2D6`, Mars `#D9774A`. Used only for the mission name in the top bar, the horizon glow on the viewscreen and the score bar.
+
+Rules:
+- A lamp is either off (dark socket) or on (its color plus a soft glow of the same color). Never a glow without a lamp.
+- Status is never shown by color alone: every lamp has a word (GO, CHECK, NO-GO, Over limit) or an icon.
+- Text on dark is `--label` or `--label-sub`. Text on a lit lamp or button is a very dark tone of the same color, for contrast.
+- Gradients only for the light on metal (top lighter than bottom), the planets and the viewscreen sky.
+
+## 3. Type
+
+All fonts are free (Google Fonts, SIL Open Font License), loaded in `index.html` with `display=swap` and system fallbacks.
+
+| Role | Font | Use |
+| --- | --- | --- |
+| Display | **Big Shoulders Stencil** 700–800 | Titles, mission names, the verdict, countdown numbers. Stencil letters like the paint on rockets and launch pads. Always uppercase. |
+| Text | **B612** 400 / 700 | Everything people read. B612 was designed for aircraft cockpit screens, so it stays clear at small sizes. |
+| Data | **B612 Mono** 400 / 700 | Numbers, units, small labels and lamp captions (`120 kg`, `GO`, `T-MINUS`). |
+
+Small labels (section names, captions) are B612 Mono uppercase with wide letter spacing, followed by a thin engraved line, like labels printed on a console.
+
+## 4. Shape and material
+
+- **Corners:** small. `--r-1: 3px` (lamps, tags), `--r-2: 6px` (modules, panels, buttons). The viewscreen has `14px`, like an old monitor.
+- **Raised parts** (`--raised`): buttons, modules and plates have a thin light line on top and a dark line at the bottom, plus a small soft shadow.
+- **Recessed parts** (`--recessed`): gauges, display windows and the tab tray are pushed into the panel with an inner shadow.
+- **Screws** (`--screws`): four small screws in the corners of every plate (top bar, panels, menu cards, modals). Made with CSS gradients.
+- **Pressed state:** a pushed button moves 1px down and turns recessed.
+
+## 5. Layout
+
+- Top bar: the mission name in a display window, then the 5 steps as a row of annunciator lamps (amber = current step, green = done, dark = not yet).
+- Left: the choice panel. Middle: the viewscreen. Right: the gauge panel.
+- On screens 861px and wider the game fills the window and the page never scrolls; only a long list scrolls inside its own panel. On phones the page scrolls normally, in this order: steps, gauges, viewscreen, choices, footer. Touch targets are at least 44px.
+
+## 6. Motion
+
+- Short and mechanical: 80–180ms with `cubic-bezier(.2,.8,.2,1)`.
+- Lamps switch on with a quick flicker (`lamp-on`). A running phase and a "Risky" gauge blink slowly.
+- The Launch button pulses softly only when everything is GO.
+- Countdown numbers drop in like a range clock; liftoff shakes the console.
+- `prefers-reduced-motion` turns all animations off.
+
+## 7. Sound
+
+All sounds are **synthesized at runtime with the Web Audio API** (`src/ui/sound.js`). No audio files, no library, nothing to license. They match the console: switch clicks, short beeps and a rumble.
+
+| Event | Sound |
+| --- | --- |
+| Button / tab | soft click (very short triangle tick) |
+| Pick a part | two rising notes |
+| Remove a part | two falling notes |
+| Not allowed / limit broken | low double buzz |
+| Open a window | short rising tick |
+| Countdown 3-2-1 | one beep per number, higher on the last one |
+| Liftoff | filtered noise rumble that rises and fades (~2 s) |
+| Phase complete | short two-note chime |
+| Random event that hurt | warning blip |
+| Mission success | four-note rising arpeggio |
+| Mission failure | slow falling tone |
+| Quiz right / wrong | chime / buzz |
+
+Rules:
+- Sound starts only after the first click or key press (browser rule).
+- **Mute** button in the top bar and on the main menu, plus the `M` key. The choice is saved in `localStorage` (if storage is blocked, the game just does not remember it).
+- Master volume is low (0.18). No sound is longer than about 2 seconds, and nothing loops.
+- Every sound has a visual equivalent, so the game is fully playable muted.
+
+## 8. Icons and emblem
+
+- Line icons in `src/ui/components/icons.js`, 2px stroke, `currentColor`.
+- The emblem (menu and favicon) is a planet with its orbit and a small spacecraft with amber body, drawn in SVG.
+
+## 9. Checklist for new screens
+
+- Uses the tokens, not new hex values.
+- A new panel is a plate (`--screws`, `--raised`); a new value is shown in a recessed display with `--digits`.
+- Color appears only as a lamp, a display or a planet, and every lamp has a word.
+- Titles in the stencil font, numbers in B612 Mono.
+- New interactions call `play(...)` with an existing sound name before inventing a new one.
+- Works at 360px wide, with reduced motion, and without page scroll on a 1366×768 laptop.
