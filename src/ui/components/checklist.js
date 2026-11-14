@@ -1,6 +1,7 @@
 import { esc, fmt } from '../format.js';
 import { formatIssue } from '../../engine/messages.js';
 import { issueRoute } from '../../engine/phases.js';
+import { RISKY_RATIO } from './meter.js';
 
 /** Which checklist line each issue belongs to. */
 function rowOf(issue) {
@@ -52,6 +53,8 @@ export function checklist(evaluation, content, data) {
     let status = 'go';
     let text = row.ok(budget);
     let step = row.step;
+    let fixable = true;
+    const entry = budget[row.key];
     if (shown) {
       const message = formatIssue(shown, content, data);
       status = error ? 'nogo' : 'check';
@@ -60,10 +63,15 @@ export function checklist(evaluation, content, data) {
     } else if (pending) {
       status = 'nogo';
       text = PENDING_TEXT[row.key] ?? 'Not set yet.';
+    } else if (row.key !== 'science' && entry?.status === 'ok' && entry.ratio > RISKY_RATIO) {
+      // Same rule as the RISKY meter: it works, but surprises will hurt more.
+      status = 'check';
+      text = `Close to the limit (${Math.round(entry.ratio * 100)}%): ${row.ok(budget)} A surprise here will hurt the mission.`;
+      fixable = false;
     }
     const label = { go: '✅ GO', check: '⚠️ CHECK', nogo: '❌ NO-GO' }[status];
     const body = `<span class="check-label">${label}</span><span class="check-name">${row.name}</span><span class="check-text">${esc(text)}</span>`;
-    return status === 'go'
+    return status === 'go' || !fixable
       ? `<li class="check check-${status}">${body}</li>`
       : `<li><button type="button" class="check check-${status}" data-action="go-step" data-value="${step}">${body}<span class="check-fix">Fix in step ${step} →</span></button></li>`;
   });

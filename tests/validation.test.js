@@ -52,13 +52,23 @@ describe('validateMission', () => {
     expect(codes(strict)).not.toContain('NO_COMMS');
   });
 
-  it('warns about data backlog and low science without failing', () => {
+  it('warns about data backlog without failing', () => {
     const parts = [camera, camera, camera, solarPanel, antenna];
-    const result = validateMission(goodMission({ parts }), { ...earthScenario, minScience: 20 });
+    const result = validateMission(goodMission({ parts }), earthScenario);
     expect(result.ok).toBe(true);
-    expect(result.issues).toEqual([
-      { code: 'DATA_BACKLOG', severity: 'warning', excessGbPerDay: 20 },
-      { code: 'LOW_SCIENCE', severity: 'warning', scienceValue: 18, minScience: 20 },
-    ]);
+    expect(result.issues).toEqual([{ code: 'DATA_BACKLOG', severity: 'warning', excessGbPerDay: 20 }]);
+  });
+
+  it('low science is an error, counting only the science that reaches Earth', () => {
+    // 3 cameras: 18 science, but only 100 of 120 GB/day reach Earth: 15 delivered.
+    const parts = [camera, camera, camera, solarPanel, antenna];
+    const result = validateMission(goodMission({ parts }), { ...earthScenario, minScience: 16 });
+    expect(result.ok).toBe(false);
+    expect(result.issues).toContainEqual({ code: 'LOW_SCIENCE', severity: 'error', scienceValue: 15, minScience: 16 });
+  });
+
+  it('does not add a science error when there is no antenna (the comms error explains it)', () => {
+    const result = validateMission(goodMission({ parts: [camera, solarPanel] }), earthScenario);
+    expect(result.issues.map((issue) => issue.code)).not.toContain('LOW_SCIENCE');
   });
 });

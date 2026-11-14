@@ -154,3 +154,14 @@ export function computeBudget(mission, scenario) {
 
   return { mass, power, budget, data, comms, time, science, scienceValue: totals.scienceValue };
 }
+
+/**
+ * Science the mission actually delivers. If the antennas cannot send all the data,
+ * only the share that reaches Earth counts.
+ */
+export function effectiveScience(budget) {
+  const { producedGbPerDay, downlinkGbPerDay } = budget.data;
+  if (!budget.comms.ok) return 0;
+  if (producedGbPerDay <= 0 || downlinkGbPerDay >= producedGbPerDay) return budget.scienceValue;
+  return budget.scienceValue * (downlinkGbPerDay / producedGbPerDay);
+}

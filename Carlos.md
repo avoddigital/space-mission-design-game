@@ -119,7 +119,7 @@ Os números entram com `{nome}` entre chaves, e o jogo substitui pelo valor. Use
 | `OVER_TIME` | a missão passa do prazo | `{excessDays}` | erro |
 | `NO_COMMS` | não tem antena | nenhum | erro |
 | `DATA_BACKLOG` | a antena não consegue enviar todos os dados | `{excessGbPerDay}` | aviso |
-| `LOW_SCIENCE` | ciência abaixo do objetivo | `{scienceValue}`, `{minScience}` | aviso |
+| `LOW_SCIENCE` | ciência que chega à Terra abaixo do objetivo (a missão sempre falha) | `{scienceValue}`, `{minScience}` | erro |
 
 ```js
 issues: {

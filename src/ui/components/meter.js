@@ -9,13 +9,16 @@ export const METERS = Object.freeze({
   time: { read: (b) => ({ entry: b.time, used: b.time.totalDays, limit: b.time.limitDays }), unit: 'days', pending: 'Pick an orbit' },
 });
 
+/** From this share of the limit a meter reads RISKY and the checklist says CHECK. */
+export const RISKY_RATIO = 0.9;
+
 const TAGS = { ok: 'OK', tight: 'TIGHT', over: 'OVER THE LIMIT', pending: 'NOT SET' };
 
 /** Bar color by how full it is (PRD 8.2): blue, amber, orange, red. */
 function tone(entry) {
   if (entry.status === 'pending') return 'pending';
   if (entry.status === 'over') return 'bad';
-  if (entry.status === 'tight' || entry.ratio > 0.9) return 'risky';
+  if (entry.status === 'tight' || entry.ratio > RISKY_RATIO) return 'risky';
   if (entry.ratio > 0.67) return 'warn';
   return 'ok';
 }
@@ -31,10 +34,25 @@ function barWidth(entry) {
   return Math.min(100, Math.round((entry.ratio ?? 0) * 100));
 }
 
-/** One meter as a button: tapping it opens the explanation. */
-export function meter(key, budget, meta, { shake = false } = {}) {
+/** Signed change, for previews: "+65", "−20". */
+function change(now, before) {
+  if (typeof now !== 'number' || typeof before !== 'number') return '';
+  const diff = Math.round((now - before) * 10) / 10;
+  if (diff === 0) return '';
+  return `${diff > 0 ? '+' : '−'}${fmt(Math.abs(diff))}`;
+}
+
+/** One meter as a button: tapping it opens the explanation. With `baseline`, it shows the change. */
+export function meter(key, budget, meta, { shake = false, baseline = null } = {}) {
   const { read, unit, pending } = METERS[key];
   const { entry, used, limit } = read(budget);
+  let delta = '';
+  if (baseline) {
+    const before = read(baseline);
+    const usedChange = change(used, before.used);
+    const limitChange = change(limit, before.limit);
+    delta = [usedChange && `${usedChange} ${unit}`, limitChange && `limit ${limitChange}`].filter(Boolean).join(' · ');
+  }
   let value = `${fmt(used)} / ${limit === null ? '—' : fmt(limit)} ${unit}`;
   if (entry.status === 'pending' && pending) value = pending;
   else if (key === 'mass' && limit === 0) value = "This rocket can't reach this orbit";
@@ -46,13 +64,14 @@ export function meter(key, budget, meta, { shake = false } = {}) {
         <span class="tag">${tagFor(entry)}</span>
       </span>
       <span class="meter-bar"><span class="meter-fill" style="width:${barWidth(entry)}%"></span></span>
-      <span class="meter-value">${esc(value)}</span>
+      <span class="meter-value">${esc(value)}${delta ? ` <span class="meter-delta">(${esc(delta)})</span>` : ''}</span>
     </button>`;
 }
 
 /** Science line: more is better, so it fills toward the goal. */
-export function scienceMeter(budget) {
+export function scienceMeter(budget, baseline = null) {
   const { value, goal, ok } = budget.science;
+  const delta = baseline ? change(value, baseline.science.value) : '';
   const width = goal > 0 ? Math.min(100, Math.round((value / goal) * 100)) : 100;
   return `
     <div class="meter tone-${ok ? 'good' : 'pending'}" aria-label="Science: ${value} of goal ${goal}">
@@ -61,7 +80,7 @@ export function scienceMeter(budget) {
         <span class="tag">${ok ? 'GOAL REACHED' : 'BELOW GOAL'}</span>
       </span>
       <span class="meter-bar"><span class="meter-fill" style="width:${width}%"></span></span>
-      <span class="meter-value">${fmt(value)} / goal ${fmt(goal)} points</span>
+      <span class="meter-value">${fmt(value)} / goal ${fmt(goal)} points${delta ? ` <span class="meter-delta">(${delta})</span>` : ''}</span>
     </div>`;
 }
 

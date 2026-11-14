@@ -7,6 +7,10 @@ import { scoreMission } from '../../src/engine/scoring.js';
 
 const byType = (parts, type) => parts.filter((part) => part.type === type);
 
+/** Valid while building: no errors except "not enough science yet", which more instruments fix. */
+const validWhileBuilding = (mission, scenario) =>
+  validateMission(mission, scenario).issues.every((issue) => issue.severity !== 'error' || issue.code === 'LOW_SCIENCE');
+
 function powerOptions(powerParts) {
   const options = powerParts.map((part) => [part]);
   for (let i = 0; i < powerParts.length; i += 1) {
@@ -31,7 +35,7 @@ export function findWinningMission(scenario, { parts, rockets, orbits }) {
           let chosen = [comms, ...power];
           for (const instrument of instruments) {
             const candidate = [...chosen, instrument];
-            if (validateMission({ parts: candidate, rocket, orbit }, scenario).ok) chosen = candidate;
+            if (validWhileBuilding({ parts: candidate, rocket, orbit }, scenario)) chosen = candidate;
           }
           const mission = { parts: chosen, rocket, orbit };
           const score = scoreMission(mission, scenario);

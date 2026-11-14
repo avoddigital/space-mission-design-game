@@ -159,8 +159,9 @@ kbd {
 }
 
 .card:hover {
-  transform: scale(1.02);
+  /* Highlight without changing size: scaling made cards jitter with the pointer near an edge. */
   border-color: var(--hi);
+  box-shadow: 0 0 14px rgba(86, 204, 242, 0.35);
 }
 
 .card.is-selected {
@@ -174,7 +175,7 @@ kbd {
 }
 
 .card.is-disabled:hover {
-  transform: none;
+  box-shadow: none;
 }
 
 .card-head {
@@ -382,6 +383,7 @@ kbd {
 
 .meters {
   grid-area: meters;
+  position: relative;
   display: grid;
   align-content: start;
   gap: 8px;
@@ -597,8 +599,11 @@ div.meter {
 }
 
 .meter-value {
+  overflow: hidden;
   font-size: 0.85rem;
   font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis; /* one line always, so previews never change the height */
 }
 
 .tone-ok .meter-fill { background: var(--sel); }
@@ -968,6 +973,322 @@ button.check {
   border: 1px solid var(--warn);
 }
 
+.toast-good {
+  background: #173f2a;
+  border: 1px solid var(--good);
+}
+
+/* --- UX: next-step hint, tags, preview, banner, transitions --- */
+
+.next-hint {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 10px;
+  margin: 0 0 10px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--hi);
+  border-radius: 8px;
+  background: rgba(86, 204, 242, 0.1);
+  font-weight: 700;
+}
+
+.hint-warn {
+  border-left-color: var(--warn);
+  background: rgba(242, 201, 76, 0.12);
+}
+
+.hint-good {
+  border-left-color: var(--good);
+  background: rgba(39, 174, 96, 0.14);
+}
+
+.hint-button {
+  min-height: 36px;
+  padding: 4px 10px;
+  border: 1px solid var(--hi);
+  border-radius: 999px;
+  background: none;
+  color: var(--hi);
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.tag-warn {
+  background: var(--warn);
+  color: #1b1b1b;
+}
+
+.tag-bad {
+  background: var(--bad);
+  color: #fff;
+}
+
+.meters.is-preview {
+  border-style: dashed;
+  border-color: var(--hi);
+}
+
+.preview-label {
+  /* Floats over the panel border, so showing it does not move anything. */
+  position: absolute;
+  top: -11px;
+  right: 12px;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--bg);
+  margin: 0;
+  color: var(--hi);
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.meter-delta {
+  color: var(--hi);
+  font-weight: 800;
+}
+
+.stage-banner {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  z-index: 25;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--good);
+  color: #fff;
+  font-weight: 900;
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
+  transform: translateX(-50%);
+  animation: banner-in 1600ms ease-out both;
+}
+
+.is-entering .cards-panel,
+.is-entering .stage,
+.is-entering .meters,
+.menu.is-entering {
+  animation: enter 220ms ease-out both;
+}
+
+/* --- Gamification: stars, rank, badges, confetti --- */
+
+.stars {
+  display: inline-flex;
+  gap: 2px;
+  color: var(--gold);
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.star {
+  color: var(--sub);
+}
+
+.star.is-on {
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(255, 209, 102, 0.6);
+}
+
+.star.is-pop {
+  animation: star-pop 450ms ease-out var(--delay) both;
+}
+
+.topbar-rewards {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--gold);
+  border-radius: 999px;
+  color: var(--gold);
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.topbar-rewards .stars {
+  font-size: 1rem;
+}
+
+.projection {
+  display: grid;
+  gap: 4px;
+  padding: 10px;
+  border: 1px solid var(--gold);
+  border-radius: 10px;
+  background: rgba(255, 209, 102, 0.08);
+}
+
+.projection.is-blocked {
+  border-color: var(--line);
+  background: rgba(8, 17, 31, 0.5);
+}
+
+.projection-title {
+  font-weight: 800;
+}
+
+.projection-title small,
+.projection-goals,
+.projection-note {
+  color: var(--sub);
+  font-size: 0.8rem;
+}
+
+.projection-body {
+  min-height: 2.4rem; /* same height with a score or with the "fix" message */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.projection-score {
+  font-size: 1.6rem;
+  font-weight: 900;
+}
+
+.rank-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0 20px;
+  padding: 12px 16px;
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  background: rgba(255, 209, 102, 0.08);
+}
+
+.rank-icon {
+  font-size: 2rem;
+}
+
+.rank-body {
+  display: grid;
+  flex: 1;
+  gap: 4px;
+}
+
+.rank-name {
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--gold);
+}
+
+.rank-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+}
+
+.rank-bar span {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+}
+
+.rank-next {
+  color: var(--sub);
+  font-size: 0.9rem;
+}
+
+.badges-section {
+  margin-top: 24px;
+}
+
+.badge-grid,
+.badge-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.badge-item,
+.badge-new {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+
+.badge-item:not(.is-on) {
+  opacity: 0.55;
+}
+
+.badge-item.is-on {
+  border-color: var(--gold);
+}
+
+.badge-icon {
+  font-size: 1.6rem;
+}
+
+.badge-new {
+  border-color: var(--gold);
+  background: rgba(255, 209, 102, 0.12);
+  animation: star-pop 500ms ease-out 900ms both;
+}
+
+.rewards {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.rewards-stars {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 12px;
+}
+
+.rewards-stars .stars {
+  font-size: 2.4rem;
+}
+
+.promotion {
+  margin: 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 209, 102, 0.18);
+  font-size: 1.1rem;
+  text-align: center;
+  animation: star-pop 500ms ease-out 1200ms both;
+}
+
+.confetti {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti i {
+  position: absolute;
+  top: -12px;
+  width: 8px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--color);
+  animation: confetti-fall var(--duration) ease-in var(--delay) forwards;
+}
+
 /* --- Animations --- */
 
 .shake {
@@ -983,6 +1304,28 @@ button.check {
   50% { opacity: 0.6; }
 }
 
+@keyframes enter {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes banner-in {
+  0% { opacity: 0; transform: translate(-50%, -12px); }
+  12%, 80% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -6px); }
+}
+
+@keyframes star-pop {
+  0% { transform: scale(0.2); opacity: 0; }
+  70% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes confetti-fall {
+  0% { transform: translateY(0) rotate(0); opacity: 1; }
+  100% { transform: translateY(105vh) rotate(var(--spin)); opacity: 0; }
+}
+
 @keyframes fail-pulse {
   50% { box-shadow: 0 0 0 4px rgba(235, 87, 87, 0.6); }
 }
@@ -994,6 +1337,10 @@ button.check {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .confetti {
+    display: none;
+  }
+
   *,
   *::before,
   *::after {

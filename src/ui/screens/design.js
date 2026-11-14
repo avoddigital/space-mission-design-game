@@ -5,6 +5,8 @@ import { card } from '../components/card.js';
 import { meter, scienceMeter } from '../components/meter.js';
 import { checklist } from '../components/checklist.js';
 import { learnBox, legend } from '../components/overlays.js';
+import { nextStep, hintLine } from '../components/hint.js';
+import { projectionCard, topbarRewards } from '../components/rewards.js';
 
 const STEPS = [
   { step: 1, screen: 'objective', label: 'Objective' },
@@ -56,30 +58,38 @@ function craftStage(mission) {
     ${craftDiagram(mission)}`;
 }
 
-function metersPanel(evaluation, content, shake) {
+/**
+ * The 5 meters and the science line. With `baseline`, it is a preview:
+ * the meters show the values after a possible choice, with the change from now.
+ */
+export function metersPanel(evaluation, content, shake = new Set(), baseline = null, previewLabel = 'Preview: if you pick this', projection = null) {
   return `
-    <section class="meters" aria-label="Resources">
-      ${['budget', 'mass', 'power', 'data', 'time'].map((key) => meter(key, evaluation.budget, content.meters?.[key], { shake: shake.has(key) })).join('')}
-      ${scienceMeter(evaluation.budget)}
+    <section class="meters${baseline ? ' is-preview' : ''}" aria-label="Resources">
+      ${baseline ? `<p class="preview-label">${esc(previewLabel)}</p>` : ''}
+      ${['budget', 'mass', 'power', 'data', 'time'].map((key) => meter(key, evaluation.budget, content.meters?.[key], { shake: shake.has(key), baseline: baseline?.budget })).join('')}
+      ${scienceMeter(evaluation.budget, baseline?.budget)}
+      ${projection ? projectionCard(projection.score, projection.baseline) : ''}
     </section>`;
 }
 
 /** Shared layout: header with steps, cards on the left, stage in the middle, meters on the right. */
-export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false }) {
+export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false, hint = '', progress = null, projected = null }) {
   // On phones, result screens (simulation and report) show the left panel first.
   return `
     <div class="game${results ? ' layout-results' : ''}">
       <header class="topbar">
         <span class="mission-name">${esc(scenario.name)}</span>
+        ${progress ? topbarRewards(progress, scenario.id) : ''}
         ${stepTabs(state)}
         <button type="button" class="btn btn-icon" data-action="pause" aria-label="Pause">⏸</button>
       </header>
       <section class="panel cards-panel" aria-labelledby="panel-title">
         <h2 id="panel-title">${esc(title)}</h2>
+        ${hint}
         ${cards}
       </section>
       <section class="stage" aria-label="Mission view">${stage}</section>
-      ${metersPanel(evaluation, content, shake)}
+      ${metersPanel(evaluation, content, shake, null, undefined, projected && ['spacecraft', 'launch'].includes(state.screen) ? { score: projected } : null)}
       <footer class="footer">${footer}${legend()}</footer>
     </div>`;
 }
@@ -104,6 +114,7 @@ export function objectiveScreen(ctx) {
   return gameLayout({
     ...ctx,
     title: 'Step 1 · Your mission',
+    hint: hintLine(nextStep('objective', ctx)),
     cards,
     stage: craftStage(ctx.mission),
     footer: `<button type="button" class="btn" data-action="menu">← Missions</button>
@@ -162,6 +173,7 @@ export function spacecraftScreen(ctx) {
   return gameLayout({
     ...ctx,
     title: 'Step 2 · Build your spacecraft',
+    hint: hintLine(nextStep('spacecraft', ctx), ctx.ui.tab),
     cards: `${tabs}<div class="card-list">${cards}</div>${learnBox(content.learn?.spacecraft)}`,
     stage: craftStage(ctx.mission),
     footer: `<button type="button" class="btn" data-action="go-step" data-value="1">← Back</button>
@@ -170,6 +182,20 @@ export function spacecraftScreen(ctx) {
 }
 
 // --- Step 3: launch and orbit ---
+
+/** Quick answers on each rocket card: does my spacecraft fit, and can I pay for it? */
+function rocketTags(rocket, capacity, { evaluation, mission }) {
+  if (!capacity) return [];
+  const { mass, budget } = evaluation.budget;
+  const tags = [];
+  const free = capacity - mass.usedKg;
+  if (free < 0) tags.push({ text: `Too small: ${fmt(-free)} kg over`, tone: 'bad' });
+  else if (free / capacity < 0.1) tags.push({ text: `Fits, but tight: ${fmt(free)} kg free`, tone: 'warn' });
+  else tags.push({ text: `Fits ✓ ${fmt(free)} kg free`, tone: 'good' });
+  const costWithRocket = budget.usedMUsd - (mission.rocket?.costMUsd ?? 0) + rocket.costMUsd;
+  if (costWithRocket > budget.limitMUsd) tags.push({ text: `Over budget by ${fmt(costWithRocket - budget.limitMUsd)} M USD`, tone: 'bad' });
+  return tags;
+}
 
 export function launchScreen(ctx) {
   const { state, data, scenario, evaluation, content } = ctx;
@@ -205,6 +231,7 @@ export function launchScreen(ctx) {
         title: rocket.name,
         description: rocket.description,
         stats,
+        tags: rocketTags(rocket, capacity, ctx),
         selected: state.design.rocketId === rocket.id,
         disabled: orbit !== null && capacity === 0,
         reason: orbit ? `Can't reach ${TARGET_NAMES[orbit.target]}.` : '',
@@ -212,6 +239,7 @@ export function launchScreen(ctx) {
     })
     .join('');
   const ready = evaluation.ok;
+  const checks = checklist(evaluation, content, data);
   const cards = `
     <h3>Orbit</h3><div class="card-list">${orbitCards}</div>
     <h3>Rocket</h3>
@@ -220,13 +248,14 @@ export function launchScreen(ctx) {
     ${learnBox(content.learn?.launch)}`;
   const stage = `
     <h3>Launch checklist</h3>
-    ${checklist(evaluation, content, data)}
+    ${checks}
     <p class="launch-note${ready ? ' is-ready' : ''}">${
-      ready ? 'All systems GO. Good luck!' : 'Some lines are red. You can still launch, but physics does not negotiate: the mission will fail.'
+      ready ? (checks.includes('check-check') ? 'GO, with small margins on the yellow lines. Good luck!' : 'All systems GO. Good luck!') : 'Some lines are red. You can still launch, but physics does not negotiate: the mission will fail.'
     }</p>`;
   return gameLayout({
     ...ctx,
     title: 'Step 3 · Orbit and rocket',
+    hint: hintLine(nextStep('launch', ctx)),
     cards,
     stage,
     footer: `<button type="button" class="btn" data-action="go-step" data-value="2">← Back</button>

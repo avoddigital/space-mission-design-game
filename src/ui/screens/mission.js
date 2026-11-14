@@ -5,6 +5,7 @@ import { formatIssue, fillText } from '../../engine/messages.js';
 import { checklist } from '../components/checklist.js';
 import { learnBox } from '../components/overlays.js';
 import { gameLayout } from './design.js';
+import { reportRewards, confetti } from '../components/rewards.js';
 
 const PHASE_NAMES = { launch: 'Launch', transfer: 'Transfer', operations: 'Operations', data: 'Data return' };
 
@@ -79,6 +80,15 @@ export function simulationScreen(ctx) {
     ? `<p class="sim-result ${simulation.outcome === 'success' ? 'is-success' : 'is-failure'}">${simulation.outcome === 'success' ? 'Mission complete!' : 'Mission failed.'}</p>`
     : '';
 
+  const failedAtLaunch = simulation.phases[0]?.ok === false;
+  const caption = !done
+    ? 'Your mission is underway…'
+    : simulation.outcome === 'success'
+      ? 'Mission complete. Open the report to see your score.'
+      : failedAtLaunch
+        ? 'The mission ended at launch. Open the report to see why.'
+        : 'The mission failed. Open the report to see why.';
+
   return gameLayout({
     ...ctx,
     title: 'Step 4 · Simulation',
@@ -86,7 +96,7 @@ export function simulationScreen(ctx) {
     cards: `<ol class="timeline" aria-live="polite">${timeline}</ol>${result}${learnBox(ctx.content.learn?.simulation)}`,
     stage: `<div class="sim-stage${done && simulation.outcome === 'failure' ? ' is-failed' : ''}">
       <div class="view3d-slot" data-view3d="flight"><p class="view3d-note">Loading 3D view…</p></div>
-      ${events || '<p class="hint">Your mission is underway…</p>'}</div>`,
+      ${events || `<p class="hint">${caption}</p>`}</div>`,
     footer: done
       ? '<button type="button" class="btn btn-primary" data-action="see-report">See the report →</button>'
       : '<button type="button" class="btn" data-action="skip">Skip animation ⏭</button>',
@@ -103,7 +113,7 @@ function scoreBlock(score) {
   ];
   return `
     <div class="score">
-      <span class="score-total">${score.total}<small> / 100</small></span>
+      <span class="score-total"><span class="score-number" data-count-to="${score.total}">${score.total}</span><small> / 100</small></span>
       <ul class="score-parts">${parts.map((part) => `<li><span>${part.name}</span><strong>${part.value} / ${part.max}</strong></li>`).join('')}</ul>
     </div>`;
 }
@@ -181,6 +191,7 @@ export function reportScreen(ctx) {
 
   const cards = `
     ${header}
+    ${reportRewards(report)}
     ${why}
     ${lessons ? `<section><h3>Surprises and what engineers do about them</h3><ul class="lessons">${lessons}</ul></section>` : ''}
     ${learnBox(learn)}
@@ -191,7 +202,7 @@ export function reportScreen(ctx) {
     ${checklist({ budget: simulation.budget, issues: simulation.issues }, content, data)}
     ${realMissions(scenarioText.realMissions)}`;
 
-  return gameLayout({
+  const layout = gameLayout({
     ...ctx,
     title: `Step 5 · Mission report (attempt ${state.runCount})`,
     results: true,
@@ -203,4 +214,6 @@ export function reportScreen(ctx) {
       <button type="button" class="btn" data-action="next-mission">Next mission →</button>
       <button type="button" class="btn" data-action="menu">Main menu</button>`,
   });
+  // Confetti only right after a successful mission (the app sets ui.celebrateUntil).
+  return success && ctx.ui.celebrateUntil > Date.now() ? layout + confetti() : layout;
 }

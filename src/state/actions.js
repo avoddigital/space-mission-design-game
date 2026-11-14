@@ -94,7 +94,7 @@ export function newConditions(state) {
 
 /** Show the final report. `report` holds the score and the best score result. */
 export function showReport(state, report) {
-  const confirmedSteps = [...new Set([...state.confirmedSteps, 3, 4])];
+  const confirmedSteps = [...new Set([...state.confirmedSteps, 1, 2, 3, 4])]; // reaching the report means every design step was done
   return { ...state, screen: STEP_SCREENS[5], report: { ...report, quizAnswered: false }, confirmedSteps, paused: false };
 }
 

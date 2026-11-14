@@ -45,3 +45,8 @@ export function runSimulation(state, data = gameData) {
 export function selectScore(state, data = gameData) {
   return scoreMission(selectMission(state, data), selectScenario(state, data), state.simulation);
 }
+
+/** Score the current design would get before random events (0 to 100). Shown live while designing. */
+export function selectProjectedScore(state, data = gameData) {
+  return scoreMission(selectMission(state, data), selectScenario(state, data));
+}

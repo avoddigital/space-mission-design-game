@@ -3,6 +3,7 @@
 // For now it scores the design only; simulation results will be added later.
 
 import { validateMission } from './validation.js';
+import { effectiveScience } from './resources.js';
 
 export const SCORE_WEIGHTS = Object.freeze({ science: 50, efficiency: 30, objective: 20 });
 
@@ -14,16 +15,8 @@ export const FULL_MARGIN_RATIO = 0.2;
 
 const clamp01 = (value) => Math.min(1, Math.max(0, value));
 
-/**
- * Science the mission actually delivers. If the antennas cannot send all the data,
- * only the share that reaches Earth counts.
- */
-export function effectiveScience(budget) {
-  const { producedGbPerDay, downlinkGbPerDay } = budget.data;
-  if (!budget.comms.ok) return 0;
-  if (producedGbPerDay <= 0 || downlinkGbPerDay >= producedGbPerDay) return budget.scienceValue;
-  return budget.scienceValue * (downlinkGbPerDay / producedGbPerDay);
-}
+// effectiveScience lives in resources.js (validation needs it too); re-exported here for existing imports.
+export { effectiveScience };
 
 /**
  * @param {{ parts: object[], rocket?: object, orbit?: object }} mission resolved objects, not ids

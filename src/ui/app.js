@@ -7,11 +7,13 @@ import {
 } from '../state/actions.js';
 import {
   gameData, selectScenario as selectScenarioData, selectMission, selectEvaluation, runSimulation, selectScore,
+  selectProjectedScore,
 } from '../state/selectors.js';
-import { loadBest, saveBest } from '../state/persistence.js';
+import { loadBest, saveBest, loadProgress, saveProgress } from '../state/persistence.js';
+import { recordMission, recordQuiz, achievementById, progressFromBest } from '../engine/progress.js';
 import { formatIssue } from '../engine/messages.js';
 import { menuScreen } from './screens/menu.js';
-import { objectiveScreen, spacecraftScreen, launchScreen } from './screens/design.js';
+import { objectiveScreen, spacecraftScreen, launchScreen, metersPanel } from './screens/design.js';
 import { simulationScreen, reportScreen, phasesToShow } from './screens/mission.js';
 import { meterDetail, METERS } from './components/meter.js';
 import { modal, toast, pauseOverlay } from './components/overlays.js';
@@ -38,9 +40,24 @@ const METER_CODES = {
 };
 
 const TOAST_MS = 4500;
+const BANNER_MS = 1600;
 /** Time each simulation phase stays on screen before the next one appears. */
 const PHASE_MS = 1500;
 const SHAKE_MS = 400;
+
+/** Animate a number from 0 to `target` (about 0.9 s). */
+function countUp(element, target) {
+  if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches || target <= 0) return;
+  const start = performance.now();
+  const step = (time) => {
+    if (!element.isConnected) return;
+    const progress = Math.min(1, (time - start) / 900);
+    element.textContent = String(Math.round(target * (1 - (1 - progress) ** 3)));
+    if (progress < 1) requestAnimationFrame(step);
+  };
+  element.textContent = '0';
+  requestAnimationFrame(step);
+}
 
 /**
  * @param {HTMLElement} root
@@ -48,7 +65,10 @@ const SHAKE_MS = 400;
  */
 export function mountApp(root, { store, data = gameData, storage }) {
   // Screen-only state (not part of the game): open tab, modal, toast, shaking meters.
-  const ui = { tab: 'instrument', modal: null, toast: null, shake: new Set(), simShown: 0 };
+  const ui = {
+    tab: 'instrument', modal: null, toast: null, shake: new Set(), simShown: 0, celebrateUntil: 0, countedRun: 0,
+    banner: null, lastScreen: null, previewKey: null,
+  };
   let toastTimer = null;
   let phaseTimer = null;
   // Keep focus on the same control after re-rendering only for keyboard users.
@@ -56,6 +76,8 @@ export function mountApp(root, { store, data = gameData, storage }) {
   let keyboardFocus = false;
 
   const evaluate = (state) => selectEvaluation(state, data);
+  // Saved progress, or stars rebuilt from best scores saved before badges existed.
+  const currentProgress = () => loadProgress(storage) ?? progressFromBest(loadBest(storage));
 
   function render() {
     const state = store.getState();
@@ -65,7 +87,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
 
     let html;
     if (state.screen === 'menu') {
-      html = menuScreen({ state, data, best: loadBest(storage) });
+      html = menuScreen({ state, data, best: loadBest(storage), progress: currentProgress() });
     } else {
       const ctx = {
         state,
@@ -77,13 +99,23 @@ export function mountApp(root, { store, data = gameData, storage }) {
         evaluation: evaluate(state),
         simulation: state.simulation,
         shake: ui.shake,
+        progress: currentProgress(),
+        projected: selectProjectedScore(state, data),
       };
       html = (SCREENS[state.screen] ?? objectiveScreen)(ctx);
     }
     if (ui.modal) html += modal(ui.modal);
     if (state.paused) html += pauseOverlay();
     if (ui.toast) html += toast(ui.toast);
+    if (ui.banner) html += `<div class="stage-banner" role="status">${ui.banner}</div>`;
     root.innerHTML = html;
+    ui.previewKey = null; // the meters now show the real values
+
+    // Short entrance animation when the screen changes (PRD 8.5).
+    if (state.screen !== ui.lastScreen) {
+      root.firstElementChild?.classList.add('is-entering');
+      ui.lastScreen = state.screen;
+    }
 
     // Optional 3D view: only reads the chosen parts and draws them.
     if (state.screen !== 'menu') {
@@ -91,6 +123,13 @@ export function mountApp(root, { store, data = gameData, storage }) {
       syncView3d(root, { ...mission, simulation: state.simulation, shown: ui.simShown }, { paused: state.paused || Boolean(ui.modal), onReady: render });
     } else {
       syncView3d(root, { parts: [] }, { paused: true, onReady: render });
+    }
+
+    // Score counts up once per report (skipped when the system asks for reduced motion).
+    const counter = root.querySelector('.score-number[data-count-to]');
+    if (counter && state.screen === 'report' && ui.countedRun !== state.runCount) {
+      ui.countedRun = state.runCount;
+      countUp(counter, Number(counter.dataset.countTo));
     }
 
     // Keep keyboard focus on the same control after re-rendering.
@@ -164,18 +203,50 @@ export function mountApp(root, { store, data = gameData, storage }) {
   function launchMission() {
     ui.simShown = 0; // reset before rendering, or a previous "Skip" would show the new run as finished
     store.update(launch, runSimulation(store.getState(), data));
+    recordRun();
     playTimeline();
   }
 
-  function openReport() {
-    clearInterval(phaseTimer);
+  /**
+   * Save the run as soon as the simulation exists, so a failure counts even if the
+   * player never opens the report (needed for the "Learn from Failure" badge).
+   */
+  function recordRun() {
     const state = store.getState();
     const score = selectScore(state, data);
     // Only successful missions can set a best score.
     const best = state.simulation?.outcome === 'success'
       ? saveBest(state.scenarioId, score.total, storage)
       : { isNewBest: false, best: loadBest(storage).byScenario[state.scenarioId] };
-    store.update(showReport, { score, ...best });
+    // Gamification: stars, badges and rank. It never changes the score.
+    const simulation = state.simulation;
+    const scenario = selectScenarioData(state, data);
+    const budget = simulation.budget;
+    const rewards = recordMission(
+      currentProgress(),
+      {
+        scenarioId: state.scenarioId,
+        outcome: simulation.outcome,
+        total: score.total,
+        events: simulation.events,
+        budgetLeftRatio: budget.budget.marginMUsd / budget.budget.limitMUsd,
+        tight: ['budget', 'mass', 'power', 'data', 'time'].some((key) => budget[key]?.status === 'tight'),
+        scienceDelivered: simulation.scienceDelivered,
+        minScience: scenario.minScience,
+      },
+      { scenarioCount: data.scenarios.length },
+    );
+    saveProgress(rewards.progress, storage);
+    ui.lastRun = { simulation, score, best, rewards };
+  }
+
+  function openReport() {
+    clearInterval(phaseTimer);
+    const run = ui.lastRun;
+    if (!run || run.simulation !== store.getState().simulation) recordRun();
+    const { score, best, rewards } = ui.lastRun;
+    if (store.getState().simulation.outcome === 'success') ui.celebrateUntil = Date.now() + 3500;
+    store.update(showReport, { score, ...best, rewards });
     window.scrollTo?.(0, 0);
   }
 
@@ -185,7 +256,17 @@ export function mountApp(root, { store, data = gameData, storage }) {
       ui.tab = 'instrument';
       store.update(startMission);
     },
-    confirm: (value) => store.update(confirmStep, Number(value)),
+    confirm: (value) => {
+      const label = { 1: 'Objective', 2: 'Spacecraft' }[value];
+      if (label) {
+        ui.banner = `✓ Stage complete: ${label}`;
+        setTimeout(() => {
+          ui.banner = null;
+          render();
+        }, BANNER_MS);
+      }
+      store.update(confirmStep, Number(value));
+    },
     'go-step': (value) => store.update(goToStep, Number(value)),
     menu: () => store.update(goToMenu),
     restart: () => {
@@ -225,7 +306,15 @@ export function mountApp(root, { store, data = gameData, storage }) {
     },
     quiz: (value) => {
       const quiz = data.content?.scenarios?.[store.getState().scenarioId]?.quiz;
-      if (quiz) store.update(answerQuiz, Number(value), quiz.answer);
+      if (!quiz || store.getState().report?.quizAnswered) return;
+      store.update(answerQuiz, Number(value), quiz.answer);
+      const { progress, unlocked } = recordQuiz(currentProgress(), Number(value) === quiz.answer);
+      saveProgress(progress, storage);
+      const badge = unlocked.map(achievementById)[0];
+      if (badge) {
+        showToast({ title: `${badge.icon} Badge unlocked: ${badge.name}`, text: badge.description, tone: 'good' });
+        render();
+      }
     },
     meter: (value) => {
       const meta = data.content?.meters?.[value];
@@ -293,6 +382,58 @@ export function mountApp(root, { store, data = gameData, storage }) {
       cards[Number(key) - 1]?.click();
     }
   });
+
+  // --- Impact preview: hovering or focusing a choice shows how the meters would change ---
+  const PREVIEW_ACTIONS = {
+    'toggle-part': (state, value) => togglePart(state, value),
+    'set-power': (state, value) => setPower(state, value, data.parts),
+    'set-comms': (state, value) => setComms(state, value, data.parts),
+    'set-orbit': (state, value) => setOrbit(state, value),
+    'set-rocket': (state, value) => setRocket(state, value),
+  };
+
+  function replaceMeters(html) {
+    const current = root.querySelector('.meters');
+    if (current) current.outerHTML = html;
+  }
+
+  function showPreview(event) {
+    const card = event.target.closest?.('[data-card]');
+    const preview = card && PREVIEW_ACTIONS[card.dataset.action];
+    if (!preview || card.getAttribute('aria-disabled') === 'true') return;
+    const state = store.getState();
+    if (state.paused || ui.modal || !['spacecraft', 'launch'].includes(state.screen)) return;
+    const key = `${card.dataset.action}|${card.dataset.value}`;
+    if (key === ui.previewKey) return;
+    ui.previewKey = key;
+    const next = preview(state, card.dataset.value);
+    const sameDesign = JSON.stringify([...next.design.partIds].sort()) === JSON.stringify([...state.design.partIds].sort())
+      && next.design.orbitId === state.design.orbitId && next.design.rocketId === state.design.rocketId;
+    const base = evaluate(state);
+    const projectedNow = selectProjectedScore(state, data);
+    if (sameDesign) {
+      replaceMeters(metersPanel(base, data.content ?? {}, ui.shake, null, undefined, { score: projectedNow }));
+      return;
+    }
+    const label = card.getAttribute('aria-pressed') === 'true' && card.dataset.action === 'toggle-part'
+      ? 'Preview: if you remove this' : 'Preview: if you pick this';
+    const projection = { score: selectProjectedScore(next, data), baseline: projectedNow };
+    replaceMeters(metersPanel(evaluate(next), data.content ?? {}, new Set(), base, label, projection));
+  }
+
+  function hidePreview(event) {
+    if (!ui.previewKey) return;
+    const card = event.target.closest?.('[data-card]');
+    if (card && event.relatedTarget && card.contains(event.relatedTarget)) return; // still inside the same card
+    ui.previewKey = null;
+    const state = store.getState();
+    replaceMeters(metersPanel(evaluate(state), data.content ?? {}, ui.shake, null, undefined, { score: selectProjectedScore(state, data) }));
+  }
+
+  root.addEventListener('pointerover', showPreview);
+  root.addEventListener('focusin', showPreview);
+  root.addEventListener('pointerout', hidePreview);
+  root.addEventListener('focusout', hidePreview);
 
   store.subscribe(render);
   render();

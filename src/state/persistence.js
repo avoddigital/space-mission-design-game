@@ -39,3 +39,39 @@ export function saveBest(scenarioId, score, storage = defaultStorage()) {
   }
   return { isNewBest: true, best: score };
 }
+
+// --- Progress: stars, badges and rank (src/engine/progress.js) ---
+
+export const PROGRESS_KEY = 'space-mission-design-game:progress-v1';
+
+// Copy kept in memory, so progress still works for this session when storage is blocked.
+let memoryProgress = null;
+
+function isProgress(value) {
+  return Boolean(value) && value.version === 1 && typeof value.byScenario === 'object' && typeof value.achievements === 'object';
+}
+
+/** @returns {object|null} saved progress, or null when there is none yet */
+export function loadProgress(storage = defaultStorage()) {
+  try {
+    const parsed = JSON.parse(storage?.getItem(PROGRESS_KEY) ?? 'null');
+    if (isProgress(parsed)) return parsed;
+  } catch {
+    // Broken or blocked storage: fall back to memory.
+  }
+  return memoryProgress;
+}
+
+export function saveProgress(progress, storage = defaultStorage()) {
+  memoryProgress = progress;
+  try {
+    storage?.setItem(PROGRESS_KEY, JSON.stringify(progress));
+  } catch {
+    // Could not save: progress still counts for this session.
+  }
+}
+
+/** Only for tests: forget the in-memory copy. */
+export function resetMemoryProgress() {
+  memoryProgress = null;
+}

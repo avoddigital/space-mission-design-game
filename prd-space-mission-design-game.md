@@ -599,7 +599,8 @@ A simulação **pode rodar com erros** ("falhar ensina"): ela para na fase do pr
 | `OVER_TIME`, `ORBIT_DECAY` (P1) | erro | operations | etapa 3 |
 | `MISSING_REQUIRED_TYPE` (comms), `NO_COMMS` | erro | data | etapa 2 |
 | ciência entregue < mínima (depois dos eventos) | falha | data | etapa 2 |
-| `LOW_MASS_MARGIN`, `DATA_BACKLOG`, `LOW_SCIENCE` | aviso | não falha | — |
+| `LOW_SCIENCE` (ciência entregue abaixo da meta, já no projeto) | erro | data | etapa 2 |
+| `LOW_MASS_MARGIN`, `DATA_BACKLOG` | aviso | não falha | — |
 
 ### 7.4 Testes
 - ✅ Já existem: `resources`, `compatibility`, `validation`, `scoring`, `findWinningMission` e `data` (formato e equilíbrio com as tabelas reais). São 50 testes.

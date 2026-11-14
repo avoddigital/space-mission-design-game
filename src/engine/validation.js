@@ -1,8 +1,9 @@
 // Full mission validation. Pure functions, no DOM.
 // Returns issue codes with parameters, never player-facing sentences.
 // Severity: 'error' means the mission cannot succeed; 'warning' means it is risky or weaker.
+// LOW_SCIENCE is an error: a mission below its science goal always fails.
 
-import { computeBudget } from './resources.js';
+import { computeBudget, effectiveScience } from './resources.js';
 import { checkLaunch } from './compatibility.js';
 
 /** Every issue code the engine can return (including the launch codes from checkLaunch). */
@@ -64,8 +65,11 @@ export function validateMission(mission, scenario) {
     warning('DATA_BACKLOG', { excessGbPerDay: -budget.data.marginGbPerDay });
   }
 
-  if (budget.scienceValue < (scenario.minScience ?? 0)) {
-    warning('LOW_SCIENCE', { scienceValue: budget.scienceValue, minScience: scenario.minScience });
+  // Below the science goal the mission always fails (in the data return phase), so it is an error.
+  // It counts only the science that reaches Earth. Without an antenna, the comms error already explains it.
+  const delivered = effectiveScience(budget);
+  if (budget.comms.ok && delivered < (scenario.minScience ?? 0)) {
+    error('LOW_SCIENCE', { scienceValue: Math.round(delivered * 10) / 10, minScience: scenario.minScience });
   }
 
   return {

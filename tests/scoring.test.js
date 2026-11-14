@@ -19,12 +19,19 @@ describe('scoreMission', () => {
     expect(result.issues.map((issue) => issue.code)).toContain('NO_ROCKET');
   });
 
-  it('gives partial science and no objective points below the minimum', () => {
-    // Science 6 of target 20 (2 x 10): 50 * 0.3 = 15.
+  it('gives partial science points between the goal and twice the goal', () => {
+    // Science 6 with goal 5: target 10, so 50 * 0.6 = 30.
+    const parts = [camera, solarPanel, antenna];
+    const result = scoreMission(goodMission({ parts }), { ...earthScenario, minScience: 5 });
+    expect(result.breakdown.science).toBe(30);
+    expect(result.breakdown.objective).toBe(20);
+  });
+
+  it('scores 0 below the science goal, because that mission always fails', () => {
     const parts = [camera, solarPanel, antenna];
     const result = scoreMission(goodMission({ parts }), { ...earthScenario, minScience: 10 });
-    expect(result.breakdown.science).toBe(15);
-    expect(result.breakdown.objective).toBe(0);
+    expect(result).toMatchObject({ total: 0, failed: true });
+    expect(result.issues.map((issue) => issue.code)).toContain('LOW_SCIENCE');
   });
 
   it('gives fewer efficiency points with a tight budget', () => {
@@ -34,13 +41,13 @@ describe('scoreMission', () => {
   });
 
   it('counts only the science that reaches Earth', () => {
-    // 3 cameras: 120 GB/day produced, 100 sent: 18 * 100/120 = 15 delivered.
+    // 3 cameras: 120 GB/day produced, 100 sent: 18 * 100/120 = 15 delivered (goal 7, target 14).
     const parts = [camera, camera, camera, solarPanel, antenna];
-    const scenario = { ...earthScenario, minScience: 16 };
-    const result = scoreMission(goodMission({ parts }), scenario);
+    const result = scoreMission(goodMission({ parts }), { ...earthScenario, minScience: 7 });
     expect(result.failed).toBe(false);
-    expect(result.breakdown.objective).toBe(0);
-    expect(result.breakdown.science).toBe(23); // 50 * 15/32 = 23.4
+    expect(result.breakdown.science).toBe(50);
+    // With a goal of 16, the 15 delivered points are not enough: the mission fails.
+    expect(scoreMission(goodMission({ parts }), { ...earthScenario, minScience: 16 }).failed).toBe(true);
   });
 });
 
