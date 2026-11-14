@@ -10,7 +10,8 @@ Rascunho em **português**, como recomendou a organização local: escrever e re
 **O júri local** avalia impacto, criatividade, validade, relevância e apresentação. Não há perguntas nem feedback: só conta o que estiver na plataforma.
 
 Marcações neste arquivo:
-- **[CONFIRMAR]**: depende de algo que ainda não está pronto (telas, 3D, vídeo). Revisar no domingo de manhã e só afirmar o que o jogo de fato faz.
+- **[CONFIRMAR]**: depende de algo que ainda não está pronto. Revisar no domingo de manhã e só afirmar o que o jogo de fato faz.
+- Os 3 cenários, o checklist GO/NO-GO, os eventos, o relatório, o quiz e o visualizador 3D da nave foram conferidos no jogo publicado em 14/11.
 
 ---
 
@@ -40,7 +41,7 @@ Isso é importante porque estudantes quase nunca conseguem experimentar uma miss
 
 *Na plataforma: os complementos.*
 
-- Jogo online: https://avoddigital.github.io/space-mission-design-game/ **[CONFIRMAR: abrir e jogar no domingo]**
+- Jogo online: https://avoddigital.github.io/space-mission-design-game/ (abrir de novo numa janela anônima antes de enviar)
 - Código-fonte: https://github.com/avoddigital/space-mission-design-game
 
 ## Project Details
@@ -56,8 +57,9 @@ Depois monta a nave com instrumentos, painel solar e antena, escolhe a órbita e
 
 **Como funciona.**
 - Um motor de regras calcula os seis recursos a cada escolha. Ele confere se a nave cabe no foguete para aquela órbita e se a energia, o orçamento, os dados e o tempo fecham.
-- Antes do lançamento, um checklist GO/NO-GO mostra o que ainda está errado. **[CONFIRMAR]**
-- Na simulação, eventos aleatórios (tempestade solar, atraso no lançamento, queda de estação terrestre, tempestade de poeira em Marte...) só prejudicam quem deixou pouca margem. Isso ensina por que engenheiros guardam folga. **[CONFIRMAR]**
+- Antes do lançamento, um checklist GO/NO-GO mostra o que ainda está errado, com os números ("Your spacecraft is 10 kg too heavy"). O jogador pode lançar mesmo assim, porque falhar também ensina.
+- Na simulação, eventos aleatórios (tempestade solar, atraso no lançamento, queda de estação terrestre, tempestade de poeira em Marte...) só prejudicam quem deixou pouca margem. Isso ensina por que engenheiros guardam folga. A mesma nave sempre recebe os mesmos eventos, para o jogador comparar mudanças de forma justa.
+- Uma visualização 3D mostra a nave mudando a cada peça escolhida, e depois o lançamento, a viagem e a órbita. Sem WebGL, o jogo mostra uma versão 2D e continua jogável. **[CONFIRMAR: testar com o WebGL desligado]**
 - O relatório dá uma nota de 0 a 100, explica o que funcionou e o que falhou e mostra missões reais da NASA parecidas com a do jogador, como Landsat 9, LRO, LCROSS, MRO, 2001 Mars Odyssey e MAVEN.
 - Uma caixa "Learn" em cada etapa e um quiz no final reforçam um conceito por vez.
 
@@ -71,7 +73,7 @@ Depois monta a nave com instrumentos, painel solar e antena, escolhe a órbita e
 **Ferramentas.**
 - JavaScript puro (ES modules), HTML e CSS, com build pelo Vite.
 - Testes automáticos com Vitest. Eles garantem que as regras funcionam e que cada missão continua com várias soluções vencedoras.
-- Three.js para a visualização 3D. **[CONFIRMAR: só se entrar]**
+- Three.js para a visualização 3D, carregado só quando é usado, para o jogo abrir rápido em computadores fracos e celulares.
 - Hospedagem no GitHub Pages. O código é aberto no GitHub.
 
 ## Use of AI
@@ -104,7 +106,10 @@ Nenhum logo, bandeira ou elemento de marca da NASA foi gerado ou modificado por 
   - Landsat 8 e 9;
   - Lunar Reconnaissance Orbiter (LRO) e LCROSS;
   - Mars Reconnaissance Orbiter (MRO), 2001 Mars Odyssey e MAVEN.
-- **[CONFIRMAR: texturas da NASA usadas no 3D, se entrar]**
+- **Imagens da NASA (domínio público)** usadas como textura dos planetas no 3D:
+  - Terra: Blue Marble, NASA Goddard Scientific Visualization Studio;
+  - Lua: CGI Moon Kit, feito com dados da LRO, NASA Scientific Visualization Studio;
+  - Marte: mosaico colorido global da Viking, NASA/JPL/USGS.
 
 ## References
 
@@ -122,6 +127,11 @@ Nenhum logo, bandeira ou elemento de marca da NASA foi gerado ou modificado por 
 - https://science.nasa.gov/mission/odyssey/
 - https://science.nasa.gov/mission/maven/
 
+**Texturas dos planetas (domínio público):**
+- Terra, Blue Marble: https://svs.gsfc.nasa.gov/3615/
+- Lua, CGI Moon Kit: https://svs.gsfc.nasa.gov/4720/
+- Marte, mosaico da Viking: https://astrogeology.usgs.gov/search/map/mars_viking_global_color_mosaic_925m
+
 **Outros fatos citados no jogo:**
 - Luz do Sol em Marte (cerca de 43% da Terra): NASA TM-2001-210935, https://ntrs.nasa.gov/api/citations/20010046858/downloads/20010046858.pdf
 - Conjunção solar de Marte: https://www.jpl.nasa.gov/news/whats-mars-solar-conjunction-and-why-does-it-matter/
@@ -133,5 +143,5 @@ Nenhum logo, bandeira ou elemento de marca da NASA foi gerado ou modificado por 
 **Ferramentas e código aberto:**
 - Vite: https://vite.dev
 - Vitest: https://vitest.dev
-- Three.js: https://threejs.org **[CONFIRMAR: só se entrar]**
+- Three.js: https://threejs.org
 - Claude Code (Anthropic): assistente de IA, ver "Use of AI".
