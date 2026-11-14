@@ -14,7 +14,7 @@ export const scenarios = [
   {
     id: 'moon-exploration',
     name: 'Explore the Moon', // simplified, inspired by LRO
-    budgetMUsd: 400,
+    budgetMUsd: 220,
     maxDays: 450,
     operationDays: 365,
     allowedOrbits: ['moon-orbit'],
@@ -24,7 +24,7 @@ export const scenarios = [
   {
     id: 'mars-study',
     name: 'Study Mars', // simplified, inspired by MRO and Mars Odyssey
-    budgetMUsd: 700,
+    budgetMUsd: 230,
     maxDays: 900,
     operationDays: 540,
     allowedOrbits: ['mars-orbit'],
