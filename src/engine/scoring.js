@@ -28,13 +28,15 @@ export function effectiveScience(budget) {
 /**
  * @param {{ parts: object[], rocket?: object, orbit?: object }} mission resolved objects, not ids
  * @param {object} scenario
+ * @param {object|null} [simulation] result of simulateMission. When given, a failed simulation
+ *   scores 0 and the science points use the science delivered after random events.
  * @returns {{ total: number, failed: boolean, breakdown: object, issues: object[], budget: object }}
  */
-export function scoreMission(mission, scenario) {
+export function scoreMission(mission, scenario, simulation = null) {
   const { ok, issues, budget } = validateMission(mission, scenario);
 
   // Any error means the mission fails: score 0, and the report explains the issues.
-  if (!ok) {
+  if (!ok || simulation?.outcome === 'failure') {
     return {
       total: 0,
       failed: true,
@@ -45,7 +47,7 @@ export function scoreMission(mission, scenario) {
   }
 
   const minScience = scenario.minScience ?? 0;
-  const delivered = effectiveScience(budget);
+  const delivered = simulation ? simulation.scienceDelivered : effectiveScience(budget);
   const scienceTarget = Math.max(1, minScience * FULL_SCIENCE_MULTIPLIER);
   const science = SCORE_WEIGHTS.science * clamp01(delivered / scienceTarget);
 

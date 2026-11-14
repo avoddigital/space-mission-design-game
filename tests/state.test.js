@@ -2,9 +2,9 @@ import { describe, it, expect, vi } from 'vitest';
 import { createStore, createInitialState } from '../src/state/store.js';
 import {
   selectScenario, startMission, confirmStep, goToStep, goToMenu, togglePart, setPower, setComms,
-  setOrbit, setRocket, launch, redesign, togglePause, answerQuiz,
+  setOrbit, setRocket, launch, redesign, togglePause, answerQuiz, newConditions, showReport,
 } from '../src/state/actions.js';
-import { selectEvaluation, selectMission, gameData } from '../src/state/selectors.js';
+import { selectEvaluation, selectMission, gameData, runSimulation, selectScore } from '../src/state/selectors.js';
 import { loadBest, saveBest, BEST_KEY } from '../src/state/persistence.js';
 import { camera, spectrometer, solarPanel, antenna, mediumRocket, leo, earthScenario } from './fixtures.js';
 
@@ -149,5 +149,54 @@ describe('best score persistence', () => {
     expect(saveBest('mars-study', 50, blocked)).toEqual({ isNewBest: true, best: 50 });
     expect(loadBest(null)).toEqual({ byScenario: {} });
     expect(loadBest({ getItem: () => '{not json' })).toEqual({ byScenario: {} });
+  });
+});
+
+describe('simulation and report flow', () => {
+  const ready = () => {
+    let state = createInitialState();
+    for (const id of ['camera', 'spectrometer']) state = togglePart(state, id);
+    state = setComms(setPower(state, 'solar', parts), 'antenna', parts);
+    return setRocket(setOrbit(state, 'leo-500'), 'medium');
+  };
+  const dataWithEvents = { ...testData, events: [
+    { id: 'storm', protectedBy: 'power', scienceLossPct: 20, scenarios: ['all'] },
+    { id: 'delay', protectedBy: 'time', scienceLossPct: 20, scenarios: ['all'] },
+    { id: 'outage', protectedBy: 'data', scienceLossPct: 20, scenarios: ['all'] },
+  ] };
+
+  it('launch stores the simulation; the same design and reroll give the same events', () => {
+    const state = ready();
+    const simulation = runSimulation(state, dataWithEvents);
+    const launched = launch(state, simulation);
+    expect(launched).toMatchObject({ screen: 'simulation', runCount: 1, simulation });
+    expect(runSimulation(launched, dataWithEvents).events).toEqual(simulation.events);
+  });
+
+  it('newConditions changes the seed', () => {
+    const state = ready();
+    const seeds = new Set([runSimulation(state, dataWithEvents).seed, runSimulation(newConditions(state), dataWithEvents).seed]);
+    expect(seeds.size).toBe(2);
+  });
+
+  it('showReport goes to step 5 with the score, and the quiz starts unanswered', () => {
+    let state = ready();
+    state = launch(state, runSimulation(state, testData));
+    const score = selectScore(state, testData);
+    expect(score).toMatchObject({ total: 100, failed: false });
+    state = showReport(state, { score, isNewBest: true, best: 100 });
+    expect(state.screen).toBe('report');
+    expect(state.report).toMatchObject({ isNewBest: true, quizAnswered: false });
+    expect(state.confirmedSteps).toEqual(expect.arrayContaining([3, 4]));
+  });
+
+  it('works with the real game data from start to report', () => {
+    let state = createInitialState();
+    for (const id of ['multispectral-imager', 'imaging-spectrometer']) state = togglePart(state, id);
+    state = setComms(setPower(state, 'solar-panel-m', gameData.parts), 'hga-antenna', gameData.parts);
+    state = setRocket(setOrbit(state, 'sso-700'), 'small-lifter');
+    const simulation = runSimulation(state, gameData);
+    expect(simulation.outcome).toBe('success');
+    expect(selectScore(launch(state, simulation), gameData).total).toBeGreaterThan(0);
   });
 });

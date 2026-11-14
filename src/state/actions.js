@@ -17,6 +17,7 @@ export function selectScenario(state, scenarioId) {
     design: { ...EMPTY_DESIGN, partIds: [] },
     confirmedSteps: [],
     runCount: 0,
+    reroll: 0,
     simulation: null,
     report: null,
   };
@@ -78,9 +79,23 @@ export function setRocket(state, rocketId) {
 
 // --- Mission ---
 
-/** Go to the simulation. The simulation result itself is added in build step 6. */
-export function launch(state) {
-  return { ...state, screen: STEP_SCREENS[4], runCount: state.runCount + 1, simulation: null, report: null, paused: false };
+/**
+ * Go to the simulation screen with its result (from simulateMission).
+ * The UI computes the simulation, so this action stays pure and simple.
+ */
+export function launch(state, simulation = null) {
+  return { ...state, screen: STEP_SCREENS[4], runCount: state.runCount + 1, simulation, report: null, paused: false };
+}
+
+/** Change the seed, so the next launch meets different random events. */
+export function newConditions(state) {
+  return { ...state, reroll: state.reroll + 1 };
+}
+
+/** Show the final report. `report` holds the score and the best score result. */
+export function showReport(state, report) {
+  const confirmedSteps = [...new Set([...state.confirmedSteps, 3, 4])];
+  return { ...state, screen: STEP_SCREENS[5], report: { ...report, quizAnswered: false }, confirmedSteps, paused: false };
 }
 
 /** Back to the step that fixes the first error, keeping every choice. */

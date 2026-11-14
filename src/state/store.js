@@ -8,9 +8,10 @@ export function createInitialState() {
     scenarioId: 'earth-observation',
     design: { partIds: [], orbitId: null, rocketId: null },
     confirmedSteps: [],
-    runCount: 0,
-    simulation: null, // result of simulateMission (step 6 of the build plan)
-    report: null, // { quizAnswered, quizRight, quizChoice, ... }
+    runCount: 0, // launches in this mission
+    reroll: 0, // changes the random events ("Try again with new conditions")
+    simulation: null, // result of simulateMission
+    report: null, // { score, isNewBest, best, quizAnswered, quizRight, quizChoice }
     team: null, // P1
     paused: false,
   };

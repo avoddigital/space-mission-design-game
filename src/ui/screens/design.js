@@ -58,9 +58,10 @@ function metersPanel(evaluation, content, shake) {
 }
 
 /** Shared layout: header with steps, cards on the left, stage in the middle, meters on the right. */
-export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer }) {
+export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false }) {
+  // On phones, result screens (simulation and report) show the left panel first.
   return `
-    <div class="game">
+    <div class="game${results ? ' layout-results' : ''}">
       <header class="topbar">
         <span class="mission-name">${esc(scenario.name)}</span>
         ${stepTabs(state)}
@@ -223,17 +224,5 @@ export function launchScreen(ctx) {
     stage,
     footer: `<button type="button" class="btn" data-action="go-step" data-value="2">← Back</button>
       <button type="button" class="btn ${ready ? 'btn-go' : 'btn-warn'}" data-action="launch">${ready ? '🚀 Launch' : '🚀 Launch anyway'}</button>`,
-  });
-}
-
-// --- Steps 4 and 5: placeholder until build step 6 ---
-
-export function comingSoonScreen(ctx) {
-  return gameLayout({
-    ...ctx,
-    title: 'Step 4 · Simulation',
-    cards: '<p>The mission simulation and the final report are being built in the next step.</p>',
-    stage: craftDiagram(ctx.mission),
-    footer: '<button type="button" class="btn" data-action="go-step" data-value="3">← Back to launch</button>',
   });
 }

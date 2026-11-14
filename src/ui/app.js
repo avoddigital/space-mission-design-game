@@ -3,13 +3,16 @@
 
 import {
   selectScenario, startMission, confirmStep, goToStep, goToMenu, togglePart, setPower, setComms,
-  setOrbit, setRocket, launch, togglePause,
+  setOrbit, setRocket, launch, togglePause, newConditions, showReport, redesign, answerQuiz,
 } from '../state/actions.js';
-import { gameData, selectScenario as selectScenarioData, selectMission, selectEvaluation } from '../state/selectors.js';
-import { loadBest } from '../state/persistence.js';
+import {
+  gameData, selectScenario as selectScenarioData, selectMission, selectEvaluation, runSimulation, selectScore,
+} from '../state/selectors.js';
+import { loadBest, saveBest } from '../state/persistence.js';
 import { formatIssue } from '../engine/messages.js';
 import { menuScreen } from './screens/menu.js';
-import { objectiveScreen, spacecraftScreen, launchScreen, comingSoonScreen } from './screens/design.js';
+import { objectiveScreen, spacecraftScreen, launchScreen } from './screens/design.js';
+import { simulationScreen, reportScreen, phasesToShow } from './screens/mission.js';
 import { meterDetail, METERS } from './components/meter.js';
 import { modal, toast, pauseOverlay } from './components/overlays.js';
 
@@ -17,8 +20,8 @@ const SCREENS = {
   objective: objectiveScreen,
   spacecraft: spacecraftScreen,
   launch: launchScreen,
-  simulation: comingSoonScreen,
-  report: comingSoonScreen,
+  simulation: simulationScreen,
+  report: reportScreen,
 };
 
 /** Step numbers of the design screens, for Back and Enter. */
@@ -34,6 +37,8 @@ const METER_CODES = {
 };
 
 const TOAST_MS = 4500;
+/** Time each simulation phase stays on screen before the next one appears. */
+const PHASE_MS = 1500;
 const SHAKE_MS = 400;
 
 /**
@@ -42,8 +47,9 @@ const SHAKE_MS = 400;
  */
 export function mountApp(root, { store, data = gameData, storage }) {
   // Screen-only state (not part of the game): open tab, modal, toast, shaking meters.
-  const ui = { tab: 'instrument', modal: null, toast: null, shake: new Set() };
+  const ui = { tab: 'instrument', modal: null, toast: null, shake: new Set(), simShown: 0 };
   let toastTimer = null;
+  let phaseTimer = null;
   // Keep focus on the same control after re-rendering only for keyboard users.
   // After a mouse click, focus goes back to the page, so Enter means "next step".
   let keyboardFocus = false;
@@ -68,9 +74,10 @@ export function mountApp(root, { store, data = gameData, storage }) {
         scenario: selectScenarioData(state, data),
         mission: selectMission(state, data),
         evaluation: evaluate(state),
+        simulation: state.simulation,
         shake: ui.shake,
       };
-      html = (SCREENS[state.screen] ?? comingSoonScreen)(ctx);
+      html = (SCREENS[state.screen] ?? objectiveScreen)(ctx);
     }
     if (ui.modal) html += modal(ui.modal);
     if (state.paused) html += pauseOverlay();
@@ -125,6 +132,44 @@ export function mountApp(root, { store, data = gameData, storage }) {
     render();
   }
 
+  /** Reveal the simulation phases one by one. Pause freezes the timeline. */
+  function playTimeline() {
+    ui.simShown = 0;
+    clearInterval(phaseTimer);
+    phaseTimer = setInterval(() => {
+      const state = store.getState();
+      if (state.screen !== 'simulation' || !state.simulation) {
+        clearInterval(phaseTimer);
+        return;
+      }
+      if (state.paused) return;
+      if (ui.simShown >= phasesToShow(state.simulation)) {
+        clearInterval(phaseTimer);
+        return;
+      }
+      ui.simShown += 1;
+      render();
+    }, PHASE_MS);
+  }
+
+  function launchMission() {
+    ui.simShown = 0; // reset before rendering, or a previous "Skip" would show the new run as finished
+    store.update(launch, runSimulation(store.getState(), data));
+    playTimeline();
+  }
+
+  function openReport() {
+    clearInterval(phaseTimer);
+    const state = store.getState();
+    const score = selectScore(state, data);
+    // Only successful missions can set a best score.
+    const best = state.simulation?.outcome === 'success'
+      ? saveBest(state.scenarioId, score.total, storage)
+      : { isNewBest: false, best: loadBest(storage).byScenario[state.scenarioId] };
+    store.update(showReport, { score, ...best });
+    window.scrollTo?.(0, 0);
+  }
+
   const handlers = {
     'select-scenario': (value) => store.update(selectScenario, value),
     start: () => {
@@ -148,7 +193,31 @@ export function mountApp(root, { store, data = gameData, storage }) {
     'set-comms': (value) => updateDesign(setComms, value, data.parts),
     'set-orbit': (value) => updateDesign(setOrbit, value),
     'set-rocket': (value) => updateDesign(setRocket, value),
-    launch: () => store.update(launch),
+    launch: () => launchMission(),
+    skip: () => {
+      ui.simShown = Number.MAX_SAFE_INTEGER;
+      clearInterval(phaseTimer);
+      render();
+    },
+    'see-report': () => openReport(),
+    redesign: () => {
+      const failed = store.getState().simulation?.failedIssue;
+      store.update(redesign, failed ? [failed] : []);
+    },
+    'new-conditions': () => {
+      store.update(newConditions);
+      launchMission();
+    },
+    'next-mission': () => {
+      const ids = data.scenarios.map((scenario) => scenario.id);
+      const next = ids[(ids.indexOf(store.getState().scenarioId) + 1) % ids.length];
+      ui.tab = 'instrument';
+      store.update((state) => startMission(selectScenario(state, next)));
+    },
+    quiz: (value) => {
+      const quiz = data.content?.scenarios?.[store.getState().scenarioId]?.quiz;
+      if (quiz) store.update(answerQuiz, Number(value), quiz.answer);
+    },
     meter: (value) => {
       const meta = data.content?.meters?.[value];
       const budget = evaluate(store.getState()).budget;
@@ -200,6 +269,10 @@ export function mountApp(root, { store, data = gameData, storage }) {
       event.preventDefault();
       if (state.screen === 'menu') handlers.start();
       else if (state.screen === 'launch') handlers.launch();
+      else if (state.screen === 'simulation') {
+        if (state.simulation && ui.simShown >= phasesToShow(state.simulation)) handlers['see-report']();
+        else handlers.skip();
+      }
       else if (STEP_OF[state.screen]) handlers.confirm(STEP_OF[state.screen]);
     } else if (key === 'Backspace') {
       event.preventDefault();
