@@ -15,6 +15,7 @@
     "vitest": "^5.1.0"
   },
   "dependencies": {
+    "flag-icons": "^7.6.0",
     "three": "^0.187.0"
   }
 }

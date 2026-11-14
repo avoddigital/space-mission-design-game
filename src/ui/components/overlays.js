@@ -1,39 +1,46 @@
 import { esc } from '../format.js';
 import { icon } from './icons.js';
 import { isMuted } from '../sound.js';
+import { t, getLocale, LOCALES } from '../../i18n/index.js';
 
 /** "Learn" box: a short concept and a rule of thumb (texts from content.learn). */
 export function learnBox(learn) {
   if (!learn) return '';
   return `
-    <aside class="learn" aria-label="Learn">
-      <span class="learn-title">${icon('bulb', 18)} Learn</span>
+    <aside class="learn" aria-label="${t('learn.title')}">
+      <span class="learn-title">${icon('bulb', 18)} ${t('learn.title')}</span>
       <p>${esc(learn.text)}</p>
-      ${learn.rule ? `<p class="learn-rule">Rule of thumb: <strong>${esc(learn.rule)}</strong></p>` : ''}
+      ${learn.rule ? `<p class="learn-rule">${t('learn.rule')} <strong>${esc(learn.rule)}</strong></p>` : ''}
     </aside>`;
 }
 
 /** Controls legend, always visible. */
 export function legend() {
   return `
-    <p class="legend" aria-label="Controls">
-      <span><kbd>Click</kbd>/<kbd>Tap</kbd> choose</span>
-      <span><kbd>Enter</kbd> next</span>
-      <span><kbd>Backspace</kbd> back</span>
-      <span><kbd>1</kbd>–<kbd>8</kbd> pick a card</span>
-      <span><kbd>P</kbd>/<kbd>Esc</kbd> pause</span>
-      <span><kbd>M</kbd> sound on/off</span>
+    <p class="legend" aria-label="${t('legend.label')}">
+      <span><kbd>${t('legend.click')}</kbd>/<kbd>${t('legend.tap')}</kbd> ${t('legend.choose')}</span>
+      <span><kbd>Enter</kbd> ${t('legend.next')}</span>
+      <span><kbd>Backspace</kbd> ${t('legend.back')}</span>
+      <span><kbd>1</kbd>–<kbd>8</kbd> ${t('legend.card')}</span>
+      <span><kbd>P</kbd>/<kbd>Esc</kbd> ${t('legend.pause')}</span>
+      <span><kbd>M</kbd> ${t('legend.sound')}</span>
+      <span><kbd>L</kbd> ${t('legend.language')}</span>
     </p>`;
 }
 
 /** Modal window with a title and paragraphs. */
-export function modal({ title, paragraphs = [] }) {
+export function modal({ title, paragraphs = [], actions = null }) {
+  const buttons = actions?.length
+    ? `<div class="modal-actions">${actions
+        .map((item, index) => `<button type="button" class="btn${item.primary ? ' btn-primary' : ''}" data-action="${esc(item.action)}" ${index === 0 ? 'autofocus' : ''}>${esc(item.label)}</button>`)
+        .join('')}</div>`
+    : `<button type="button" class="btn btn-primary" data-action="close-modal" autofocus>${t('common.gotIt')}</button>`;
   return `
     <div class="overlay" data-action="close-modal">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title" data-stop>
         <h2 id="modal-title">${esc(title)}</h2>
         ${paragraphs.filter(Boolean).map((text) => `<p>${esc(text)}</p>`).join('')}
-        <button type="button" class="btn btn-primary" data-action="close-modal" autofocus>Got it</button>
+        ${buttons}
       </div>
     </div>`;
 }
@@ -51,11 +58,11 @@ export function pauseOverlay() {
   return `
     <div class="overlay">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-        <h2 id="pause-title">Paused</h2>
+        <h2 id="pause-title">${t('pause.title')}</h2>
         <div class="modal-actions">
-          <button type="button" class="btn btn-primary" data-action="pause" autofocus>Resume</button>
-          <button type="button" class="btn" data-action="restart">Restart mission</button>
-          <button type="button" class="btn" data-action="menu">Main menu</button>
+          <button type="button" class="btn btn-primary" data-action="pause" autofocus>${t('pause.resume')}</button>
+          <button type="button" class="btn" data-action="restart">${t('pause.restart')}</button>
+          <button type="button" class="btn" data-action="menu">${t('pause.leave')}</button>
         </div>
       </div>
     </div>`;
@@ -69,7 +76,7 @@ export function countdownOverlay(count) {
   const liftoff = count <= 0;
   return `
     <div class="countdown${liftoff ? ' is-liftoff' : ''}" role="status" aria-live="assertive">
-      <span class="countdown-label">${liftoff ? 'Liftoff!' : 'T-minus'}</span>
+      <span class="countdown-label">${liftoff ? t('countdown.liftoff') : t('countdown.tminus')}</span>
       <span class="countdown-number" key="${count}">${liftoff ? icon('rocket', 96) : count}</span>
     </div>`;
 }
@@ -92,5 +99,12 @@ export function confetti(pieces = 48) {
 export function soundToggle(extraClass = '') {
   const muted = isMuted();
   return `<button type="button" class="btn btn-icon${muted ? ' is-muted' : ''}${extraClass ? ` ${extraClass}` : ''}" data-action="mute"
-    aria-pressed="${!muted}" aria-label="${muted ? 'Turn sound on' : 'Turn sound off'}" title="Sound (M)">${icon(muted ? 'sound-off' : 'sound', 18)}</button>`;
+    aria-pressed="${!muted}" aria-label="${muted ? t('sound.on') : t('sound.off')}" title="${t('sound.title')}">${icon(muted ? 'sound-off' : 'sound', 18)}</button>`;
+}
+
+/** Language button: shows the current language and switches to the next one (also the L key). */
+export function langToggle(extraClass = '') {
+  const current = LOCALES.find((item) => item.id === getLocale()) ?? LOCALES[0];
+  return `<button type="button" class="btn btn-lang${extraClass ? ` ${extraClass}` : ''}" data-action="language"
+    aria-label="${t('lang.label', { name: current.name })}" title="${t('lang.title')}">${icon('globe', 16)}<span>${current.short}</span></button>`;
 }

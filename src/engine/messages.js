@@ -29,6 +29,7 @@ function readableValues(issue, data) {
   const nameOf = (list, id) => list?.find((item) => item.id === id)?.name ?? id;
   if (issue.rocketId) values.rocketId = nameOf(data.rockets, issue.rocketId);
   if (issue.orbitId) values.orbitId = nameOf(data.orbits, issue.orbitId);
+  if (issue.type && data.content?.typeNames?.[issue.type]) values.type = data.content.typeNames[issue.type];
   return values;
 }
 

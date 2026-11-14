@@ -4,20 +4,30 @@
 import {
   selectScenario, startMission, confirmStep, goToStep, goToMenu, togglePart, setPower, setComms,
   setOrbit, setRocket, launch, togglePause, newConditions, showReport, redesign, answerQuiz,
+  openFreePlay, openSetup, enterCampaign, setCampaign, planMission, goToHub,
 } from '../state/actions.js';
 import {
   gameData, selectScenario as selectScenarioData, selectMission, selectEvaluation, runSimulation, selectScore,
 } from '../state/selectors.js';
-import { loadBest, saveBest } from '../state/persistence.js';
+import { loadBest, saveBest, loadCampaign, saveCampaign, loadProfile, saveProfile } from '../state/persistence.js';
+import { track } from '../engine/achievements.js';
+import { badgesScreen, badgeNotice } from './screens/badges.js';
+import {
+  createCampaign, campaignData, clearReserve, payLaunch, finishMission, phaseOfScenario, runSideJob, buyResearch,
+  drawEvent, applyEvent, libraryUnlocked, currentPhase, isFinished,
+} from '../engine/campaign.js';
+import { sideJobs, research } from '../data/campaign.js';
 import { formatIssue } from '../engine/messages.js';
 import { menuScreen } from './screens/menu.js';
 import { objectiveScreen, spacecraftScreen, launchScreen } from './screens/design.js';
 import { simulationScreen, reportScreen, phasesToShow } from './screens/mission.js';
 import { libraryScreen } from './screens/library.js';
+import { titleScreen, setupScreen, hubScreen, globeView } from './screens/campaign.js';
 import { meterDetail, METERS } from './components/meter.js';
 import { modal, toast, pauseOverlay, countdownOverlay, confetti } from './components/overlays.js';
 import { syncView3d } from './view3dHost.js';
 import { play, toggleMute } from './sound.js';
+import { t, setLocale, nextLocale, localizeData, localizeList } from '../i18n/index.js';
 
 const SCREENS = {
   objective: objectiveScreen,
@@ -69,9 +79,27 @@ const ACTION_SOUNDS = {
   meter: 'open',
   'close-modal': 'close',
   library: 'open',
+  badges: 'open',
+  'close-badges': 'close',
   'library-tab': 'tab',
   'close-library': 'close',
+  'free-play': 'pick',
+  'new-campaign': 'pick',
+  'confirm-new-campaign': 'pick',
+  'continue-campaign': 'pick',
+  'pick-country': 'pick',
+  'pick-focus': 'pick',
+  'found-agency': 'success',
+  plan: 'pick',
+  hub: 'click',
+  'ops-tab': 'tab',
+  language: 'click',
 };
+
+/** Screens with the Earth globe instead of a mission. */
+const GLOBE_SCREENS = new Set(['menu', 'setup', 'hub']);
+/** Screens that are not a mission: no pause there. */
+const MENU_SCREENS = new Set(['menu', 'free', 'setup', 'hub']);
 
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -79,7 +107,15 @@ const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: re
  * @param {HTMLElement} root
  * @param {{ store: object, data?: object, storage?: Storage }} options
  */
-export function mountApp(root, { store, data = gameData, storage }) {
+export function mountApp(root, { store, data: baseData = gameData, storage }) {
+  // The game tables. In a campaign, research and the agency funds change them (src/engine/campaign.js).
+  let data = baseData;
+  const syncData = () => {
+    const state = store.getState();
+    // Agency changes first (numbers), then the translation (texts): ids and numbers never depend on the language.
+    data = localizeData(state.mode === 'campaign' ? campaignData(baseData, state.campaign) : baseData);
+  };
+
   // Screen-only state (not part of the game): open tab, modal, toast, shaking meters.
   const ui = {
     tab: 'instrument', modal: null, toast: null, shake: new Set(), simShown: 0,
@@ -87,7 +123,16 @@ export function mountApp(root, { store, data = gameData, storage }) {
     countdown: null, // 3, 2, 1, 0 while the launch countdown runs
     celebrate: false, // confetti after a successful simulation
     library: null, // { tab } while the Mission Library is open (screen-only, the game keeps its state)
+    setup: { countryId: null, focusId: null }, // choices on the new agency screen
+    opsTab: 'jobs', // command center: 'jobs' or 'research'
+    campaignResult: null, // what the last report did to the agency (shown on the report)
+    badges: false, // the Badges screen is open
+    badgeNotice: [], // badge ids just earned (shown for a few seconds)
+    reportBadges: [], // badge ids earned by the last report (shown on the report)
   };
+  // Achievements profile: what the player did across all modes (src/engine/achievements.js).
+  let profile = loadProfile(storage);
+  let noticeTimer = null;
   let toastTimer = null;
   let phaseTimer = null;
   let countdownTimer = null;
@@ -99,16 +144,28 @@ export function mountApp(root, { store, data = gameData, storage }) {
   const evaluate = (state) => selectEvaluation(state, data);
 
   function render() {
+    syncData();
     const state = store.getState();
     const focusKey = document.activeElement?.dataset?.action
       ? `${document.activeElement.dataset.action}|${document.activeElement.dataset.value ?? ''}`
       : null;
 
     let html;
-    if (ui.library) {
-      html = libraryScreen({ tab: ui.library.tab, inGame: state.screen !== 'menu' });
+    if (ui.badges) {
+      const back = state.screen === 'hub' ? t('common.commandCenter') : MENU_SCREENS.has(state.screen) ? t('common.mainMenu') : t('common.backToMission');
+      html = badgesScreen({ profile, backLabel: back });
+    } else if (ui.library) {
+      const back = state.screen === 'hub' ? t('common.commandCenter') : MENU_SCREENS.has(state.screen) ? t('common.mainMenu') : t('common.backToMission');
+      const agency = state.campaign ?? loadCampaign(storage);
+      html = libraryScreen({ tab: ui.library.tab, backLabel: back, unlocked: libraryUnlocked(agency), hasAgency: Boolean(agency) });
     } else if (state.screen === 'menu') {
+      html = titleScreen({ saved: loadCampaign(storage) });
+    } else if (state.screen === 'free') {
       html = menuScreen({ state, data, best: loadBest(storage) });
+    } else if (state.screen === 'setup') {
+      html = setupScreen({ setup: ui.setup });
+    } else if (state.screen === 'hub' && state.campaign) {
+      html = hubScreen({ campaign: state.campaign, data, ui });
     } else {
       const ctx = {
         state,
@@ -128,15 +185,19 @@ export function mountApp(root, { store, data = gameData, storage }) {
     if (ui.toast) html += toast(ui.toast);
     if (ui.countdown !== null) html += countdownOverlay(ui.countdown);
     if (ui.celebrate) html += confetti();
+    if (ui.badgeNotice.length) html += badgeNotice(ui.badgeNotice);
     root.innerHTML = html;
     root.classList.toggle('is-liftoff', ui.countdown === 0);
 
     // Optional 3D view: only reads the chosen parts and draws them.
-    if (state.screen !== 'menu' && !ui.library) {
+    if (ui.library || ui.badges || state.screen === 'free') {
+      syncView3d(root, { parts: [] }, { paused: true, onReady: render });
+    } else if (GLOBE_SCREENS.has(state.screen)) {
+      const agency = state.screen === 'menu' ? loadCampaign(storage) : state.screen === 'hub' ? state.campaign : null;
+      syncView3d(root, { parts: [], globe: globeView(agency) }, { paused: Boolean(ui.modal), onReady: render });
+    } else {
       const mission = selectMission(state, data);
       syncView3d(root, { ...mission, simulation: state.simulation, shown: ui.simShown }, { paused: state.paused || Boolean(ui.modal), onReady: render });
-    } else {
-      syncView3d(root, { parts: [] }, { paused: true, onReady: render });
     }
 
     // Keep keyboard focus on the same control after re-rendering.
@@ -146,6 +207,32 @@ export function mountApp(root, { store, data = gameData, storage }) {
       const [action, value] = focusKey.split('|');
       root.querySelector(`[data-action="${CSS.escape(action)}"][data-value="${CSS.escape(value)}"]`)?.focus();
     }
+  }
+
+  /** Record something the player did; announce and save any badge it earns. Returns the new badge ids. */
+  function trackAchievement(event) {
+    const today = new Date().toISOString().slice(0, 10);
+    const result = track(profile, event, today);
+    if (result.profile !== profile) {
+      profile = result.profile;
+      saveProfile(profile, storage);
+    }
+    if (result.earned.length) {
+      ui.badgeNotice = [...ui.badgeNotice, ...result.earned];
+      setTimeout(() => play('success'), 450);
+      clearTimeout(noticeTimer);
+      noticeTimer = setTimeout(() => {
+        ui.badgeNotice = [];
+        render();
+      }, 5000);
+    }
+    return result.earned;
+  }
+
+  /** Campaign progress that can earn badges (library discoveries, campaign finished). */
+  function trackCampaign() {
+    const { campaign } = store.getState();
+    if (campaign) trackAchievement({ type: 'campaign', libraryFound: campaign.library.length, finished: isFinished(campaign) });
   }
 
   function showToast(message) {
@@ -239,8 +326,41 @@ export function mountApp(root, { store, data = gameData, storage }) {
 
   function launchMission() {
     ui.simShown = 0; // reset before rendering, or a previous "Skip" would show the new run as finished
-    store.update(launch, runSimulation(store.getState(), data));
+    syncData();
+    const state = store.getState();
+    const simulation = runSimulation(state, data);
+    if (state.mode === 'campaign') {
+      // The agency pays the real cost of the spacecraft and the rocket, even if the mission fails.
+      store.update(setCampaign, payLaunch(state.campaign, evaluate(state).budget.budget.usedMUsd));
+      ui.campaignResult = null;
+    }
+    store.update(launch, simulation);
+    ui.reportBadges = [];
+    trackAchievement({ type: 'launch' });
     playTimeline();
+  }
+
+  /** Forget the last launch's reserved budget (the money is spent) before designing or launching again. */
+  function settleLaunch() {
+    const state = store.getState();
+    if (state.mode === 'campaign' && state.campaign?.reservedMUsd) store.update(setCampaign, clearReserve(state.campaign));
+    syncData();
+  }
+
+  /** In a campaign, the agency must be able to pay for the launch. */
+  function prepareLaunch() {
+    settleLaunch();
+    const state = store.getState();
+    if (state.mode === 'campaign') {
+      const cost = evaluate(state).budget.budget.usedMUsd;
+      if (cost > state.campaign.fundsMUsd) {
+        play('error');
+        showToast({ title: t('toast.noFunds'), text: t('toast.noFundsText', { cost, funds: state.campaign.fundsMUsd }), tone: 'bad' });
+        render();
+        return;
+      }
+    }
+    startCountdown();
   }
 
   /** T-minus 3, 2, 1, liftoff, then the simulation starts. Reduced motion skips straight to it. */
@@ -278,7 +398,53 @@ export function mountApp(root, { store, data = gameData, storage }) {
       ? saveBest(state.scenarioId, score.total, storage)
       : { isNewBest: false, best: loadBest(storage).byScenario[state.scenarioId] };
     store.update(showReport, { score, ...best });
+    const budgetEntry = state.simulation?.budget?.budget;
+    ui.reportBadges = trackAchievement({
+      type: 'report',
+      scenarioId: state.scenarioId,
+      success: state.simulation?.outcome === 'success',
+      score: score.total,
+      tight: ['budget', 'mass', 'power', 'data', 'time'].some((key) => state.simulation?.budget?.[key]?.status === 'tight'),
+      budgetRatio: budgetEntry?.limitMUsd ? budgetEntry.usedMUsd / budgetEntry.limitMUsd : undefined,
+      safeEvents: (state.simulation?.events ?? []).filter((event) => !event.harmed).length,
+    });
+    if (state.mode === 'campaign' && state.campaign) {
+      const phase = phaseOfScenario(state.scenarioId);
+      const success = state.simulation?.outcome === 'success';
+      const finished = finishMission(store.getState().campaign, phase?.id, { success, scienceDelivered: state.simulation?.scienceDelivered ?? 0 });
+      const event = drawEvent(Math.random(), Math.random());
+      const after = applyEvent(finished.campaign, event);
+      const before = new Set(state.campaign.library);
+      ui.campaignResult = { ...finished.result, event, phaseId: phase?.id, unlocked: after.library.filter((id) => !before.has(id)) };
+      store.update(setCampaign, after);
+      ui.reportBadges = [...ui.reportBadges, ...trackAchievement({ type: 'campaign', libraryFound: after.library.length, finished: isFinished(after) })];
+    }
     window.scrollTo?.(0, 0);
+  }
+
+  /** Show a message window, optionally with its own buttons. */
+  function showModal(title, paragraphs, actions) {
+    ui.modal = { title, paragraphs, actions };
+    render();
+  }
+
+  function sideJob(jobId) {
+    const job = localizeList(sideJobs, 'campaign.sideJobs').find((item) => item.id === jobId);
+    const { campaign, outcome } = runSideJob(store.getState().campaign, jobId, Math.random());
+    if (!outcome) return;
+    play(outcome.success ? 'success' : 'failure');
+    store.update(setCampaign, campaign);
+    trackAchievement({ type: 'sideJob' });
+    trackCampaign();
+    const gains = [
+      outcome.fundsMUsd ? `${outcome.fundsMUsd > 0 ? '+' : ''}${outcome.fundsMUsd} M USD` : '',
+      outcome.science ? t('agency.plusScience', { n: outcome.science }) : '',
+    ].filter(Boolean).join(', ');
+    showModal(t(outcome.success ? 'job.okTitle' : 'job.failTitle', { name: job.name }), [
+      outcome.success ? t('job.ok') : t('job.fail'),
+      gains ? t('job.result', { gains }) : '',
+      outcome.unlocked.length ? t('job.newEntry') : '',
+    ]);
   }
 
   const handlers = {
@@ -289,7 +455,79 @@ export function mountApp(root, { store, data = gameData, storage }) {
     },
     confirm: (value) => store.update(confirmStep, Number(value)),
     'go-step': (value) => store.update(goToStep, Number(value)),
-    menu: () => store.update(goToMenu),
+    menu: () => {
+      const state = store.getState();
+      settleLaunch();
+      if (state.mode === 'campaign' && state.screen !== 'hub') store.update(goToHub);
+      else store.update(goToMenu);
+    },
+    hub: () => {
+      settleLaunch();
+      store.update(goToHub);
+    },
+    'free-play': () => store.update(openFreePlay),
+    'new-campaign': () => {
+      if (loadCampaign(storage)) {
+        showModal(t('newCampaign.title'), [t('newCampaign.text')], [
+          { label: t('newCampaign.confirm'), action: 'confirm-new-campaign', primary: true },
+          { label: t('newCampaign.keep'), action: 'close-modal' },
+        ]);
+        return;
+      }
+      handlers['confirm-new-campaign']();
+    },
+    'confirm-new-campaign': () => {
+      ui.modal = null;
+      ui.setup = { countryId: null, focusId: null };
+      store.update(openSetup);
+    },
+    'continue-campaign': () => {
+      const saved = loadCampaign(storage);
+      if (saved) store.update(enterCampaign, saved);
+    },
+    'pick-country': (value) => {
+      ui.setup = { ...ui.setup, countryId: value };
+      render();
+    },
+    'pick-focus': (value) => {
+      ui.setup = { ...ui.setup, focusId: value };
+      render();
+    },
+    'found-agency': () => {
+      const { countryId, focusId } = ui.setup;
+      if (!countryId || !focusId) return;
+      const campaign = createCampaign(countryId, focusId);
+      saveCampaign(campaign, storage);
+      ui.opsTab = 'jobs';
+      store.update(enterCampaign, campaign);
+      trackAchievement({ type: 'founded' });
+      showModal(t('welcome.title'), [
+        t('welcome.text1'),
+        t('welcome.text2'),
+      ]);
+    },
+    plan: (value) => {
+      settleLaunch();
+      ui.tab = 'instrument';
+      store.update(planMission, value);
+    },
+    'ops-tab': (value) => {
+      ui.opsTab = value;
+      render();
+    },
+    'side-job': (value) => sideJob(value),
+    research: (value) => {
+      const before = store.getState().campaign;
+      const after = buyResearch(before, value);
+      if (after === before) return;
+      play('pick');
+      store.update(setCampaign, after);
+      trackAchievement({ type: 'research' });
+      trackCampaign();
+      const item = localizeList(research, 'campaign.research').find((entry) => entry.id === value);
+      showToast({ title: t('toast.research', { name: item.name }), text: item.text, tone: 'warn' });
+      render();
+    },
     restart: () => {
       const { scenarioId } = store.getState();
       store.update((state) => startMission(selectScenario(state, scenarioId)));
@@ -304,7 +542,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
     'set-comms': (value) => updateDesign(setComms, value, data.parts),
     'set-orbit': (value) => updateDesign(setOrbit, value),
     'set-rocket': (value) => updateDesign(setRocket, value),
-    launch: () => startCountdown(),
+    launch: () => prepareLaunch(),
     skip: () => {
       const simulation = store.getState().simulation;
       if (simulation && ui.simShown < phasesToShow(simulation)) {
@@ -321,12 +559,13 @@ export function mountApp(root, { store, data = gameData, storage }) {
     },
     'see-report': () => openReport(),
     redesign: () => {
+      settleLaunch();
       const failed = store.getState().simulation?.failedIssue;
       store.update(redesign, failed ? [failed] : []);
     },
     'new-conditions': () => {
       store.update(newConditions);
-      startCountdown();
+      prepareLaunch();
     },
     'next-mission': () => {
       const ids = data.scenarios.map((scenario) => scenario.id);
@@ -339,6 +578,8 @@ export function mountApp(root, { store, data = gameData, storage }) {
       if (!quiz || store.getState().report?.quizAnswered) return;
       play(Number(value) === quiz.answer ? 'right' : 'wrong');
       store.update(answerQuiz, Number(value), quiz.answer);
+      ui.reportBadges = [...ui.reportBadges, ...trackAchievement({ type: 'quiz', scenarioId: store.getState().scenarioId, right: Number(value) === quiz.answer })];
+      render();
     },
     meter: (value) => {
       const meta = data.content?.meters?.[value];
@@ -347,6 +588,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
       render();
     },
     library: () => {
+      ui.badges = false;
       ui.library = { tab: 'missions' };
       ui.modal = null;
       if (store.getState().paused) store.update(togglePause);
@@ -359,6 +601,23 @@ export function mountApp(root, { store, data = gameData, storage }) {
     },
     'close-library': () => {
       ui.library = null;
+      render();
+    },
+    badges: () => {
+      ui.badges = true;
+      ui.library = null;
+      ui.modal = null;
+      if (store.getState().paused) store.update(togglePause);
+      render();
+      root.querySelector('.lib-scroll')?.focus();
+    },
+    'close-badges': () => {
+      ui.badges = false;
+      render();
+    },
+    language: () => {
+      setLocale(nextLocale());
+      syncData();
       render();
     },
     mute: () => {
@@ -374,6 +633,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
   /** Run an action from a click or a key, with its sound. */
   function run(action, value) {
     if (!handlers[action]) return;
+    syncData();
     if (ACTION_SOUNDS[action]) play(ACTION_SOUNDS[action]);
     handlers[action](value);
   }
@@ -390,7 +650,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
       const reason = element.querySelector('.card-reason')?.textContent;
       element.classList.add('shake');
       play('error');
-      if (reason) showToast({ title: 'Not possible', text: reason, tone: 'warn' });
+      if (reason) showToast({ title: t('toast.notPossible'), text: reason, tone: 'warn' });
       setTimeout(() => element.classList.remove('shake'), SHAKE_MS);
       render();
       return;
@@ -411,6 +671,17 @@ export function mountApp(root, { store, data = gameData, storage }) {
       run('mute');
       return;
     }
+    if ((key === 'l' || key === 'L') && !event.target.closest?.('input, textarea')) {
+      run('language');
+      return;
+    }
+    if (ui.badges) {
+      if (key === 'Escape' || key === 'Backspace') {
+        event.preventDefault();
+        run('close-badges');
+      }
+      return;
+    }
     // The library is its own screen: Esc or Backspace closes it, other game keys do nothing there.
     if (ui.library) {
       if (key === 'Escape' || key === 'Backspace') {
@@ -419,7 +690,7 @@ export function mountApp(root, { store, data = gameData, storage }) {
       }
       return;
     }
-    if ((key === 'p' || key === 'P' || key === 'Escape') && state.screen !== 'menu') {
+    if ((key === 'p' || key === 'P' || key === 'Escape') && !MENU_SCREENS.has(state.screen)) {
       event.preventDefault();
       run('pause');
       return;
@@ -428,7 +699,13 @@ export function mountApp(root, { store, data = gameData, storage }) {
 
     if (key === 'Enter' && event.target === document.body) {
       event.preventDefault();
-      if (state.screen === 'menu') run('start');
+      if (state.screen === 'menu') run(loadCampaign(storage) ? 'continue-campaign' : 'new-campaign');
+      else if (state.screen === 'free') run('start');
+      else if (state.screen === 'setup') run('found-agency');
+      else if (state.screen === 'hub') {
+        const next = currentPhase(state.campaign);
+        if (next) run('plan', next.scenarioId);
+      }
       else if (state.screen === 'launch') run('launch');
       else if (state.screen === 'simulation') {
         if (state.simulation && ui.simShown >= phasesToShow(state.simulation)) run('see-report');
@@ -438,7 +715,8 @@ export function mountApp(root, { store, data = gameData, storage }) {
     } else if (key === 'Backspace') {
       event.preventDefault();
       const step = STEP_OF[state.screen];
-      if (step === 1) run('menu');
+      if (state.screen === 'free' || state.screen === 'setup') run('menu');
+      else if (step === 1) run('menu');
       else if (step) run('go-step', step - 1);
     } else if (/^[1-8]$/.test(key)) {
       const cards = root.querySelectorAll('[data-card]');
@@ -446,6 +724,12 @@ export function mountApp(root, { store, data = gameData, storage }) {
     }
   });
 
+  // Save the agency every time it changes (it lives in localStorage, like the best scores).
+  let savedCampaign = store.getState().campaign;
+  store.subscribe((state) => {
+    if (state.campaign && state.campaign !== savedCampaign) saveCampaign(state.campaign, storage);
+    savedCampaign = state.campaign;
+  });
   store.subscribe(render);
   render();
 }

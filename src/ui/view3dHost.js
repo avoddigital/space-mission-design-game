@@ -2,7 +2,9 @@
 // The 3D code is loaded on demand. If it fails (no WebGL, old device, ?3d=off),
 // the 2D diagram stays and the game works the same.
 
-const FALLBACK_TEXT = '3D view unavailable on this device. The game works the same.';
+import { t } from '../i18n/index.js';
+
+const FALLBACK_TEXT = () => t('common.no3d');
 
 let view = null;
 let status = 'idle'; // 'idle' | 'loading' | 'ready' | 'failed'
@@ -18,7 +20,7 @@ function disabledByUrl() {
 function showFallback(slot) {
   slot.classList.add('is-off');
   const note = slot.querySelector('.view3d-note');
-  if (note) note.textContent = FALLBACK_TEXT;
+  if (note) note.textContent = FALLBACK_TEXT();
 }
 
 /**
@@ -41,6 +43,7 @@ export function syncView3d(root, scene, { paused, onReady }) {
   if (status === 'ready') {
     view.attach(slot);
     if (slot.dataset.view3d === 'flight') view.showFlight(scene);
+    else if (slot.dataset.view3d === 'globe') view.showGlobe(scene.globe);
     else view.showSpacecraft(scene.parts);
     view.setPaused(paused);
     slot.classList.add('is-3d');

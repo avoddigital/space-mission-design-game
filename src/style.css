@@ -2970,3 +2970,799 @@ button.check:hover {
     margin-top: clamp(10px, 2.4vh, 22px);
   }
 }
+
+/* --- Campaign: title, new agency, command center (src/ui/screens/campaign.js) --- */
+
+.flag {
+  display: block;
+  width: 40px;
+  height: 30px;
+  flex: none;
+  object-fit: cover;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--seam), 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+.flag-sm {
+  width: 28px;
+  height: 21px;
+}
+
+/* A small amber display with a caption: funds, science, month. */
+.readout {
+  display: inline-grid;
+  gap: 0;
+  padding: 3px 10px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-1);
+  background: var(--bezel);
+  box-shadow: var(--recessed);
+  line-height: 1.2;
+}
+
+.readout small {
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.58rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.readout b {
+  color: var(--digits);
+  font-family: var(--font-data);
+  font-size: 0.95rem;
+  white-space: nowrap;
+}
+
+.readout i {
+  color: var(--label-sub);
+  font-size: 0.7em;
+  font-style: normal;
+}
+
+.stage > .globe-caption {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 5px 12px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-1);
+  background: rgba(12, 14, 13, 0.85);
+  color: var(--label);
+  font-family: var(--font-data);
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  transform: translateX(-50%);
+}
+
+.globe-caption b {
+  color: var(--digits);
+}
+
+/* Title: Earth on the left, the game and its buttons on the right. */
+.title {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(320px, 1fr);
+  gap: 24px;
+  align-items: stretch;
+}
+
+.title-stage {
+  min-height: 420px;
+}
+
+.title-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 8px;
+}
+
+.title-panel .menu-sound {
+  top: 0;
+}
+
+.title-panel h1 {
+  font-size: clamp(3.4rem, 8vw, 6.4rem);
+}
+
+.title-panel h1 span {
+  color: var(--digits);
+}
+
+.title-panel .lead {
+  margin: 14px 0 0;
+}
+
+.title-actions {
+  display: grid;
+  gap: 12px;
+  max-width: 440px;
+  margin-top: 26px;
+}
+
+.title-actions .btn-big {
+  justify-content: flex-start;
+  margin: 0;
+}
+
+.title-continue span {
+  display: grid;
+  line-height: 1;
+  text-align: left;
+}
+
+.title-continue small {
+  margin-top: 4px;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: none;
+}
+
+.title-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.title-panel .legend {
+  margin-top: 22px;
+}
+
+/* New agency */
+.setup {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 520px);
+  gap: 16px;
+}
+
+.setup-stage {
+  min-height: 360px;
+}
+
+.setup-panel {
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.setup-panel h2 {
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--rule);
+}
+
+.countries {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 6px;
+}
+
+.country {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 6px 8px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+  color: var(--label);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-align: left;
+}
+
+.country .flag {
+  width: 30px;
+  height: 22px;
+}
+
+.country:hover {
+  border-color: rgba(232, 228, 214, 0.3);
+}
+
+.country.is-selected {
+  border-color: var(--lamp-go);
+  background: #2f3833;
+  box-shadow: 0 0 0 1px var(--lamp-go), 0 0 10px rgba(92, 207, 134, 0.3);
+}
+
+.focus-bonus {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--digits);
+  font-family: var(--font-data);
+  font-size: 0.72rem;
+}
+
+.setup-start {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 0 0;
+  color: var(--label-sub);
+  font-size: 0.86rem;
+}
+
+.setup-actions {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.setup-actions .btn[aria-disabled] {
+  cursor: not-allowed;
+  opacity: 0.45;
+  filter: saturate(0.3);
+}
+
+/* Command center */
+.hub {
+  grid-template-columns: minmax(290px, 340px) minmax(0, 1fr) minmax(290px, 350px);
+}
+
+.hub .hub-ops {
+  grid-area: meters;
+  overflow-x: hidden;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.hub-top {
+  flex-wrap: wrap;
+}
+
+.agency {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-right: auto;
+}
+
+.agency > span {
+  display: grid;
+  line-height: 1.1;
+}
+
+.agency b {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.agency small {
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.64rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.readouts {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.phase-card.is-done .card-icon {
+  color: var(--lamp-go);
+}
+
+.phase-card.is-done::after {
+  background: var(--lamp-go);
+  box-shadow: 0 0 8px rgba(92, 207, 134, 0.8);
+}
+
+.phase-card.is-current {
+  border-color: rgba(242, 179, 61, 0.6);
+}
+
+.phase-card.is-current::after {
+  background: var(--lamp-caution);
+  box-shadow: 0 0 8px rgba(242, 179, 61, 0.8);
+  animation: blink 1.4s steps(2, start) infinite;
+}
+
+.phase-card.is-current .card-icon {
+  color: var(--lamp-caution);
+}
+
+.phase-card.is-locked {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.phase-card .card-reason {
+  display: none;
+}
+
+.phase-tag {
+  color: var(--label-sub);
+}
+
+.is-done .phase-tag { color: var(--lamp-go); }
+.is-current .phase-tag { color: var(--lamp-caution); }
+
+.op-card[aria-disabled]:not(.is-selected) {
+  opacity: 0.6;
+}
+
+.op-card[aria-disabled] {
+  cursor: not-allowed;
+}
+
+.agency-log {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--bezel);
+  box-shadow: var(--recessed);
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  list-style: none;
+}
+
+.agency-log span {
+  color: var(--digits);
+}
+
+.hub-done {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--lamp-go);
+  font-weight: 700;
+}
+
+/* Report and launch, campaign only */
+.agency-result {
+  margin: 0 0 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(242, 179, 61, 0.4);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+}
+
+.agency-result h3 {
+  margin-top: 0;
+}
+
+.agency-event {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: var(--r-1);
+  background: rgba(242, 179, 61, 0.1);
+  font-size: 0.86rem;
+}
+
+.agency-event .icon {
+  margin-top: 2px;
+  color: var(--lamp-caution);
+}
+
+.agency-totals {
+  margin: 10px 0 0;
+  color: var(--label-sub);
+  font-size: 0.82rem;
+}
+
+.agency-totals b {
+  color: var(--digits);
+  font-family: var(--font-data);
+}
+
+.launch-cost {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 10px 14px;
+  border: 1px solid rgba(232, 228, 214, 0.12);
+  border-radius: var(--r-2);
+  background: rgba(20, 24, 23, 0.85);
+  font-size: 0.86rem;
+}
+
+.launch-cost b {
+  color: var(--digits);
+  font-family: var(--font-data);
+}
+
+.topbar-funds {
+  flex: none;
+}
+
+/* Free mission header */
+.free-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0 18px;
+  text-align: left;
+}
+
+.free-head > div {
+  flex: 1;
+}
+
+.free-head h1 {
+  margin: 0;
+  font-size: clamp(2.2rem, 5vw, 3.2rem);
+}
+
+.free-head .lead {
+  max-width: none;
+  margin: 4px 0 0;
+}
+
+/* Library: entries not discovered yet */
+.lib-card.is-locked {
+  opacity: 0.75;
+}
+
+.lib-locked-window {
+  display: grid;
+  place-items: center;
+  aspect-ratio: 16 / 9;
+  background: repeating-linear-gradient(-45deg, var(--bezel) 0 10px, #141817 10px 20px);
+  color: #3a423f;
+}
+
+.lib-card.is-locked .lib-kicker {
+  color: var(--label-sub);
+}
+
+.lib-count {
+  flex: none;
+}
+
+@media (max-width: 1100px) {
+  .hub,
+  .hub.layout-hero {
+    grid-template-columns: minmax(280px, 330px) 1fr;
+    grid-template-areas:
+      'top top'
+      'cards stage'
+      'meters meters'
+      'footer footer';
+  }
+}
+
+@media (max-width: 860px) {
+  .title,
+  .setup {
+    grid-template-columns: 1fr;
+  }
+
+  .title-stage {
+    min-height: 260px;
+  }
+
+  .setup-stage {
+    min-height: 220px;
+  }
+
+  .hub,
+  .hub.layout-hero {
+    grid-template-areas:
+      'top'
+      'stage'
+      'cards'
+      'meters'
+      'footer';
+  }
+
+  .free-head {
+    flex-wrap: wrap;
+  }
+
+  .free-head > div {
+    flex-basis: 100%;
+    order: 3;
+  }
+}
+
+/* Wide screens: title, setup and command center fill the window like the game. */
+@media (min-width: 861px) {
+  .title,
+  .setup {
+    flex: 1;
+    min-height: 0;
+  }
+
+  .title-stage,
+  .setup-stage,
+  .setup-panel {
+    min-height: 0;
+  }
+
+  .hub .view3d-slot {
+    margin-bottom: 0;
+  }
+}
+
+@media (min-width: 861px) and (max-width: 1100px) {
+  .hub,
+  .hub.layout-hero {
+    grid-template-rows: auto minmax(0, 1fr) minmax(0, 0.8fr) auto;
+  }
+
+  .hub .hub-ops {
+    overflow-y: auto;
+  }
+}
+
+/* The stage class carries the game grid area; title and setup place it themselves. */
+.title-stage,
+.setup-stage {
+  grid-area: auto;
+}
+
+.title-panel .eyebrow {
+  align-self: flex-start;
+}
+
+/* --- Card badges and stat lines that always fit --- */
+
+.card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.badge-good {
+  color: var(--lamp-go);
+}
+
+.badge-warn {
+  color: var(--lamp-caution);
+}
+
+.cards-panel .stats {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.stat {
+  min-width: 0;
+}
+
+.stat-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-value,
+.stat-text {
+  white-space: nowrap;
+}
+
+/* --- Language button and title tools --- */
+
+.btn-lang {
+  min-width: 44px;
+  padding: 8px 10px;
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+}
+
+.title-tools {
+  position: absolute;
+  top: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  gap: 8px;
+}
+
+/* --- Badges: embroidered mission patches (src/ui/screens/badges.js) --- */
+
+.patch {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 35%, #2a302e 0%, var(--bezel) 75%);
+  box-shadow: 0 0 0 2px #262b29, 0 0 0 3px var(--seam), inset 0 2px 6px rgba(0, 0, 0, 0.7);
+  color: #4b5450;
+}
+
+/* Stitched edge, like the thread around a real patch. */
+.patch::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border: 2px dashed rgba(232, 228, 214, 0.12);
+  border-radius: 50%;
+}
+
+.patch-big {
+  width: 64px;
+  height: 64px;
+}
+
+.patch-small {
+  width: 30px;
+  height: 30px;
+}
+
+.patch-small::after {
+  inset: 2px;
+  border-width: 1px;
+}
+
+.patch.is-earned {
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255, 255, 255, 0.25) 0%, transparent 45%),
+    linear-gradient(160deg, #3a78d6 0%, #2a4f9a 55%, #1c2f5e 100%);
+  box-shadow: 0 0 0 3px var(--lamp-caution), 0 0 0 4px var(--seam), 0 0 14px rgba(242, 179, 61, 0.35);
+  color: var(--digits);
+}
+
+.patch.is-earned::after {
+  border-color: rgba(255, 210, 122, 0.7);
+}
+
+.badge-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 10px;
+}
+
+.badge-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+  opacity: 0.7;
+}
+
+.badge-card.is-earned {
+  background: linear-gradient(180deg, var(--console-hi) 0%, var(--console) 100%);
+  box-shadow: var(--raised);
+  opacity: 1;
+}
+
+.badge-body {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.badge-body strong {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  letter-spacing: 0.04em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.badge-body span {
+  color: var(--label-sub);
+  font-size: 0.84rem;
+}
+
+.badge-body small {
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.badge-card.is-earned .badge-body small {
+  color: var(--digits);
+}
+
+.badge-progress {
+  height: 10px;
+  padding: 2px;
+  border-radius: 2px;
+  background: var(--bezel);
+  box-shadow: var(--recessed);
+}
+
+.badge-progress i {
+  display: block;
+  height: 100%;
+  border-radius: 1px;
+  background: var(--lamp-caution);
+  box-shadow: 0 0 8px rgba(242, 179, 61, 0.5);
+}
+
+/* "Badge earned" notice, top right. */
+.badge-notice {
+  position: fixed;
+  top: 16px;
+  right: 16px;
+  z-index: 40;
+  display: grid;
+  gap: 8px;
+  pointer-events: none;
+}
+
+.badge-notice-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 14px 8px 8px;
+  border: 1px solid rgba(242, 179, 61, 0.6);
+  border-radius: var(--r-2);
+  background: var(--console);
+  box-shadow: var(--raised), 0 10px 30px rgba(0, 0, 0, 0.6), 0 0 18px rgba(242, 179, 61, 0.25);
+  font-family: var(--font-data);
+  font-size: 0.78rem;
+  font-weight: 700;
+  animation: badge-in 450ms var(--ease) both;
+}
+
+@keyframes badge-in {
+  0% { transform: translateX(30px) scale(0.9); opacity: 0; }
+  60% { transform: translateX(-4px) scale(1.03); opacity: 1; }
+  100% { transform: none; }
+}
+
+/* Badges earned by the last report. */
+.report-patches {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--rule);
+}
+
+.report-patches > span {
+  width: 100%;
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.report-patch {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid var(--seam);
+  border-radius: 20px;
+  background: var(--console);
+  color: var(--label);
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.title-row .title-badges {
+  grid-column: 1 / -1;
+}

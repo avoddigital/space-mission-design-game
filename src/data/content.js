@@ -6,6 +6,9 @@
 // Other facts: sunlight at Mars ~43% of Earth (NASA TM-2001-210935);
 // coldest lunar craters measured by LRO Diviner (NASA LRO pages).
 export const content = {
+  // Names of part types inside sentences ("needs at least one {type} part").
+  typeNames: { instrument: 'instrument', power: 'power', comms: 'antenna' },
+
   // --- Task 2: one entry per engine issue code. Placeholders use only the names listed in Carlos.md ---
   issues: {
     NO_ROCKET: {

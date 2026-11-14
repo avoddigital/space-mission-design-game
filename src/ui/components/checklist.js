@@ -2,6 +2,7 @@ import { esc, fmt } from '../format.js';
 import { formatIssue } from '../../engine/messages.js';
 import { issueRoute } from '../../engine/phases.js';
 import { icon } from './icons.js';
+import { t } from '../../i18n/index.js';
 
 /** Which checklist line each issue belongs to. */
 function rowOf(issue) {
@@ -25,25 +26,25 @@ function rowOf(issue) {
 }
 
 const ROWS = [
-  { key: 'budget', name: 'Budget', step: 2, ok: (b) => `${fmt(b.budget.usedMUsd)} of ${fmt(b.budget.limitMUsd)} million USD.` },
-  { key: 'mass', name: 'Mass', step: 3, ok: (b) => `${fmt(b.mass.usedKg)} kg of the ${fmt(b.mass.limitKg)} kg the rocket can carry.` },
-  { key: 'power', name: 'Power', step: 2, ok: (b) => `Uses ${fmt(b.power.consumedW)} W of the ${fmt(b.power.generatedW)} W it makes.` },
-  { key: 'data', name: 'Data downlink', step: 2, ok: (b) => `Makes ${fmt(b.data.producedGbPerDay)} GB/day; the antenna sends ${fmt(b.data.downlinkGbPerDay)} GB/day.` },
-  { key: 'time', name: 'Time', step: 3, ok: (b) => `${fmt(b.time.totalDays)} of ${fmt(b.time.limitDays)} days.` },
-  { key: 'science', name: 'Science', step: 2, ok: (b) => `${fmt(b.science.value)} points; the goal is ${fmt(b.science.goal)}.` },
+  { key: 'budget', name: 'check.budget', step: 2, ok: (b) => t('check.okBudget', { used: fmt(b.budget.usedMUsd), limit: fmt(b.budget.limitMUsd) }) },
+  { key: 'mass', name: 'check.mass', step: 3, ok: (b) => t('check.okMass', { used: fmt(b.mass.usedKg), limit: fmt(b.mass.limitKg) }) },
+  { key: 'power', name: 'check.power', step: 2, ok: (b) => t('check.okPower', { used: fmt(b.power.consumedW), limit: fmt(b.power.generatedW) }) },
+  { key: 'data', name: 'check.data', step: 2, ok: (b) => t('check.okData', { used: fmt(b.data.producedGbPerDay), limit: fmt(b.data.downlinkGbPerDay) }) },
+  { key: 'time', name: 'check.time', step: 3, ok: (b) => t('check.okTime', { used: fmt(b.time.totalDays), limit: fmt(b.time.limitDays) }) },
+  { key: 'science', name: 'check.science', step: 2, ok: (b) => t('check.okScience', { used: fmt(b.science.value), limit: fmt(b.science.goal) }) },
 ];
 
 const PENDING_TEXT = {
-  mass: 'Pick an orbit and a rocket.',
-  power: 'Pick a power source.',
-  data: 'Pick an antenna.',
-  time: 'Pick an orbit.',
+  mass: 'pending.mass',
+  power: 'pending.power',
+  data: 'pending.data',
+  time: 'pending.time',
 };
 
 const LABELS = {
-  go: `${'<span class="check-mark">'}${icon('check', 14)}</span> GO`,
-  check: `<span class="check-mark">${icon('warn', 14)}</span> CHECK`,
-  nogo: `<span class="check-mark">${icon('cross', 14)}</span> NO-GO`,
+  go: () => `<span class="check-mark">${icon('check', 14)}</span> ${t('check.go')}`,
+  check: () => `<span class="check-mark">${icon('warn', 14)}</span> ${t('check.check')}`,
+  nogo: () => `<span class="check-mark">${icon('cross', 14)}</span> ${t('check.nogo')}`,
 };
 
 /**
@@ -69,12 +70,12 @@ export function checklist(evaluation, content, data, { currentStep = 0 } = {}) {
       step = issueRoute(shown).step;
     } else if (pending) {
       status = 'nogo';
-      text = PENDING_TEXT[row.key] ?? 'Not set yet.';
+      text = PENDING_TEXT[row.key] ? `${t(PENDING_TEXT[row.key])}.` : t('check.notSet');
     }
-    const body = `<span class="check-label">${LABELS[status]}</span><span class="check-name">${icon(row.key, 16)} ${row.name}</span><span class="check-text">${esc(text)}</span>`;
+    const body = `<span class="check-label">${LABELS[status]()}</span><span class="check-name">${icon(row.key, 16)} ${t(row.name)}</span><span class="check-text">${esc(text)}</span>`;
     if (status === 'go') return `<li class="check check-${status}">${body}</li>`;
-    const fix = step === currentStep ? 'Fix it on this step' : `Fix in step ${step} ${icon('next', 12)}`;
+    const fix = step === currentStep ? t('check.fixHere') : `${t('check.fixIn', { n: step })} ${icon('next', 12)}`;
     return `<li><button type="button" class="check check-${status}" data-action="go-step" data-value="${step}">${body}<span class="check-fix">${fix}</span></button></li>`;
   });
-  return `<ul class="checklist" aria-label="Launch checklist">${lines.join('')}</ul>`;
+  return `<ul class="checklist" aria-label="${t('launch.checklist')}">${lines.join('')}</ul>`;
 }
