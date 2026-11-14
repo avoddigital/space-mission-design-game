@@ -4,6 +4,7 @@
 import { describe, it, expect } from 'vitest';
 import { validateMission } from '../src/engine/validation.js';
 import { findWinningMission } from './helpers/findWinningMission.js';
+import { countWinningMissions } from './helpers/countWinningMissions.js';
 
 const modules = import.meta.glob('../src/data/*.js', { eager: true });
 const table = (file, name) => modules[`../src/data/${file}`]?.[name];
@@ -112,5 +113,38 @@ describe.skipIf(!hasData)('data tables: balance with the rules engine', () => {
     const nonInstruments = mission.parts.filter((part) => part.type !== 'instrument');
     const everything = { ...mission, parts: [...nonInstruments, ...instruments] };
     expect(validateMission(everything, scenario).ok, `all instruments fit in ${scenario.id}`).toBe(false);
+  });
+});
+
+// No single right answer (PRD 6.4): every scenario must have many winning designs,
+// using at least 2 different rockets or 2 different orbits.
+const MIN_WINNING_DESIGNS = 10;
+
+describe.skipIf(!hasData)('data tables: more than one way to win', () => {
+  const data = { parts, rockets, orbits };
+  const counts = new Map();
+  const countFor = (scenario) => {
+    if (!counts.has(scenario.id)) {
+      const result = countWinningMissions(scenario, data);
+      counts.set(scenario.id, result);
+      const pct = ((result.wins / result.total) * 100).toFixed(1);
+      console.info(
+        `[balance] ${scenario.id}: ${result.wins} winning designs of ${result.total} (${pct}%), ` +
+          `rockets: ${[...result.rockets].join(', ') || '-'}, orbits: ${[...result.orbits].join(', ') || '-'}`,
+      );
+    }
+    return counts.get(scenario.id);
+  };
+
+  it.each(scenarios ?? [])(`scenario "$id" has at least ${MIN_WINNING_DESIGNS} winning designs`, (scenario) => {
+    expect(countFor(scenario).wins).toBeGreaterThanOrEqual(MIN_WINNING_DESIGNS);
+  });
+
+  it.each(scenarios ?? [])('scenario "$id" can be won with 2+ rockets or 2+ orbits', (scenario) => {
+    const { rockets: winningRockets, orbits: winningOrbits } = countFor(scenario);
+    expect(
+      winningRockets.size >= 2 || winningOrbits.size >= 2,
+      `${scenario.id} wins only with ${[...winningRockets]} on ${[...winningOrbits]}`,
+    ).toBe(true);
   });
 });
