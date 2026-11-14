@@ -4,6 +4,8 @@
 
 import * as THREE from 'three';
 import { buildSpacecraft, disposeShared } from './spacecraft.js';
+import { createFlight } from './flight.js';
+import { disposePlanetTextures } from './planets.js';
 
 const MAX_PIXEL_RATIO = 2;
 const MAX_FRAME_MS = 100; // a background tab must not make the animation jump
@@ -22,6 +24,8 @@ let popStart = 0;
 let lastTime = 0;
 let dragging = null;
 let lastDragAt = 0;
+let flight = null;
+let mode = 'spacecraft'; // 'spacecraft' (steps 1 and 2) or 'flight' (simulation)
 
 const reducedMotion = () => globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -86,8 +90,10 @@ function resize() {
   const width = Math.max(1, parent.clientWidth);
   const height = Math.round(Math.min(360, Math.max(200, width * 0.7)));
   renderer.setSize(width, height, true);
-  camera.aspect = width / height;
-  camera.updateProjectionMatrix();
+  for (const view of [camera, flight?.camera].filter(Boolean)) {
+    view.aspect = width / height;
+    view.updateProjectionMatrix();
+  }
 }
 
 /**
@@ -96,6 +102,7 @@ function resize() {
  */
 export function showSpacecraft(parts = []) {
   if (!scene) return;
+  mode = 'spacecraft';
   const key = parts.map((part) => part.id).join(',');
   if (craft && key === lastKey) return;
   const rotation = craft ? craft.rotation.clone() : new THREE.Euler(0.25, -0.6, 0);
@@ -105,6 +112,21 @@ export function showSpacecraft(parts = []) {
   scene.add(craft);
   if (lastKey !== '' || parts.length) popStart = performance.now();
   lastKey = key;
+}
+
+/**
+ * Show the launch, transfer, orbit and data return for a simulation result.
+ * The HTML timeline is in charge: `shown` is how many phases it has revealed.
+ * @param {{ simulation: object, parts: object[], rocket?: object, orbit?: object, shown: number }} params
+ */
+export function showFlight(params) {
+  if (!renderer || !params?.simulation) return;
+  if (!flight) {
+    flight = createFlight();
+    resize();
+  }
+  mode = 'flight';
+  flight.set(params);
 }
 
 export function setPaused(value) {
@@ -117,8 +139,10 @@ export function dispose() {
   resizeObserver?.disconnect();
   renderer?.domElement.remove();
   renderer?.dispose();
+  flight?.dispose();
   disposeShared();
-  renderer = scene = camera = craft = null;
+  disposePlanetTextures();
+  renderer = scene = camera = craft = flight = null;
   lastKey = '';
 }
 
@@ -128,7 +152,14 @@ function startLoop() {
     const dt = Math.min(MAX_FRAME_MS, time - (lastTime || time)) / 1000;
     lastTime = time;
     // Draw only when the canvas is on screen, the game is not paused and the tab is visible.
-    if (!renderer.domElement.isConnected || paused || document.hidden || !craft) return;
+    if (!renderer.domElement.isConnected || paused || document.hidden) return;
+
+    if (mode === 'flight' && flight) {
+      flight.update(dt);
+      renderer.render(flight.scene, flight.camera);
+      return;
+    }
+    if (!craft) return;
 
     if (!dragging && !reducedMotion() && time - lastDragAt > 1500) craft.rotation.y += AUTO_SPIN * dt;
     const pop = popStart && !reducedMotion() ? Math.max(0, 1 - (time - popStart) / POP_MS) : 0;
@@ -141,6 +172,7 @@ function startLoop() {
 function setupDrag(canvas) {
   canvas.style.touchAction = 'none';
   canvas.addEventListener('pointerdown', (event) => {
+    if (mode !== 'spacecraft') return; // the flight has its own camera
     dragging = { x: event.clientX, y: event.clientY };
     canvas.setPointerCapture(event.pointerId);
   });

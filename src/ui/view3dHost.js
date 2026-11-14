@@ -24,10 +24,11 @@ function showFallback(slot) {
 /**
  * Call after every render. Puts the 3D canvas in the slot of the current screen, if any.
  * @param {HTMLElement} root app root
- * @param {object[]} parts resolved parts of the current design
+ * @param {{ parts: object[], rocket?: object, orbit?: object, simulation?: object, shown?: number }} scene
+ *   what to draw: the spacecraft (steps 1 and 2) or the flight (simulation screen)
  * @param {{ paused: boolean, onReady: Function }} options onReady re-renders when 3D finished loading
  */
-export function syncView3d(root, parts, { paused, onReady }) {
+export function syncView3d(root, scene, { paused, onReady }) {
   const slot = root.querySelector('[data-view3d]');
   if (!slot) {
     view?.setPaused(true); // nothing to draw on this screen
@@ -39,7 +40,8 @@ export function syncView3d(root, parts, { paused, onReady }) {
   }
   if (status === 'ready') {
     view.attach(slot);
-    view.showSpacecraft(parts);
+    if (slot.dataset.view3d === 'flight') view.showFlight(scene);
+    else view.showSpacecraft(scene.parts);
     view.setPaused(paused);
     slot.classList.add('is-3d');
     return;

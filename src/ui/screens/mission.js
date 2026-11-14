@@ -84,7 +84,9 @@ export function simulationScreen(ctx) {
     title: 'Step 4 · Simulation',
     results: true,
     cards: `<ol class="timeline" aria-live="polite">${timeline}</ol>${result}${learnBox(ctx.content.learn?.simulation)}`,
-    stage: `<div class="sim-stage${done && simulation.outcome === 'failure' ? ' is-failed' : ''}">${events || '<p class="hint">Your mission is underway…</p>'}</div>`,
+    stage: `<div class="sim-stage${done && simulation.outcome === 'failure' ? ' is-failed' : ''}">
+      <div class="view3d-slot" data-view3d="flight"><p class="view3d-note">Loading 3D view…</p></div>
+      ${events || '<p class="hint">Your mission is underway…</p>'}</div>`,
     footer: done
       ? '<button type="button" class="btn btn-primary" data-action="see-report">See the report →</button>'
       : '<button type="button" class="btn" data-action="skip">Skip animation ⏭</button>',

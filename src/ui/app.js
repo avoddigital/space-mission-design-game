@@ -87,9 +87,10 @@ export function mountApp(root, { store, data = gameData, storage }) {
 
     // Optional 3D view: only reads the chosen parts and draws them.
     if (state.screen !== 'menu') {
-      syncView3d(root, selectMission(state, data).parts, { paused: state.paused || Boolean(ui.modal), onReady: render });
+      const mission = selectMission(state, data);
+      syncView3d(root, { ...mission, simulation: state.simulation, shown: ui.simShown }, { paused: state.paused || Boolean(ui.modal), onReady: render });
     } else {
-      syncView3d(root, [], { paused: true, onReady: render });
+      syncView3d(root, { parts: [] }, { paused: true, onReady: render });
     }
 
     // Keep keyboard focus on the same control after re-rendering.
