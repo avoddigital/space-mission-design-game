@@ -26,7 +26,7 @@ Space mission design is full of trade-offs: a better instrument adds science val
 - Fits the screen on laptops and desktops (no page scroll); on phones the meters stay in a strip on top and the main button stays at the bottom of the screen; 2D fallback without WebGL.
 
 ## Who it is for
-Teenagers and young adults (Generation Z, about 14 to 29 years old), and teachers who want a short class activity. No install, no account, playable on a phone or a school laptop. The game explains every result in plain words, uses SI units (like NASA's own projects) and links every real fact to its official source.
+Teenagers (about 12 to 17 years old), and teachers who want a short class activity. No install, no account, playable on a phone or a school laptop. The game explains every result in plain words, uses SI units (like NASA's own projects) and links every real fact to its official source.
 
 What players learn in each mission and step, the learning theories behind the game (Kolb, Knowles, Vygotsky, Papert, Gee, Kapur, Freire, Black & Wiliam), how it uses NASA's open data and how it turns mistakes into learning: [docs/learning-design.md](docs/learning-design.md).
 

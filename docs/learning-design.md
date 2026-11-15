@@ -10,19 +10,17 @@ costs, science goals) are simplified game values and live in `src/data/`; this d
 
 ## 1. Audience
 
-**Teenagers and adults of Generation Z.** Pew Research Center places the start of this generation at people
-born from 1997 onward ([Pew, 2019](https://www.pewresearch.org/short-reads/2019/01/17/where-millennials-end-and-generation-z-begins/)).
-Pew has not fixed an end year; we use **1997–2012** as a working range, which means players about
-**14 to 29 years old in 2026**.
+**Teenagers, about 12 to 17 years old.** Lower and upper secondary school students who play alone, in pairs,
+in a team of up to four, or in class.
 
 Two groups inside that range, with different needs:
 
 | Group | Typical situation | What they need from the game |
 | --- | --- | --- |
-| **Teen students (14–17)** | High school, playing alone, in pairs or in class | Short sessions, clear goals, visual feedback, no login, works on a school laptop or phone |
-| **Young adults (18–29)** | University students, early-career professionals, space fans | Respect for what they already know, real trade-offs, freedom to choose, real sources to go deeper |
+| **Younger teens (12–14)** | Lower secondary school, often a first contact with space science; playing in class or at home | A guide that shows the next step (Commander Capi), short sentences, visual feedback, no login, works on a school laptop or phone |
+| **Older teens (15–17)** | Upper secondary school, some physics and maths already, space fans | Respect for what they already know, real trade-offs, freedom to choose, the real numbers on request, real sources to go deeper |
 
-Design choices that follow from this audience (not assumptions about "what Gen Z is like", but requirements we can test):
+Design choices that follow from this audience (not assumptions about "what teenagers are like", but requirements we can test):
 
 - **Browser, no install, no account.** Plays on phones and weak laptops; the 3D view is optional.
 - **Short loops.** One mission in a few minutes; the campaign can be played in short sessions (it saves itself).
@@ -89,7 +87,7 @@ Learning goals use the revised Bloom's taxonomy verbs (Anderson & Krathwohl, 200
 
 ## 4. Pedagogy and andragogy
 
-The game is built for both teenagers (pedagogy) and adults (andragogy). These are the references and how each one shows up in the game.
+The game is built for teenagers (pedagogy). Knowles's principles for adult learners (andragogy) also guide it: older teens want the same respect and autonomy, and teachers and adult players are a secondary audience. These are the references and how each one shows up in the game.
 
 ### Experiential learning — Kolb (1984)
 Kolb, D. A. *Experiential Learning: Experience as the Source of Learning and Development.* Prentice Hall.
@@ -105,7 +103,7 @@ Knowles describes adult learners as needing to know why they learn, self-directe
 ready to learn what solves real problems, problem-centred and internally motivated. In the game:
 - **Need to know why:** every limit explains *why* it matters ("this rocket can carry X kg to this orbit").
 - **Self-direction:** the player chooses country, focus, strategy and when to take risks; no forced tutorial.
-- **Experience as a resource:** adults who know physics or budgets can go straight to the numbers ("Show numbers").
+- **Experience as a resource:** players who already know some physics or budgets can go straight to the numbers ("Show numbers").
 - **Problem-centred:** each mission is a real problem (a science question), not a list of facts.
 - **Internal motivation:** progress, discovery in the Library and the wish to beat one's own design, not points for their own sake. The 16 badges (mission patches) reward learning behaviours, not just winning: "Lesson learned" for succeeding after a failure, "Built to last" for margins that absorbed a surprise, "Budget saver", "Curious mind" for the Library.
 
