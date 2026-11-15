@@ -16,6 +16,8 @@ export function createInitialState() {
     reroll: 0, // changes the random events ("Try again with new conditions")
     simulation: null, // result of simulateMission
     report: null, // { score, isNewBest, best, quizAnswered, quizRight, quizChoice }
+    attempts: [], // a short record of each flight in this mission (engine/debrief.js attemptSummary), to compare them
+    conditions: null, // { eventIds, run }: replay the surprises of flight `run` ("Rebuild, same conditions")
     team: null, // { players: [{ name, roles }] } from src/engine/team.js; null means one player
     paused: false,
   };

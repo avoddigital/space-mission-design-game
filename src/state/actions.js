@@ -20,6 +20,8 @@ export function selectScenario(state, scenarioId) {
     reroll: 0,
     simulation: null,
     report: null,
+    attempts: [],
+    conditions: null,
   };
 }
 
@@ -83,13 +85,14 @@ export function setRocket(state, rocketId) {
  * Go to the simulation screen with its result (from simulateMission).
  * The UI computes the simulation, so this action stays pure and simple.
  */
-export function launch(state, simulation = null) {
-  return { ...state, screen: STEP_SCREENS[4], runCount: state.runCount + 1, simulation, report: null, paused: false };
+export function launch(state, simulation = null, attempt = null) {
+  const attempts = attempt ? [...(state.attempts ?? []), attempt] : state.attempts ?? [];
+  return { ...state, screen: STEP_SCREENS[4], runCount: state.runCount + 1, simulation, report: null, attempts, paused: false };
 }
 
-/** Change the seed, so the next launch meets different random events. */
+/** Change the seed and forget any replayed conditions, so the next launch meets different random events. */
 export function newConditions(state) {
-  return { ...state, reroll: state.reroll + 1 };
+  return { ...state, reroll: state.reroll + 1, conditions: null };
 }
 
 /** Show the final report. `report` holds the score and the best score result. */
@@ -98,9 +101,19 @@ export function showReport(state, report) {
   return { ...state, screen: STEP_SCREENS[5], report: { ...report, quizAnswered: false }, confirmedSteps, paused: false };
 }
 
-/** Back to the step that fixes the first error, keeping every choice. */
-export function redesign(state, issues = []) {
-  return { ...state, screen: STEP_SCREENS[redesignStep(issues)], simulation: null, report: null, paused: false };
+/**
+ * Back to the step that fixes the first error, keeping every choice. With `sameConditions`, the next
+ * flight replays this flight's surprises, so the effect of one change can be compared fairly. That is only
+ * possible when this flight reached the science phase (where events happen); otherwise none is kept.
+ */
+export function redesign(state, issues = [], { sameConditions = false } = {}) {
+  const simulation = state.simulation;
+  const reachedScience = simulation?.phases?.some((phase) => phase.id === 'operations' && phase.ok !== null);
+  let conditions = state.conditions ?? null;
+  if (sameConditions) {
+    conditions = reachedScience ? { eventIds: simulation.events.map((event) => event.id), run: state.runCount } : null;
+  }
+  return { ...state, screen: STEP_SCREENS[redesignStep(issues)], simulation: null, report: null, conditions, paused: false };
 }
 
 export function togglePause(state) {

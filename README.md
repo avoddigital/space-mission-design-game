@@ -56,6 +56,16 @@ There is no single right answer: different combinations of instruments, orbits a
 
 **Controls:** click or tap to choose · **Enter** next · **Backspace** back · **1–8** pick a card · **P** / **Esc** pause · **M** sound on/off · **L** language.
 
+## Commander Capi
+
+Commander Capi, a capybara astronaut, guides the mission: she presents the science question, asks the player to predict
+the effect of a choice, explains the result with the game's real numbers and leads a short reflection after each flight.
+Her words are always on screen in English, Portuguese and Spanish.
+
+**Voice status:** all 20 narration lines are recorded in English, Portuguese and Spanish (see `docs/capi-narration.md`,
+section 0). If a file cannot load, the game reads her sentence with a voice installed on the player's device, or shows the text only.
+The voice is optional (Voice button or `V`), separate from the sound effects (`M`), and never starts on its own before a click.
+
 ## Team play
 Choose 2, 3 or 4 players on the **Free mission** or **New campaign** screen. Each player gets one or more roles; every role is always covered:
 

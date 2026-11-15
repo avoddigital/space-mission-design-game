@@ -38,7 +38,9 @@ export function selectEvaluation(state, data = gameData) {
  */
 export function runSimulation(state, data = gameData) {
   const seed = (hashDesign(state.design, state.scenarioId) + state.reroll * 7919) >>> 0;
-  return simulateMission(selectMission(state, data), selectScenario(state, data), data.events ?? [], seed);
+  // "Rebuild, same conditions": replay the surprises of an earlier flight (see actions.redesign).
+  const eventIds = state.conditions?.eventIds ?? null;
+  return simulateMission(selectMission(state, data), selectScenario(state, data), data.events ?? [], seed, { eventIds });
 }
 
 /** Score for the simulation stored in the state (0 to 100). */

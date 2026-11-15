@@ -39,8 +39,11 @@ function pickEvents(pool, random) {
  * @param {object} scenario
  * @param {object[]} events the events table (src/data/events.js); may be empty
  * @param {number} seed same seed and same mission give the same events
+ * @param {{ eventIds?: string[] }} [options] `eventIds`: replay exactly these events (the same external
+ *   conditions as an earlier flight), so a design change can be compared fairly. Whether each one hurts
+ *   still depends on this design's margins. Ids not available in this scenario are skipped.
  */
-export function simulateMission(mission, scenario, events = [], seed = 0) {
+export function simulateMission(mission, scenario, events = [], seed = 0, { eventIds = null } = {}) {
   const random = mulberry32(seed);
   const { issues, budget } = validateMission(mission, scenario);
   const errors = issues.filter((issue) => issue.severity === 'error');
@@ -59,8 +62,12 @@ export function simulateMission(mission, scenario, events = [], seed = 0) {
 
   // Random events happen only if the spacecraft reaches the science phase.
   const reachedOperations = failedPhaseIndex > PHASES.indexOf('operations');
+  const pool = eventsFor(scenario, events);
+  const drawn = Array.isArray(eventIds)
+    ? eventIds.map((id) => pool.find((event) => event.id === id)).filter(Boolean)
+    : pickEvents(pool, random);
   const simulatedEvents = reachedOperations
-    ? pickEvents(eventsFor(scenario, events), random).map((event) => {
+    ? drawn.map((event) => {
         const margin = resourceMargin(budget, event.protectedBy);
         const harmed = margin < EVENT_SAFE_MARGIN;
         return {

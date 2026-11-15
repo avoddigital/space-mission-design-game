@@ -5310,3 +5310,451 @@ button.check:hover {
     font-size: 0.64rem;
   }
 }
+
+/* --- Commander Capi: the CAPCOM radio plate (src/ui/capi/panel.js) ---
+   A recessed strip at the top of the left panel (under the title on the menu). It never covers
+   the choices, the viewscreen or the gauges. The lamp is lit (with the words "On air") while she speaks. */
+
+.capi {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  margin: 10px 0;
+  padding: 8px 10px;
+  border: 1px solid var(--seam);
+  border-left: 3px solid var(--lamp-on);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+}
+
+.capi-surprise,
+.capi-launch {
+  border-left-color: var(--lamp-caution);
+}
+
+.capi-success {
+  border-left-color: var(--lamp-go);
+}
+
+.capi-failure {
+  border-left-color: var(--lamp-alert);
+}
+
+/* Small monitor with Capi's head and shoulders (the artwork is a full figure, so it is zoomed in). */
+.capi-frame {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  overflow: hidden;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-1);
+  background: radial-gradient(circle at 50% 30%, #23313a 0%, var(--bezel) 75%);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.7);
+}
+
+.capi-face {
+  position: absolute;
+  top: -2px;
+  left: -16px;
+  width: 96px;
+  height: 96px;
+  max-width: none;
+}
+
+.capi-body {
+  min-width: 0;
+}
+
+.capi-name {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 3px;
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.capi-lamp {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--bezel);
+  box-shadow: inset 0 0 0 1px var(--seam);
+}
+
+.capi.is-speaking .capi-lamp {
+  background: var(--lamp-go);
+  box-shadow: 0 0 8px rgba(92, 207, 134, 0.7);
+  animation: capi-air 1.2s ease-in-out infinite;
+}
+
+.capi-air {
+  color: var(--lamp-go);
+}
+
+@keyframes capi-air {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+.capi-text {
+  margin: 0;
+  color: var(--label);
+  font-size: 0.86rem;
+  line-height: 1.42;
+}
+
+.capi-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.capi-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 40px;
+  min-height: 40px;
+  padding: 0 9px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-1);
+  background: linear-gradient(180deg, var(--console-hi), var(--console));
+  box-shadow: var(--raised);
+  color: var(--label-sub);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.capi-tool:hover:not(:disabled) {
+  color: var(--label);
+}
+
+.capi-tool:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow: var(--recessed);
+}
+
+.capi-tool.is-on {
+  color: var(--lamp-go);
+}
+
+.capi-tool:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.capi .capi-play {
+  min-height: 40px;
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+}
+
+.capi-note {
+  color: var(--label-sub);
+  font-size: 0.72rem;
+}
+
+/* Hidden help: one small button brings Capi back. */
+.capi-show {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  margin: 8px 0;
+  padding: 4px 12px 4px 4px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-1);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+  color: var(--label-sub);
+  cursor: pointer;
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.capi-show:hover {
+  color: var(--label);
+}
+
+.capi-show img {
+  width: 30px;
+  height: 30px;
+  border-radius: 2px;
+  background: var(--bezel);
+  object-fit: cover;
+  object-position: 50% 0;
+}
+
+.title-panel .capi,
+.title-panel .capi-show {
+  max-width: 440px;
+  margin: 16px 0 0;
+}
+
+.title-panel .capi + .title-actions,
+.title-panel .capi-show + .title-actions {
+  margin-top: 16px;
+}
+
+@media (max-width: 860px) {
+  .capi {
+    grid-template-columns: 52px minmax(0, 1fr);
+  }
+
+  .capi-frame {
+    width: 52px;
+    height: 52px;
+  }
+
+  .capi-face {
+    left: -13px;
+    width: 78px;
+    height: 78px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .capi.is-speaking .capi-lamp {
+    animation: none;
+  }
+}
+
+/* Guided lessons inside Capi's panel (src/ui/capi/coach.js): caption, answer options, hint and buttons. */
+.capi-step {
+  margin-left: auto;
+  padding: 1px 6px;
+  border: 1px solid rgba(242, 179, 61, 0.5);
+  border-radius: var(--r-1);
+  color: var(--lamp-caution);
+}
+
+.capi-kicker {
+  margin: 0 0 2px;
+  color: var(--lamp-caution);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.capi-offer {
+  margin: 6px 0 0;
+  color: var(--label);
+  font-size: 0.84rem;
+}
+
+.capi-options {
+  display: grid;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.capi .capi-option {
+  justify-content: flex-start;
+  min-height: 40px;
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 0.82rem;
+  text-align: left;
+  white-space: normal;
+}
+
+.capi-hint {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 8px 0 0;
+  padding: 6px 8px;
+  border-radius: var(--r-1);
+  background: var(--placard);
+  color: var(--placard-ink);
+  font-size: 0.8rem;
+}
+
+.capi-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.capi-actions .btn {
+  min-height: 40px;
+  margin: 0;
+  padding: 4px 12px;
+  font-size: 0.78rem;
+}
+
+/* Narrow phones: a smaller portrait leaves the width to the question and its answers. */
+@media (max-width: 480px) {
+  .capi {
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: 8px;
+    padding: 8px;
+  }
+
+  .capi-frame {
+    width: 40px;
+    height: 40px;
+  }
+
+  .capi-face {
+    left: -10px;
+    width: 60px;
+    height: 60px;
+  }
+
+  .capi .capi-option {
+    min-height: 40px;
+    padding: 4px 10px;
+  }
+}
+
+/* --- Report debrief (src/ui/components/debrief.js) --- */
+
+.score-caption {
+  margin: 6px 0 0;
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+}
+
+.debrief h4 {
+  margin: 12px 0 4px;
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.debrief p {
+  margin: 0 0 6px;
+}
+
+.debrief-goal {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+  padding: 8px 10px;
+  border-left: 3px solid var(--lamp-go);
+  border-radius: var(--r-1);
+  background: var(--console-lo);
+  font-weight: 700;
+}
+
+.debrief-goal.is-missed {
+  border-left-color: var(--lamp-alert);
+}
+
+.debrief-goal .icon {
+  flex: none;
+  margin-top: 2px;
+}
+
+.debrief-goal.is-reached .icon {
+  color: var(--lamp-go);
+}
+
+.debrief-goal.is-missed .icon {
+  color: var(--lamp-alert);
+}
+
+.debrief-worked {
+  display: grid;
+  gap: 3px;
+  margin: 0 0 6px;
+  padding: 0;
+  list-style: none;
+  font-size: 0.86rem;
+}
+
+.debrief-worked .icon {
+  color: var(--lamp-go);
+  vertical-align: -2px;
+}
+
+.debrief .lessons li.is-hurt .icon {
+  color: var(--lamp-alert);
+}
+
+.debrief .lessons li.is-safe .icon {
+  color: var(--lamp-go);
+}
+
+.debrief .lessons small {
+  display: block;
+  color: var(--label-sub);
+}
+
+.debrief-compare {
+  margin-top: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+}
+
+.debrief-compare h4 {
+  margin-top: 0;
+}
+
+.debrief-compare ul {
+  margin: 0 0 6px;
+  padding-left: 18px;
+  font-size: 0.86rem;
+}
+
+.debrief-conditions {
+  font-size: 0.82rem;
+}
+
+.debrief-conditions.is-same {
+  color: var(--lamp-go);
+}
+
+.debrief-conditions.is-different {
+  color: var(--lamp-caution);
+}
+
+/* Launch step: same or new conditions for the next flight */
+.conditions-note {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+  margin: 8px 0 0;
+  color: var(--label-sub);
+  font-size: 0.84rem;
+}
+
+.conditions-note.is-same .icon {
+  color: var(--lamp-go);
+}
+
+.conditions-note.is-new .icon {
+  color: var(--lamp-caution);
+}

@@ -139,6 +139,47 @@ Feedback during the activity, tied to the task, helps learning more than a final
 
 ---
 
+### Guided lessons with Commander Capi (scaffolding that fades)
+
+Code: `src/ui/capi/coach.js` (lessons), `src/engine/diagnosis.js` (cause of a failure). Each relevant decision follows one cycle:
+
+1. **Problem.** Capi states it in plain words ("Instruments only run with power. We use 130 W.").
+2. **Prediction.** The player chooses a card (the choice is the prediction) or answers a short question
+   ("You picked a powerful instrument. What else has to keep up with it?"). The answer is judged against the real data, never a fixed key.
+3. **Change.** The gauges move (the game, not Capi).
+4. **Explanation.** Capi links the decision to its consequences with the game's real values (watts, kilograms, GB per day, days, percent).
+5. **Then.** The player continues, asks for a hint (which nudges without giving the answer before the prediction) or reviews the last explanation.
+
+| Destination | Lessons | What the player reasons about |
+| --- | --- | --- |
+| Earth | instrument, power, data | Each instrument asks for power and an antenna; power needs a margin; science only counts when it reaches Earth |
+| Moon | mass, rocket capacity, budget | Every kilogram counts; a rocket carries much less to the Moon; the rocket is a big share of the budget |
+| Mars | integration, time, margin | Where the least room is left; the trip uses mission time; which margin protects against a dust storm |
+
+- **Optional.** On the objective step of a destination with lessons the player has not finished, Capi offers to guide. "I'll explore" keeps free play free. "Skip guide" stops it; "Guide me" repeats it at any time; voice off or "Hide" silences it.
+- **Fading.** Finished lessons are saved in the browser and not offered again. After three launches, routine sentences are shown but no longer spoken.
+- **No double messages.** While Capi explains a change, the next-step hint and the limit toast are hidden, because they would say the same thing.
+- **Failures by real cause.** The report names budget, launch, orbit, power, time, data (no antenna or an antenna too slow), science (instruments below the goal) or events. Events are blamed only when the design had reached the goal before them; they never explain a failure that happened before the science phase.
+
+### Debrief and rebuild (reflection after every flight)
+
+Code: `src/engine/debrief.js` (facts), `src/ui/components/debrief.js` (report), Capi's reflection in `src/ui/capi/script.js`.
+
+- **The report shows, from the engine only:** whether the science goal was reached; the systems that worked (a system is
+  called ok only if the flight reached the phase where the engine checks it); what stopped the mission, or the biggest
+  risk after a success; the limiting resource and one change to test; each surprise, absorbed by a margin or causing a loss.
+- **The score stays the operational result** (it can be 0 after a failure, and badges and saves still use it). It is shown
+  apart from the debrief, with its own caption. The debrief is not called a "learning score".
+- **Between attempts:** science delivered, result, cause and newly working systems, compared with the previous flight.
+- **Fair comparison:** "Rebuild (same conditions)" keeps every choice and replays the previous flight's surprises
+  (`simulateMission` option `eventIds`); each surprise still hurts or not according to the new margins. "New conditions"
+  draws new ones. The launch step and the comparison say clearly when the conditions are the same, different, or unknown
+  (a flight that ended before the science phase never met its surprises).
+- **Capi's reflection** is one or two questions about decisions ("Which decision would you change first?", "If you choose
+  a bigger antenna, what cost could appear?", "Which reserve protected the mission?"), tied to the cause the engine confirmed.
+- **Language:** feedback talks about the spacecraft and the decisions ("The spacecraft could not send enough data:
+  the antenna sends..."), never about the player's ability or effort.
+
 ## 5. NASA open data: democratising space knowledge
 
 **What NASA's policy says.** NASA's Science Mission Directorate states that "information produced from SMD-funded scientific research activities be made publicly available"; peer-reviewed publications are "made openly available with no embargo period", and "mission data are released as soon as possible" ([NASA Science Information Policy, SPD-41a](https://science.nasa.gov/open-science/science-information-policy/)).

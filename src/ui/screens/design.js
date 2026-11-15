@@ -80,7 +80,7 @@ export function metersPanel(evaluation, content, shake = new Set(), baseline = n
 }
 
 /** Shared layout: header with steps, cards on the left, stage in the middle, meters on the right. */
-export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false, hero = false, hint = '', progress = null, projected = null, flight = null, ui = null }) {
+export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false, hero = false, hint = '', progress = null, projected = null, flight = null, ui = null, capi = '', coaching = false }) {
   // On phones, result screens (simulation and report) show the left panel first.
   return `
     <div class="game${results ? ' layout-results' : ''}${hero ? ' layout-hero' : ''}" data-mission="${esc(scenario.id)}">
@@ -96,8 +96,9 @@ export function gameLayout({ state, scenario, evaluation, content, shake, title,
       </header>
       <section class="panel cards-panel" aria-labelledby="panel-title">
         <h2 id="panel-title">${esc(title)}</h2>
+        ${capi}
         ${turnChip(state.team, state.screen, ui?.tab)}
-        ${hint}
+        ${coaching ? '' : hint}
         ${cards}
       </section>
       <section class="stage" aria-label="${t('aria.missionView')}">${stage}</section>
@@ -274,6 +275,19 @@ function rocketTags(rocket, capacity, { evaluation, mission }) {
   return tags;
 }
 
+/**
+ * Which external conditions the next flight meets: the same surprises as an earlier flight (a fair
+ * comparison) or new ones. Shown only after a first flight in this mission.
+ */
+function conditionsNote(state, data) {
+  if (state.conditions) {
+    const names = state.conditions.eventIds.map((id) => data.events?.find((event) => event.id === id)?.name ?? id).join(', ');
+    return `<p class="conditions-note is-same">${icon('dice', 16)} ${esc(t('conditions.same', { n: state.conditions.run, list: names }))}</p>`;
+  }
+  if (state.runCount > 0) return `<p class="conditions-note is-new">${icon('dice', 16)} ${esc(t('conditions.new', { n: state.runCount }))}</p>`;
+  return '';
+}
+
 export function launchScreen(ctx) {
   const { state, data, scenario, evaluation, content, ui } = ctx;
   const orbit = ctx.mission.orbit;
@@ -337,6 +351,7 @@ export function launchScreen(ctx) {
     <p class="launch-note${ready ? ' is-ready' : ''}">${
       ready ? (checks.includes('check-check') ? t('launch.goWithMargins') : t('launch.allGo')) : t('launch.someRed')
     }</p>
+    ${conditionsNote(state, data)}
     ${state.mode === 'campaign' && state.campaign ? `<p class="launch-cost">${icon('budget', 16)} ${t('launch.cost', { cost: `<b>${fmt(evaluation.budget.budget.usedMUsd)} M USD</b>`, funds: `<b>${fmt(state.campaign.fundsMUsd)} M USD</b>` })}</p>` : ''}`;
   return gameLayout({
     ...ctx,
