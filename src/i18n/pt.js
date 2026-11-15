@@ -582,9 +582,11 @@ export const ui = {
   // Commander Capi, narrator and guide (src/ui/capi/)
   "capi.name": "CAPCOM · Comandante Capi",
   "capi.aria": "Comandante Capi, sua guia na missão",
-  "capi.portrait": "Comandante Capi, uma capivara astronauta",
+  "capi.portrait": "Comandante Capi, uma capivara astronauta (imagem gerada por IA)",
+  "capi.aiTag": "IA",
+  "capi.aiNote": "A imagem e a voz da Comandante Capi foram geradas por IA.",
   "capi.replay": "Repetir a fala da Capi",
-  "capi.voice": "Voz",
+  "capi.voice": "Voz IA",
   "capi.voiceOn": "Ligar a voz da Capi",
   "capi.voiceOff": "Desligar a voz da Capi",
   "capi.hide": "Ocultar a ajuda da Capi",
@@ -615,8 +617,7 @@ export const ui = {
   "capi.say.eventHurt": "Um imprevisto nos atingiu e faltou folga. Isso nos custou parte da ciência.",
   "capi.say.reportSuccess": "Missão cumprida! A ciência chegou em casa. E agora, dá para fazer ainda melhor?",
   "capi.say.rebuild": "Hora de reconstruir. Mude uma coisa, preveja o efeito e lance para testar.",
-  // Mission facts shown under her sentence (text only).
-  "capi.brief.detail": "Pergunta: {question} Meta: trazer pelo menos {science} pontos de ciência, gastar até {budget} milhões de dólares e terminar em até {days} dias.",
+  // Facts shown under her sentence (text only).
   "capi.launch.blockedDetail": "Problema: {problem}. A correção está na etapa {step}.",
   "capi.launch.tightDetail": "Folgas pequenas: {list}.",
   "capi.event.safeDetail": "{event}: nossa folga de {resource} era de {pct}%. Uma folga de {safe}% ou mais absorve o impacto.",

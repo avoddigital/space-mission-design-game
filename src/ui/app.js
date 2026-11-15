@@ -37,7 +37,7 @@ import { syncView3d } from './view3dHost.js';
 import { enableMusic, play, setMusicTheme, toggleMute, duck } from './sound.js';
 import { t, setLocale, nextLocale, localizeData, localizeList, getLocale } from '../i18n/index.js';
 import { capiLine } from './capi/script.js';
-import { capiPanel } from './capi/panel.js';
+import { capiPanel, CAPI_READOUT } from './capi/panel.js';
 import { createVoice } from './capi/voice.js';
 import { lessonsFor, lessonById, nextLesson, firstStage, stageAfterChange, lessonCard } from './capi/coach.js';
 import { redesignStep, STEP_SCREENS } from '../engine/phases.js';
@@ -287,7 +287,8 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     const element = root.querySelector('.capi, .capi-show');
     if (!element || !ui.capi.line) return;
     const focused = element.contains(document.activeElement) ? document.activeElement.dataset.action : null;
-    element.outerHTML = capiPanel(ui.capi.line, capiView());
+    const readout = element.querySelector('.capi-readout')?.outerHTML ?? ''; // the step's hint stays in place
+    element.outerHTML = capiPanel(ui.capi.line, capiView()).replace(CAPI_READOUT, readout);
     if (focused) root.querySelector(`.capi [data-action="${focused}"], .capi-show[data-action="${focused}"]`)?.focus();
   }
 

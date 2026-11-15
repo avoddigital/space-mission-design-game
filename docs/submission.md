@@ -101,6 +101,8 @@ Usamos o **Claude (Anthropic), pelo Claude Code**, como assistente durante o des
 - **Traduções:** rascunho das versões em português e espanhol a partir do texto em inglês. **[CONFIRMAR: revisão por falantes nativos, principalmente do espanhol]**
 - **[CONFIRMAR com o Silvio: como a IA foi usada no motor de regras, nas telas e nos testes]**
 
+- **Comandante Capi (imagem e áudio gerados por IA):** as 13 artes da Capi foram feitas com um gerador de imagens por IA **[CONFIRMAR com o Silvio: qual ferramenta]** e as 60 narrações (20 falas × 3 idiomas) com o text-to-speech do Google AI Studio (voz Sulafat). Todas as imagens têm marca d'água visível "AI-generated", o jogo mostra a marca "AI" no retrato e o botão "AI voice", e cada WAV declara a IA nos metadados (`comment` e `artist`). No formulário de SI: marcar imagem e áudio.
+
 Nenhum logo, bandeira ou elemento de marca da NASA foi gerado ou modificado por IA.
 
 ## Space Agency Data

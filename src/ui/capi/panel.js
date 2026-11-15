@@ -19,6 +19,9 @@ const PORTRAITS = {
   thinking: new URL('../../assets/capi/ui/capi-09-quiz.png', import.meta.url).href,
 };
 
+/** Where a screen puts its next-step hint inside Capi's panel (design.js), so CAPCOM speaks in one place. */
+export const CAPI_READOUT = '<!--capi-readout-->';
+
 export const portraitFor = (mood) => PORTRAITS[mood] ?? PORTRAITS.welcome;
 
 /**
@@ -30,9 +33,9 @@ export function capiPanel(line, { voiceOn, hidden, status }, extraClass = '') {
   if (!line) return '';
   const cls = extraClass ? ` ${extraClass}` : '';
   if (hidden) {
-    return `<button type="button" class="capi-show${cls}" data-action="capi-show" title="${t('capi.show')}">
+    return `<button type="button" class="capi-show${cls}" data-action="capi-show" title="${t('capi.show')} · ${t('capi.aiNote')}">
       <img src="${portraitFor(line.mood)}" alt="" width="28" height="28" loading="lazy" decoding="async">
-      <span>${t('capi.show')}</span></button>`;
+      <span>${t('capi.show')}</span><span class="capi-ai-inline">${t('capi.aiTag')}</span></button>`;
   }
   // The spoken sentence (bold) is always on screen, and a recording says exactly that text (catalog.js).
   const { lead, detail, coach } = line;
@@ -51,21 +54,22 @@ export function capiPanel(line, { voiceOn, hidden, status }, extraClass = '') {
     : `<p class="capi-text"><strong>${esc(lead)}</strong>${detail ? ` ${esc(detail)}` : ''}</p>`;
   return `
     <aside class="capi capi-${esc(line.mood)}${speaking ? ' is-speaking' : ''}${coach ? ' is-coaching' : ''}${cls}" aria-label="${t('capi.aria')}">
-      <span class="capi-frame"><img class="capi-face" src="${portraitFor(line.mood)}" alt="${t('capi.portrait')}" width="96" height="96" decoding="async"></span>
+      <span class="capi-frame" title="${t('capi.aiNote')}"><img class="capi-face" src="${portraitFor(line.mood)}" alt="${t('capi.portrait')}" width="96" height="96" decoding="async"><span class="capi-ai" aria-hidden="true">${t('capi.aiTag')}</span></span>
       <div class="capi-body">
         <p class="capi-name"><span class="capi-lamp" aria-hidden="true"></span>${t('capi.name')}${speaking ? ` <span class="capi-air">${t('capi.onAir')}</span>` : ''}${coach?.step ? ` <span class="capi-step">${t('coach.label', { step: coach.step, total: coach.total })}</span>` : ''}</p>
         ${text}
+        ${voiceNote ? `<p class="capi-note">${voiceNote}</p>` : ''}
         ${line.offer ? `<p class="capi-offer">${esc(line.offer)}</p>` : ''}
         ${coachControls(line)}
-        <div class="capi-tools">
-          ${play}
-          <button type="button" class="capi-tool" data-action="capi-replay" title="${t('capi.replay')}" aria-label="${t('capi.replay')}"${canSpeak ? '' : ' disabled'}>${icon('replay', 16)}</button>
-          <button type="button" class="capi-tool${voiceOn ? ' is-on' : ''}" data-action="capi-voice" aria-pressed="${voiceOn}" title="${voiceOn ? t('capi.voiceOff') : t('capi.voiceOn')} (V)" aria-label="${voiceOn ? t('capi.voiceOff') : t('capi.voiceOn')}">${icon(voiceOn ? 'sound' : 'sound-off', 16)}<span>${t('capi.voice')}</span></button>
-          ${line.guide === 'start' ? `<button type="button" class="capi-tool" data-action="coach-start">${icon('bulb', 16)}<span>${t('coach.start')}</span></button>` : ''}
-          ${line.guide === 'skip' ? `<button type="button" class="capi-tool" data-action="coach-skip">${icon('next', 16)}<span>${t('coach.skip')}</span></button>` : ''}
-          <button type="button" class="capi-tool" data-action="capi-hide" title="${t('capi.hide')}" aria-label="${t('capi.hide')}">${icon('cross', 16)}</button>
-          ${voiceNote ? `<span class="capi-note">${voiceNote}</span>` : ''}
-        </div>
+        ${CAPI_READOUT}
+      </div>
+      <div class="capi-tools">
+        ${play}
+        <button type="button" class="capi-tool" data-action="capi-replay" title="${t('capi.replay')}" aria-label="${t('capi.replay')}"${canSpeak ? '' : ' disabled'}>${icon('replay', 15)}</button>
+        <button type="button" class="capi-tool${voiceOn ? ' is-on' : ''}" data-action="capi-voice" aria-pressed="${voiceOn}" title="${voiceOn ? t('capi.voiceOff') : t('capi.voiceOn')} (V)" aria-label="${voiceOn ? t('capi.voiceOff') : t('capi.voiceOn')}">${icon(voiceOn ? 'sound' : 'sound-off', 15)}<span>${t('capi.voice')}</span></button>
+        ${line.guide === 'start' ? `<button type="button" class="capi-tool" data-action="coach-start">${icon('bulb', 15)}<span>${t('coach.start')}</span></button>` : ''}
+        ${line.guide === 'skip' ? `<button type="button" class="capi-tool" data-action="coach-skip">${icon('next', 15)}<span>${t('coach.skip')}</span></button>` : ''}
+        <button type="button" class="capi-tool" data-action="capi-hide" title="${t('capi.hide')}" aria-label="${t('capi.hide')}">${icon('cross', 15)}</button>
       </div>
     </aside>`;
 }

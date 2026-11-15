@@ -599,9 +599,11 @@ export const ui = {
   // Commander Capi, narrator and guide (src/ui/capi/)
   "capi.name": "CAPCOM · Commander Capi",
   "capi.aria": "Commander Capi, your mission guide",
-  "capi.portrait": "Commander Capi, a capybara astronaut",
+  "capi.portrait": "Commander Capi, a capybara astronaut (AI-generated image)",
+  "capi.aiTag": "AI",
+  "capi.aiNote": "Commander Capi's image and voice are AI-generated.",
   "capi.replay": "Repeat what Capi said",
-  "capi.voice": "Voice",
+  "capi.voice": "AI voice",
   "capi.voiceOn": "Turn Capi's voice on",
   "capi.voiceOff": "Turn Capi's voice off",
   "capi.hide": "Hide Capi's help",
@@ -632,8 +634,7 @@ export const ui = {
   "capi.say.eventHurt": "A surprise hit us, and we didn't have enough margin. It cost us some science.",
   "capi.say.reportSuccess": "Mission accomplished! The science made it home. Now, can we do even better?",
   "capi.say.rebuild": "Time to rebuild. Change one thing, predict what it will do, then launch to test it.",
-  // Mission facts shown under her sentence (text only).
-  "capi.brief.detail": "Question: {question} Goal: bring home at least {science} science points, spend up to {budget} million USD and finish within {days} days.",
+  // Facts shown under her sentence (text only).
   "capi.launch.blockedDetail": "Problem: {problem}. The fix is in step {step}.",
   "capi.launch.tightDetail": "Thin margins: {list}.",
   "capi.event.safeDetail": "{event}: our {resource} margin was {pct}%. A margin of {safe}% or more absorbs it.",

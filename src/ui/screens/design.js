@@ -10,6 +10,7 @@ import { icon, partIconKey, orbitIconKey } from '../components/icons.js';
 import { nextStep, hintLine } from '../components/hint.js';
 import { projectionCard, topbarRewards } from '../components/rewards.js';
 import { turnChip } from '../components/team.js';
+import { CAPI_READOUT } from '../capi/panel.js';
 
 const STEPS = [
   { step: 1, screen: 'objective', label: 'steps.objective', icon: 'flag' },
@@ -81,6 +82,8 @@ export function metersPanel(evaluation, content, shake = new Set(), baseline = n
 
 /** Shared layout: header with steps, cards on the left, stage in the middle, meters on the right. */
 export function gameLayout({ state, scenario, evaluation, content, shake, title, cards, stage, footer, results = false, hero = false, hint = '', progress = null, projected = null, flight = null, ui = null, capi = '', coaching = false }) {
+  // The next-step hint is CAPCOM's readout inside Capi's panel when she is shown; otherwise it stands alone.
+  const inCapi = Boolean(hint) && !coaching && capi.includes(CAPI_READOUT);
   // On phones, result screens (simulation and report) show the left panel first.
   return `
     <div class="game${results ? ' layout-results' : ''}${hero ? ' layout-hero' : ''}" data-mission="${esc(scenario.id)}">
@@ -96,9 +99,9 @@ export function gameLayout({ state, scenario, evaluation, content, shake, title,
       </header>
       <section class="panel cards-panel" aria-labelledby="panel-title">
         <h2 id="panel-title">${esc(title)}</h2>
-        ${capi}
+        ${inCapi ? capi.replace(CAPI_READOUT, `<div class="capi-readout">${hint}</div>`) : capi}
         ${turnChip(state.team, state.screen, ui?.tab)}
-        ${coaching ? '' : hint}
+        ${coaching || inCapi ? '' : hint}
         ${cards}
       </section>
       <section class="stage" aria-label="${t('aria.missionView')}">${stage}</section>
