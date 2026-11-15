@@ -3,3 +3,5 @@ dist/
 .DS_Store
 *.log
 .vite/
+# Office lock files (created while a document is open)
+~$*
