@@ -582,9 +582,11 @@ export const ui = {
   // Commander Capi, narrator and guide (src/ui/capi/)
   "capi.name": "CAPCOM · Comandante Capi",
   "capi.aria": "Comandante Capi, tu guía en la misión",
-  "capi.portrait": "Comandante Capi, una capibara astronauta",
+  "capi.portrait": "Comandante Capi, una capibara astronauta (imagen generada por IA)",
+  "capi.aiTag": "IA",
+  "capi.aiNote": "La imagen y la voz de la comandante Capi fueron generadas por IA.",
   "capi.replay": "Repetir lo que dijo Capi",
-  "capi.voice": "Voz",
+  "capi.voice": "Voz IA",
   "capi.voiceOn": "Activar la voz de Capi",
   "capi.voiceOff": "Desactivar la voz de Capi",
   "capi.hide": "Ocultar la ayuda de Capi",
@@ -615,8 +617,7 @@ export const ui = {
   "capi.say.eventHurt": "Nos golpeó un imprevisto y nos faltó margen. Eso nos costó parte de la ciencia.",
   "capi.say.reportSuccess": "¡Misión cumplida! La ciencia llegó a casa. ¿Y ahora, podemos hacerlo aún mejor?",
   "capi.say.rebuild": "Hora de reconstruir. Cambia una cosa, predice qué hará y lanza para comprobarlo.",
-  // Mission facts shown under her sentence (text only).
-  "capi.brief.detail": "Pregunta: {question} Meta: traer al menos {science} puntos de ciencia, gastar hasta {budget} millones de dólares y terminar en {days} días o menos.",
+  // Facts shown under her sentence (text only).
   "capi.launch.blockedDetail": "Problema: {problem}. La solución está en la etapa {step}.",
   "capi.launch.tightDetail": "Márgenes pequeños: {list}.",
   "capi.event.safeDetail": "{event}: nuestro margen de {resource} era del {pct}%. Un margen del {safe}% o más lo absorbe.",

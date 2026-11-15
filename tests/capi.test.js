@@ -42,14 +42,11 @@ describe('capiLine', () => {
     expect(line.lead).toMatch(/Commander Capi.*design a mission/s);
   });
 
-  it('opens the mission with its science question and what to reach', () => {
+  it('opens the mission with the briefing sentence only (question and goals are on the screen)', () => {
     const state = earth();
     const line = capiLine(ctxFor(state, 'objective'));
-    const scenario = selectScenario(state);
     expect(line.say).toBe('briefing');
-    expect(line.detail).toContain(gameData.content.scenarios[scenario.id].question);
-    expect(line.detail).toContain(String(scenario.minScience));
-    expect(line.detail).toContain(String(scenario.budgetMUsd));
+    expect(line.detail ?? '').toBe('');
   });
 
   it('explains the price of parts, then the consequence of a limit just broken, until it is fixed', () => {

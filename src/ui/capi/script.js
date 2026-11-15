@@ -81,14 +81,9 @@ export function eventsVisible(simulation, shown) {
   return index !== -1 && shown > index && simulation.events.length > 0;
 }
 
-function briefLine({ scenario, content }) {
-  const question = content?.scenarios?.[scenario.id]?.question ?? scenario.name;
-  return line(`brief:${scenario.id}`, 'briefing', 'briefing', t('capi.brief.detail', {
-    question,
-    science: fmt(scenario.minScience),
-    budget: fmt(scenario.budgetMUsd),
-    days: fmt(scenario.maxDays),
-  }));
+// No detail text: the question and the goals are already on the objective screen, right under Capi.
+function briefLine({ scenario }) {
+  return line(`brief:${scenario.id}`, 'briefing', 'briefing');
 }
 
 function buildLine({ scenario, evaluation, cue, content, data, runCount = 0 }) {

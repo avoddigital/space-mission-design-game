@@ -61,7 +61,7 @@ There is no single right answer: different combinations of instruments, orbits a
 
 Commander Capi, a capybara astronaut, guides the mission: she presents the science question, asks the player to predict
 the effect of a choice, explains the result with the game's real numbers and leads a short reflection after each flight.
-Her words are always on screen in English, Portuguese and Spanish.
+Her words are always on screen in English, Portuguese and Spanish. Her image and voice are AI-generated and marked as such in the game (see Credits).
 
 **Voice status:** all 20 narration lines are recorded in English, Portuguese and Spanish (see `docs/capi-narration.md`,
 section 0). If a file cannot load, the game reads her sentence with a voice installed on the player's device, or shows the text only.
@@ -151,7 +151,9 @@ All game values (mass, power, cost, data, rocket capacity, travel time, and the 
 
 **Fonts** (SIL Open Font License, via Google Fonts): B612 and B612 Mono (designed for aircraft cockpit displays) and Big Shoulders Stencil.
 
-**Sounds:** synthesized in the browser with the Web Audio API; no audio files are used.
+**Sounds:** sound effects and music are synthesized in the browser with the Web Audio API. The only audio files are Commander Capi's narration (see below).
+
+**Commander Capi (AI-generated, SI):** Capi's artwork (`src/assets/capi/`) was made with an AI image generator, and her narration (`src/assets/capi/narracao/`) with Google AI Studio text-to-speech (voice Sulafat). Every image carries a visible "AI-generated" watermark, the game shows an "AI" mark on her portrait and labels her voice "AI voice", and every WAV file states it in its metadata (`comment` and `artist` tags). The team wrote her lines, chose the images and checked every recording.
 
 The spacecraft, rockets, emblem, badges and link preview image were made for this project from simple shapes. No NASA logos or insignia are used.
 
