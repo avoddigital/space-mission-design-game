@@ -68,7 +68,7 @@ function readout(label, value, unit = '') {
 
 // --- Title ---
 
-export function titleScreen({ saved }) {
+export function titleScreen({ saved, capi = '' }) {
   const phase = saved ? currentPhase(saved) : null;
   const phaseName = phase ? nameIn(L.phases(), phase.id) : t('title.allDone');
   const continueButton = saved
@@ -86,6 +86,7 @@ export function titleScreen({ saved }) {
         <h1>Tupi <span>Orbit</span></h1>
         <p class="subtitle">${t('title.subtitle')}</p>
         <p class="lead">${t('title.lead')}</p>
+        ${capi}
         <div class="title-actions">
           ${continueButton}
           <button type="button" class="btn ${saved ? '' : 'btn-primary '}btn-big" data-action="new-campaign">${icon('flag', 22)} ${t('title.new')}</button>

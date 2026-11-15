@@ -24,6 +24,7 @@ export function legend() {
       <span><kbd>1</kbd>–<kbd>8</kbd> ${t('legend.card')}</span>
       <span><kbd>P</kbd>/<kbd>Esc</kbd> ${t('legend.pause')}</span>
       <span><kbd>M</kbd> ${t('legend.sound')}</span>
+      <span><kbd>V</kbd> ${t('legend.voice')}</span>
       <span><kbd>L</kbd> ${t('legend.language')}</span>
     </p>`;
 }

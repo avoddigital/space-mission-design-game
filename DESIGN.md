@@ -120,7 +120,7 @@ All sounds are **synthesized at runtime with the Web Audio API** (`src/ui/sound.
 
 Rules:
 - Sound starts only after the first click or key press (browser rule).
-- **Mute** button in the top bar, the title screen, the command center, the Library and Badges, plus the `M` key. The choice is saved in `localStorage` (if storage is blocked, the game just does not remember it).
+- **Mute** button (effects and music; Capi's voice has its own switch) in the top bar, the title screen, the command center, the Library and Badges, plus the `M` key. The choice is saved in `localStorage` (if storage is blocked, the game just does not remember it).
 - Master volume is low (0.18). No sound effect is longer than about 2 seconds, and no effect loops.
 - **Background music:** slow, quiet ambient loops, also synthesized (soft chords that cross-fade, a few random high notes and an echo). Each part of the game has its own theme, and changing theme cross-fades:
   - **Menus, command center, Library, Badges:** calm and open (A minor, F major 7, C major, G sus2).
@@ -130,6 +130,17 @@ Rules:
 
   The music plays at 18% of the master volume, only on the main device, stops while the tab is hidden and follows the same Mute button.
 - Every sound has a visual equivalent, so the game is fully playable muted.
+
+### 7.1 Commander Capi's voice (narration)
+
+The sound effects above stay synthesized. Narration is separate (`src/ui/capi/`):
+- Each line has one fixed sentence from the narration catalog (`src/ui/capi/catalog.js`, scripts in `docs/capi-narration.md`): it is spoken and shown in bold. The facts of the mission (numbers, names, causes) follow as text only. Voice on/off (also the `V` key), Repeat and Hide are on her panel. The voice is independent from the effects and music: `M` mutes only those, and while she speaks they drop to 30% of their volume (`duck` in `src/ui/sound.js`).
+- Recordings (`src/assets/capi/narracao/<lang>/<id>.wav`) are loaded only when their line plays, and only when the catalog marks them as verified; until then a voice installed on the device reads the same sentence (online voices are never used). Both are free, with no service or key. Status of the recordings: `docs/capi-narration.md`, section 0 (all 20 lines recorded in the three languages).
+- Screen readers hear each new line once, from a live region outside the redrawn game area.
+- Nothing plays before the first click or key press: the panel shows a "Hear Capi" button instead. A new screen, a language change, pause, the countdown, hiding the panel or turning the voice off stops the line.
+- She speaks only on real changes (new screen, a limit just broken, an event that happened, the report, a redesign), never twice for the same line in a mission.
+
+Her panel is a CAPCOM radio plate: a recessed strip at the top of the left panel (under the title on the menu), with a small monitor showing her portrait (192 px copies of the artwork in `src/assets/capi/ui/`), an "On air" lamp while she speaks and a left edge in the lamp color of the moment.
 
 ## 8. Icons and emblem
 

@@ -41,6 +41,7 @@ const ICONS = {
   flag: '<path d="M5 21V4h11l-2 4 2 4H5"/>',
   star: '<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z"/>',
   play: '<path d="M7 4v16l13-8z"/>',
+  replay: '<path d="M4 12a8 8 0 1 0 2.4-5.7"/><path d="M4 4v4h4"/>',
   pause: '<path d="M8 5v14M16 5v14"/>',
   back: '<path d="M15 5l-7 7 7 7"/>',
   next: '<path d="m9 5 7 7-7 7"/>',

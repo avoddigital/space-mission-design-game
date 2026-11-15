@@ -2,6 +2,8 @@
 
 import { esc, fmt } from '../format.js';
 import { formatIssue, fillText } from '../../engine/messages.js';
+import { debriefMission, compareAttempts } from '../../engine/debrief.js';
+import { debriefSection } from '../components/debrief.js';
 import { checklist } from '../components/checklist.js';
 import { learnBox } from '../components/overlays.js';
 import { icon } from '../components/icons.js';
@@ -236,18 +238,18 @@ export function reportScreen(ctx) {
   const success = simulation.outcome === 'success';
   const tight = success && ['budget', 'mass', 'power', 'data', 'time'].some((key) => simulation.budget[key]?.status === 'tight');
   const failure = simulation.failedIssue ? formatIssue(simulation.failedIssue, content, data) : null;
-  const harmed = simulation.events.filter((event) => event.harmed);
-  const lessons = simulation.events
-    .map((simEvent) => data.events?.find((event) => event.id === simEvent.id))
-    .filter(Boolean)
-    .map((event) => `<li>${icon('shield', 16)}<span><strong>${esc(event.name)}:</strong> ${esc(event.lesson)}</span></li>`)
-    .join('');
+  // The debrief: what worked, the cause or biggest risk, the limiting resource, the events and the comparison
+  // with the last attempt. Facts only from the engine (src/engine/debrief.js); the score stays separate.
+  const debrief = debriefMission(simulation, scenario);
+  const attempts = state.attempts ?? [];
+  const comparison = attempts.length >= 2 ? compareAttempts(attempts.at(-2), attempts.at(-1)) : null;
   const scenarioText = content.scenarios?.[scenario.id] ?? {};
 
   const header = `
     <div class="report-head ${success ? 'is-success' : 'is-failure'}${report.isNewBest ? ' is-best' : ''}">
       <h2 class="report-title">${success ? t('report.success') : t('report.failure')}</h2>
       ${scoreBlock(score)}
+      <p class="score-caption">${t('score.caption')}</p>
       <div class="badges">
         ${report.isNewBest ? `<span class="badge badge-gold">${icon('star', 12)} ${t('badge.best')}</span>` : ''}
         ${tight ? `<span class="badge badge-tight">${t('badge.tight')}</span>` : ''}
@@ -259,12 +261,6 @@ export function reportScreen(ctx) {
       }).join('')}</div>` : ''}
     </div>`;
 
-  const why = failure
-    ? `<section class="report-why is-failure"><h3>${t('report.wrong')}</h3><p><strong>${esc(failure.title)}.</strong> ${esc(failure.text)}</p>
-        ${harmed.length && simulation.failedIssue.code === 'LOW_SCIENCE' ? `<p>${t('report.eventsTook', { list: harmed.map((event) => `${esc(data.events.find((item) => item.id === event.id)?.name ?? event.id)} (−${event.scienceLossPct}%)`).join(', ') })}</p>` : ''}
-        ${failure.tip ? `<p><strong>${t('report.tryThis')}</strong> ${esc(failure.tip)}</p>` : ''}</section>`
-    : `<section class="report-why is-success"><h3>${t('report.why')}</h3><p>${t('report.whyText', { orbit: esc(ctx.mission.orbit?.name ?? t('phase.itsOrbit')), sent: fmt(simulation.scienceDelivered), goal: fmt(scenario.minScience) })}</p></section>`;
-
   const learn = failure?.learn ? { text: failure.learn, rule: content.learn?.report?.rule } : content.learn?.report;
 
   const campaignMode = state.mode === 'campaign';
@@ -273,9 +269,8 @@ export function reportScreen(ctx) {
     ${exampleBlock(state.exampleId)}
     ${reportRewards(report)}
     ${campaignMode ? agencyBlock(ctx.ui.campaignResult, state.campaign) : ''}
-    ${why}
+    ${debriefSection(debrief, comparison, ctx)}
     ${isTeamPlay(state.team) ? teamDebriefSection(state.team, teamDebrief(state.team, simulation), data) : ''}
-    ${lessons ? `<section><h3>${icon('storm', 18)} ${t('report.surprises')}</h3><ul class="lessons">${lessons}</ul></section>` : ''}
     ${learnBox(learn)}
     ${quizBlock(scenarioText.quiz, report)}`;
 
@@ -294,10 +289,10 @@ export function reportScreen(ctx) {
     footer: campaignMode
       ? `
       <button type="button" class="btn btn-primary" data-action="hub">${icon('home', 16)} ${t('common.commandCenter')}</button>
-      <button type="button" class="btn" data-action="redesign">${icon('wrench', 16)} ${t('report.redesign')}</button>
+      <button type="button" class="btn" data-action="redesign">${icon('wrench', 16)} ${t('report.rebuildSame')}</button>
       <button type="button" class="btn" data-action="new-conditions">${icon('dice', 16)} ${t('report.launchAgain')}</button>`
       : `
-      <button type="button" class="btn btn-primary" data-action="redesign">${icon('wrench', 16)} ${t('report.redesign')}</button>
+      <button type="button" class="btn btn-primary" data-action="redesign">${icon('wrench', 16)} ${t('report.rebuildSame')}</button>
       <button type="button" class="btn" data-action="new-conditions">${icon('dice', 16)} ${t('report.newConditions')}</button>
       <button type="button" class="btn" data-action="next-mission">${t('report.nextMission')} ${icon('next', 16)}</button>
       <button type="button" class="btn" data-action="menu">${icon('home', 16)} ${t('common.mainMenu')}</button>`,

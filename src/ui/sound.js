@@ -4,11 +4,18 @@
 
 const MUTE_KEY = 'smdg.muted';
 const MASTER_VOLUME = 0.18;
+/**
+ * While Commander Capi speaks, the effects play at this share of their volume ("ducking"), so the
+ * narration is never masked by clicks, chimes or the rocket rumble. The voice has its own on/off
+ * (src/ui/capi); the M key and this mute only switch the effects and the music.
+ */
+const DUCK_LEVEL = 0.3;
 
 let context = null;
 let master = null;
 let noiseBuffer = null;
 let muted = readMuted();
+let ducked = false;
 
 function readMuted() {
   try {
@@ -25,7 +32,7 @@ function audio() {
   try {
     context = new AudioContextClass();
     master = context.createGain();
-    master.gain.value = MASTER_VOLUME;
+    master.gain.value = MASTER_VOLUME * (ducked ? DUCK_LEVEL : 1);
     master.connect(context.destination);
   } catch {
     context = null;
@@ -383,6 +390,22 @@ export function play(name) {
     // audio is optional; never break the game for it
   }
 }
+
+/** Lower the effects while the narration plays (true), or bring them back (false). Never throws. */
+export function duck(on) {
+  ducked = Boolean(on);
+  if (!context || !master) return;
+  try {
+    const now = context.currentTime;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setTargetAtTime(MASTER_VOLUME * (ducked ? DUCK_LEVEL : 1), now, 0.08);
+  } catch {
+    // audio is optional
+  }
+}
+
+/** Effects volume now, as a share of the normal level (for checks and tests). */
+export const effectsLevel = () => (ducked ? DUCK_LEVEL : 1);
 
 export function isMuted() {
   return muted;
