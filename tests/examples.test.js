@@ -4,6 +4,7 @@ import { gameData, runSimulation } from '../src/state/selectors.js';
 import { createInitialState } from '../src/state/store.js';
 import { loadExample, togglePart, selectScenario } from '../src/state/actions.js';
 import { dictionaries } from '../src/i18n/index.js';
+import { debriefMission, attemptSummary } from '../src/engine/debrief.js';
 
 // Example missions promise a result (src/data/examples.js `expect`). These tests run the real engine,
 // so a change to the numbers in src/data/ that breaks a promise shows up here.
@@ -74,6 +75,18 @@ describe('example missions', () => {
       for (const field of ['name', 'watch', 'verdict', 'shows', 'read', 'next']) {
         expect(dictionaries.en[`example.${example.kind}.${field}`], `${example.kind}.${field}`).toBeTruthy();
       }
+    }
+  });
+});
+
+describe('report debrief of the example missions', () => {
+  it('counts no science home when the mission stopped before the data phase', () => {
+    for (const example of examples.filter((item) => item.expect.failedPhase && item.expect.failedPhase !== 'data')) {
+      const simulation = runSimulation(stateFor(example));
+      const scenario = gameData.scenarios.find((item) => item.id === example.scenarioId);
+      const debrief = debriefMission(simulation, scenario);
+      expect(debrief.goal.delivered, example.id).toBe(0);
+      expect(attemptSummary(simulation, scenario, { run: 1 }).delivered, example.id).toBe(0);
     }
   });
 });
