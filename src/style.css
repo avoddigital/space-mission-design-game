@@ -705,6 +705,135 @@ kbd {
   padding: 12px 18px 16px;
 }
 
+/* Example missions: one click launches a ready-made design (src/data/examples.js). */
+.examples {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.examples h2 {
+  margin-bottom: 2px;
+}
+
+.examples > .note {
+  margin: 0 0 10px;
+}
+
+/* 4 examples: one row of 4 on wide screens, 2 × 2 on tablets, one column on small phones (never 3 + 1). */
+.example-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+@media (max-width: 1000px) {
+  .example-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 440px) {
+  .example-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.example-card {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: linear-gradient(180deg, var(--console-hi) 0%, var(--console) 100%);
+  box-shadow: var(--raised);
+  color: var(--label);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: filter 120ms var(--ease);
+}
+
+.example-card:hover {
+  filter: brightness(1.1);
+}
+
+.example-card:active {
+  box-shadow: var(--recessed);
+}
+
+.example-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+  color: var(--accent);
+}
+
+.example-main {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.example-name {
+  font-weight: 700;
+}
+
+.example-watch {
+  color: var(--label-sub);
+  font-size: 0.85rem;
+  line-height: 1.3;
+}
+
+/* On the report of an example mission: what it shows and how to read it. */
+.example-about {
+  padding: 12px 14px;
+  border: 1px solid var(--seam);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+}
+
+.example-about h3 {
+  margin-top: 0;
+}
+
+.example-about p {
+  margin: 6px 0 0;
+}
+
+.example-verdict {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+.example-verdict.is-good {
+  background: rgba(92, 207, 134, 0.18);
+  color: var(--lamp-go);
+}
+
+.example-verdict.is-bad {
+  background: rgba(228, 115, 63, 0.18);
+  color: var(--lamp-alert);
+}
+
+.example-verdict.is-risky {
+  background: rgba(242, 179, 61, 0.18);
+  color: var(--lamp-caution);
+}
+
 /* Stars and best score share the last line, inside the card's padding. */
 .scenario-foot {
   display: flex;
@@ -2194,38 +2323,95 @@ button.check:hover {
 
 /* --- UX: next-step hint, tags, preview, banner, transitions --- */
 
+/* Next-step hint: a message window recessed into the panel, like a CAPCOM readout.
+   A lamp (blue info, amber check, green GO) and its caption say the tone; the message is plain engraved text. */
 .next-hint {
+  --hint-lamp: var(--lamp-on);
+  --hint-glow: rgba(142, 197, 255, 0.55);
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 6px 10px;
   margin: 0 0 10px;
-  padding: 8px 12px;
-  border-left: 3px solid var(--hi);
-  border-radius: 8px;
-  background: rgba(86, 204, 242, 0.1);
-  font-weight: 700;
+  padding: 8px 10px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--console-lo);
+  box-shadow: var(--recessed);
+  color: var(--label);
+  font-size: 0.88rem;
+  line-height: 1.35;
 }
 
 .hint-warn {
-  border-left-color: var(--warn);
-  background: rgba(242, 201, 76, 0.12);
+  --hint-lamp: var(--lamp-caution);
+  --hint-glow: rgba(242, 179, 61, 0.55);
 }
 
 .hint-good {
-  border-left-color: var(--good);
-  background: rgba(39, 174, 96, 0.14);
+  --hint-lamp: var(--lamp-go);
+  --hint-glow: rgba(92, 207, 134, 0.55);
 }
 
+/* A small round lamp in a dark socket, lit with the tone's color. */
+.hint-lamp {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--hint-lamp);
+  box-shadow: 0 0 0 2px var(--bezel), 0 0 8px var(--hint-glow);
+  animation: lamp-on 400ms var(--ease);
+}
+
+.hint-caption {
+  flex: none;
+  padding-right: 10px;
+  border-right: 1px solid var(--rule);
+  color: var(--hint-lamp);
+  font-family: var(--font-data);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.hint-text {
+  flex: 1 1 14em;
+  min-width: 0;
+}
+
+/* A small console push button (same material as .btn). */
 .hint-button {
   min-height: 36px;
-  padding: 4px 10px;
-  border: 1px solid var(--hi);
-  border-radius: 999px;
-  background: none;
-  color: var(--hi);
-  font-weight: 800;
+  padding: 4px 12px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: linear-gradient(180deg, #4a524f 0%, #363d3a 100%);
+  box-shadow: var(--raised);
+  color: var(--label);
+  font-family: var(--font-text);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   cursor: pointer;
+  transition: filter 120ms var(--ease), transform 80ms var(--ease);
+}
+
+.hint-button:hover {
+  filter: brightness(1.12);
+}
+
+.hint-button:active {
+  transform: translateY(1px);
+  box-shadow: var(--recessed);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hint-lamp {
+    animation: none;
+  }
 }
 
 .card-tags {
@@ -2315,15 +2501,22 @@ button.check:hover {
   animation: star-pop 450ms ease-out var(--delay) both;
 }
 
+/* Rank and this mission's stars in the top bar: a small recessed display window, like the mission name. */
 .topbar-rewards {
   display: inline-flex;
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  border: 1px solid var(--gold);
-  border-radius: 999px;
-  color: var(--gold);
-  font-weight: 800;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-1);
+  background: var(--bezel);
+  box-shadow: var(--recessed);
+  color: var(--digits);
+  font-family: var(--font-data);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   white-space: nowrap;
 }
 
@@ -2369,49 +2562,123 @@ button.check:hover {
   font-weight: 900;
 }
 
+/* Rank plate: a metal plate with screws. Insignia in a recessed socket, the rank in stencil letters,
+   9 star lamps (a gap marks where each new rank starts) and an amber readout with the stars. */
 .rank-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   margin: 8px 0 20px;
-  padding: 12px 16px;
-  border: 1px solid var(--gold);
-  border-radius: var(--radius);
-  background: rgba(255, 209, 102, 0.08);
+  padding: 12px 22px;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background:
+    var(--screws),
+    linear-gradient(180deg, var(--console-hi) 0%, var(--console) 100%);
+  box-shadow: var(--raised);
+  text-align: left;
 }
 
-.rank-icon {
-  font-size: 2rem;
+.rank-insignia {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: var(--bezel);
+  box-shadow: var(--recessed), 0 0 0 2px #4b5450;
+  color: var(--digits);
 }
 
 .rank-body {
   display: grid;
   flex: 1;
-  gap: 4px;
+  gap: 5px;
+  min-width: 0;
+}
+
+.rank-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.rank-caption {
+  color: var(--label-sub);
+  font-family: var(--font-data);
+  font-size: 0.66rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
 }
 
 .rank-name {
-  font-size: 1.2rem;
-  font-weight: 900;
-  color: var(--gold);
+  color: var(--label);
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
-.rank-bar {
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.1);
-  overflow: hidden;
+/* One lamp per star in a dark window: lit amber when earned, dark socket when not. */
+.rank-lamps {
+  display: flex;
+  gap: 4px;
+  width: min(100%, 420px);
+  padding: 4px;
+  border-radius: var(--r-1);
+  background: var(--bezel);
+  box-shadow: var(--recessed);
 }
 
-.rank-bar span {
-  display: block;
-  height: 100%;
-  background: var(--gold);
+.rank-lamp {
+  flex: 1 1 0; /* the 9 lamps share the window, so they also fit small phones */
+  min-width: 8px;
+  height: 9px;
+  border-radius: 2px;
+  background: #1b1f1d;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+.rank-lamp.is-on {
+  background: var(--digits);
+  box-shadow: 0 0 6px rgba(255, 190, 85, 0.55);
+}
+
+.rank-lamp.is-step {
+  margin-left: 8px; /* a new rank starts here */
 }
 
 .rank-next {
-  color: var(--sub);
-  font-size: 0.9rem;
+  color: var(--label-sub);
+  font-size: 0.82rem;
+  text-align: left;
+}
+
+.rank-next strong {
+  color: var(--label);
+}
+
+.rank-readout {
+  flex: none;
+  text-align: center;
+}
+
+.rank-readout b {
+  font-size: 1.3rem;
+}
+
+@media (max-width: 440px) {
+  .rank-card {
+    gap: 10px;
+    padding: 10px 16px;
+  }
+
+  .rank-insignia {
+    display: none;
+  }
 }
 
 .badges-section {
@@ -2476,11 +2743,18 @@ button.check:hover {
 }
 
 .promotion {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   margin: 0;
   padding: 10px 12px;
-  border-radius: 10px;
-  background: rgba(255, 209, 102, 0.18);
-  font-size: 1.1rem;
+  border: 1px solid var(--seam);
+  border-radius: var(--r-2);
+  background: var(--bezel);
+  box-shadow: var(--recessed);
+  color: var(--digits);
+  font-size: 1.05rem;
   text-align: center;
   animation: star-pop 500ms ease-out 1200ms both;
 }
@@ -4568,11 +4842,16 @@ button.check:hover {
 
   .menu .rank-card {
     margin: 4px 0 10px;
-    padding: 6px 14px;
+    padding: 6px 20px;
   }
 
-  .menu .rank-icon {
-    font-size: 1.4rem;
+  .menu .rank-insignia {
+    width: 36px;
+    height: 36px;
+  }
+
+  .menu .rank-name {
+    font-size: 1.25rem;
   }
 
   .menu .planet {

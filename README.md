@@ -19,9 +19,10 @@ Space mission design is full of trade-offs: a better instrument adds science val
 - **Mission Library:** real missions and topics with real NASA images; every fact links to its official source. Entries unlock as the agency grows.
 - **Badges:** 16 mission patches for first steps, destinations, good engineering, learning and the agency.
 - **Free mission** mode for classes and demos: any mission, no agency.
+- **Example missions:** four ready-made spacecraft for each destination (Earth, Moon and Mars: balanced, on the edge, too heavy or rocket too weak, out of power) launch in one click, and their report explains whether the result is good or bad, how to read the numbers and what to try next.
 - **Team play** for 1 to 4 players: each player leads a role (Mission Director, Science Lead, Spacecraft Engineer, Communications), the game shows whose turn it is, the whole team votes GO / NO-GO before launch, and the report has a team debrief. Play on one device, or open a room with a code: each player then plays the game on their own device (phone, tablet or computer), with their own view, and makes the choices of their role on their turn (see [Team play](#team-play)).
 - **Three languages:** English, Portuguese and Spanish.
-- **Synthesized sounds** (Web Audio) with a mute button; fully playable muted.
+- **Synthesized sounds and background music** (Web Audio), with its own music for the menus, Earth, the Moon and Mars, and a mute button; fully playable muted.
 - Fits the screen on laptops and desktops (no page scroll); on phones the meters stay in a strip on top and the main button stays at the bottom of the screen; 2D fallback without WebGL.
 
 ## Who it is for

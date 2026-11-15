@@ -60,14 +60,17 @@ describe('report rewards', () => {
   });
 });
 
-describe('rank progress bar', () => {
-  it('fills by the share of the current rank step', async () => {
+describe('rank lamps', () => {
+  it('light one lamp per star, with a gap where each new rank starts', async () => {
     const { progressFromBest } = await import('../src/engine/progress.js');
-    const widthFor = (best) => Number(rankCard(progressFromBest({ byScenario: best })).match(/data-progress="(\d+)"/)[1]);
-    expect(widthFor({})).toBe(0); // 0 of 3 stars to Engineer
-    expect(widthFor({ 'earth-observation': 68 })).toBe(33); // 1 of 3
-    expect(widthFor({ 'earth-observation': 75 })).toBe(67); // 2 of 3
-    expect(widthFor({ 'earth-observation': 95, 'moon-exploration': 68 })).toBe(33); // Engineer: 4 stars, 1 of 3 toward 6
-    expect(widthFor({ 'earth-observation': 95, 'moon-exploration': 95, 'mars-study': 95 })).toBe(100); // top rank
+    const html = (best) => rankCard(progressFromBest({ byScenario: best }));
+    const lit = (best) => (html(best).match(/rank-lamp is-on/g) ?? []).length;
+    expect(html({}).match(/class="rank-lamp[ "]/g)).toHaveLength(9);
+    expect(html({}).match(/is-step/g)).toHaveLength(2); // Engineer at 3 stars, Flight Director at 6 (Architect is the end)
+    expect(lit({})).toBe(0);
+    expect(lit({ 'earth-observation': 75 })).toBe(2);
+    expect(lit({ 'earth-observation': 95, 'moon-exploration': 68 })).toBe(4);
+    expect(lit({ 'earth-observation': 95, 'moon-exploration': 95, 'mars-study': 95 })).toBe(9);
+    expect(html({ 'earth-observation': 95, 'moon-exploration': 68 })).toContain('4 of 9 stars');
   });
 });

@@ -17,6 +17,7 @@ export function createInitialState() {
     simulation: null, // result of simulateMission
     report: null, // { score, isNewBest, best, quizAnswered, quizRight, quizChoice }
     team: null, // { players: [{ name, roles }] } from src/engine/team.js; null means one player
+    exampleId: null, // id of the example mission being shown (src/data/examples.js); null for the player's own design
     paused: false,
   };
 }
