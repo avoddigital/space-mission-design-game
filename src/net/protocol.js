@@ -20,7 +20,7 @@ export const REMOTE_ACTIONS = new Set([
   'select-scenario', 'start', 'confirm', 'go-step', 'menu', 'hub', 'free-play', 'new-campaign', 'confirm-new-campaign',
   'continue-campaign', 'pick-country', 'pick-focus', 'found-agency', 'plan', 'side-job', 'research', 'restart',
   'pause', 'tab', 'toggle-part', 'set-power', 'set-comms', 'set-orbit', 'set-rocket', 'launch', 'skip',
-  'see-report', 'redesign', 'new-conditions', 'next-mission', 'quiz', 'close-modal',
+  'see-report', 'redesign', 'new-conditions', 'next-mission', 'quiz', 'close-modal', 'example',
 ]);
 const MAX_VALUE_LENGTH = 64;
 

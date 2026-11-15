@@ -4,6 +4,7 @@ import { icon } from '../components/icons.js';
 import { starRow, rankCard } from '../components/rewards.js';
 import { teamPicker } from '../components/team.js';
 import { t } from '../../i18n/index.js';
+import { examplesFor } from '../../data/examples.js';
 // NASA public-domain maps (credits in src/view3d/planets.js and the README), also used by the 3D view.
 import earthMap from '../../assets/textures/earth_1k.jpg';
 import moonMap from '../../assets/textures/moon_1k.jpg';
@@ -21,6 +22,28 @@ const HOW_TO_PLAY = [
 ];
 
 const DIFFICULTY_PIPS = { easy: 1, medium: 2, hard: 3 };
+
+/** Example missions of the chosen destination (src/data/examples.js): one click launches a ready-made design. */
+function examplesSection(scenario) {
+  const list = scenario ? examplesFor(scenario.id) : [];
+  if (!list.length) return '';
+  const cards = list
+    .map((example) => `
+      <button type="button" class="example-card" data-action="example" data-value="${esc(example.id)}">
+        <span class="example-icon" aria-hidden="true">${icon(example.icon, 22)}</span>
+        <span class="example-main">
+          <span class="example-name">${esc(t(`example.${example.kind}.name`))}</span>
+          <span class="example-watch">${esc(t(`example.${example.kind}.watch`))}</span>
+        </span>
+      </button>`)
+    .join('');
+  return `
+    <section class="examples" aria-labelledby="examples-title">
+      <h2 id="examples-title">${t('example.title', { name: esc(scenario.name) })}</h2>
+      <p class="note">${t('example.lead')}</p>
+      <div class="example-grid">${cards}</div>
+    </section>`;
+}
 
 /** Free mission screen: rank, the 3 missions with stars, how to play and the best scores (no campaign). */
 export function menuScreen({ state, data, best, progress, room = null }) {
@@ -74,6 +97,7 @@ export function menuScreen({ state, data, best, progress, room = null }) {
         <h2 id="missions-title">${t('free.choose')}</h2>
         <div class="scenario-grid">${cards}</div>
         ${teamPicker(state.team, room)}
+        ${examplesSection(data.scenarios.find((scenario) => scenario.id === state.scenarioId))}
         <div class="menu-actions">
           <button type="button" class="btn btn-primary btn-big" data-action="start">${icon('rocket', 22)} ${t('free.start')}</button>
           <button type="button" class="btn btn-big btn-library" data-action="library">${icon('book', 22)} ${t('common.library')}</button>

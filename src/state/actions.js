@@ -6,7 +6,8 @@ import { STEP_SCREENS, redesignStep } from '../engine/phases.js';
 
 const EMPTY_DESIGN = Object.freeze({ partIds: [], orbitId: null, rocketId: null });
 
-const withDesign = (state, changes) => ({ ...state, design: { ...state.design, ...changes } });
+// Changing the design turns an example mission into the player's own mission.
+const withDesign = (state, changes) => ({ ...state, design: { ...state.design, ...changes }, exampleId: null });
 
 // --- Navigation ---
 
@@ -20,6 +21,24 @@ export function selectScenario(state, scenarioId) {
     reroll: 0,
     simulation: null,
     report: null,
+    exampleId: null,
+  };
+}
+
+/**
+ * Load an example mission (src/data/examples.js): its scenario and finished design, ready to launch.
+ * Free mission only. The UI starts the launch right after.
+ */
+export function loadExample(state, example) {
+  const fresh = selectScenario(state, example.scenarioId);
+  return {
+    ...fresh,
+    mode: 'free',
+    design: { ...example.design, partIds: [...example.design.partIds] },
+    confirmedSteps: [1, 2, 3],
+    screen: STEP_SCREENS[3],
+    exampleId: example.id,
+    paused: false,
   };
 }
 

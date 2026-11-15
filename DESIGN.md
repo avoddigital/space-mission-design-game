@@ -121,7 +121,14 @@ All sounds are **synthesized at runtime with the Web Audio API** (`src/ui/sound.
 Rules:
 - Sound starts only after the first click or key press (browser rule).
 - **Mute** button in the top bar, the title screen, the command center, the Library and Badges, plus the `M` key. The choice is saved in `localStorage` (if storage is blocked, the game just does not remember it).
-- Master volume is low (0.18). No sound is longer than about 2 seconds, and nothing loops.
+- Master volume is low (0.18). No sound effect is longer than about 2 seconds, and no effect loops.
+- **Background music:** slow, quiet ambient loops, also synthesized (soft chords that cross-fade, a few random high notes and an echo). Each part of the game has its own theme, and changing theme cross-fades:
+  - **Menus, command center, Library, Badges:** calm and open (A minor, F major 7, C major, G sus2).
+  - **Earth missions:** warm and hopeful, with a gentle arpeggio (C major 7, A minor 7, F major 7, G6).
+  - **Moon missions:** cold, sparse and still: open fifths, pure sine tones, a very long echo.
+  - **Mars missions:** dark and dusty: E Phrygian chords with a gritty edge, a slow low beat and wind.
+
+  The music plays at 18% of the master volume, only on the main device, stops while the tab is hidden and follows the same Mute button.
 - Every sound has a visual equivalent, so the game is fully playable muted.
 
 ## 8. Icons and emblem
@@ -137,6 +144,10 @@ Rules:
 - **Locked Library entry:** hazard-striped dark window instead of the photo, "Not discovered yet" and the way to discover it.
 - **Part badges:** small stamped tags on part and rocket cards: green for a strength ("High science", "Light"), amber for the price to pay ("Heavy", "Lots of data").
 - **Language button:** globe icon plus the current language code (EN, PT, ES); it switches to the next language. Next to the sound button everywhere.
+- **Rank plate** (Free mission screen): a metal plate with screws. The medal insignia sits in a recessed round socket, the rank name is in stencil letters under a mono "RANK" caption, a dark window holds 9 star lamps (amber when earned, with a gap where each new rank starts), and an amber readout shows the stars. In the top bar the rank is a small recessed display (medal icon, rank, this mission's stars). No emoji.
+- **Next-step hint (CAPCOM readout):** a message window recessed into the panel, with a small round lamp and a mono caption: blue "CAPCOM" for the next step, amber "CHECK" for a problem, green "GO" when ready. The message is plain text, no emoji; "Open …" is a small console push button.
+- **Example mission card** (Free mission screen, four for the chosen mission): a small module with a round recessed icon window, the example's name and one line on what to watch; one click launches it.
+- **Example box** (report of an example): a recessed panel with a blue left edge, a verdict pill (green "Good result", amber "Risky", orange "Bad result"), what the example shows, how to read the numbers and what to try.
 
 ## 10. Languages and text length
 

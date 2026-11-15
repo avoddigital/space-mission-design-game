@@ -80,8 +80,10 @@ export const events = [
     scenarios: ['mars-study'],
     protectedBy: 'data',
     scienceLossPct: 15,
-    safeText: 'The Sun passed between Earth and Mars and blocked radio signals for about two weeks. Your {marginPct}% spare antenna capacity caught up afterwards.',
-    hurtText: 'The Sun passed between Earth and Mars and blocked radio signals for about two weeks. With only {marginPct}% spare antenna capacity, some data was lost.',
-    lesson: 'About every two years the Sun blocks signals between Earth and Mars, so teams plan quiet weeks with no commands.',
+    // Real: about every 26 months Mars is behind the Sun as seen from Earth; the hot, charged gas of the
+    // solar corona garbles radio, so NASA stops sending commands for about two weeks. Simplified for the game.
+    safeText: 'Seen from Earth, Mars went behind the Sun, and the Sun\'s hot gas scrambled radio signals for about two weeks. Your {marginPct}% spare antenna capacity caught up afterwards.',
+    hurtText: 'Seen from Earth, Mars went behind the Sun, and the Sun\'s hot gas scrambled radio signals for about two weeks. With only {marginPct}% spare antenna capacity, some data was lost.',
+    lesson: 'About every two years Mars passes behind the Sun as seen from Earth. The Sun\'s hot gas scrambles radio signals, so teams plan quiet weeks with no commands: a garbled command could make the spacecraft do the wrong thing.',
   },
 ];

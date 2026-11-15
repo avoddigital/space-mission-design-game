@@ -200,7 +200,8 @@ export function createEventEffects({ events, destination, planet, planetRadius, 
       }
       case 'ground-station-outage':
       case 'solar-conjunction': {
-        // Outage: the station on Earth blinks red. Conjunction: the Sun moves between the spacecraft and Earth.
+        // Outage: the station on Earth blinks red. Conjunction: the Sun's glow sits between the spacecraft and
+        // Earth (in reality the planets move, putting Mars behind the Sun; the glow sliding in only illustrates it).
         // Either way the data stops reaching home for a while; with enough margin it catches up after.
         const conjunction = event.id === 'solar-conjunction';
         const marker = own(spriteFrom((context, size) => glow(context, size, conjunction ? 'rgba(255,250,220,1)' : 'rgba(255,90,60,1)', conjunction ? 'rgba(255,190,80,0.6)' : 'rgba(255,60,40,0.5)')));

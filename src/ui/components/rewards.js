@@ -2,10 +2,13 @@
 // Badges ("mission patches") live in src/engine/achievements.js and src/ui/screens/badges.js.
 
 import { esc } from '../format.js';
-import { rankFor, totalStars } from '../../engine/progress.js';
+import { rankFor, totalStars, RANKS } from '../../engine/progress.js';
 import { t } from '../../i18n/index.js';
+import { icon } from './icons.js';
 
 const MAX_STARS = 3;
+/** Stars in the whole game: the top rank needs all of them. */
+const MAX_TOTAL_STARS = RANKS[RANKS.length - 1].minStars;
 
 /** Rank name in the current language. */
 const rankName = (name) => t(`rank.${name}`);
@@ -19,24 +22,30 @@ export function starRow(stars, { animate = false, label = '' } = {}) {
   return `<span class="stars" role="img" aria-label="${esc(label || t('stars.of3', { n: stars }))}">${items}</span>`;
 }
 
-/** Rank card for the Free mission screen. */
+/**
+ * Rank plate for the Free mission screen (DESIGN.md section 9): an insignia, the rank in stencil letters,
+ * a row of 9 star lamps (one per star, with a gap where each new rank starts) and an amber readout.
+ */
 export function rankCard(progress) {
   const stars = totalStars(progress);
   const rank = rankFor(stars);
   const next = rank.next
     ? t('rank.next', { name: `<strong>${esc(rankName(rank.next.name))}</strong>`, n: rank.next.starsNeeded })
     : t('rank.top');
-  // Progress inside the current rank step: from this rank's stars to the next rank's stars.
-  const stepSize = rank.next ? stars + rank.next.starsNeeded - rank.minStars : 1;
-  const width = rank.next ? Math.round(((stars - rank.minStars) / stepSize) * 100) : 100;
+  const rankStarts = new Set(RANKS.map((item) => item.minStars));
+  const lamps = Array.from({ length: MAX_TOTAL_STARS }, (_, index) => {
+    const classes = ['rank-lamp', index < stars ? 'is-on' : '', index > 0 && rankStarts.has(index) ? 'is-step' : ''];
+    return `<i class="${classes.filter(Boolean).join(' ')}"></i>`;
+  }).join('');
   return `
-    <section class="rank-card" aria-label="${esc(t('rank.aria'))}" data-progress="${width}">
-      <span class="rank-icon" aria-hidden="true">🎖️</span>
+    <section class="rank-card" aria-label="${esc(t('rank.aria'))}">
+      <span class="rank-insignia" aria-hidden="true">${icon('medal', 26)}</span>
       <span class="rank-body">
-        <span class="rank-name">${esc(rankName(rank.name))}</span>
-        <span class="rank-bar"><span style="width:${width}%"></span></span>
-        <span class="rank-next">★ ${stars} / 9 · ${next}</span>
+        <span class="rank-head"><small class="rank-caption">${t('rank.caption')}</small><span class="rank-name">${esc(rankName(rank.name))}</span></span>
+        <span class="rank-lamps" role="img" aria-label="${esc(t('rank.starsAria', { n: stars, total: MAX_TOTAL_STARS }))}">${lamps}</span>
+        <span class="rank-next">${next}</span>
       </span>
+      <span class="readout rank-readout"><small>${t('rank.starsCaption')}</small><b>${stars}<i> / ${MAX_TOTAL_STARS}</i></b></span>
     </section>`;
 }
 
@@ -46,7 +55,7 @@ export function reportRewards(report) {
   const { starsNow, starsBefore, rankBefore, rankNow } = report.rewards;
   const better = starsNow > starsBefore;
   const promoted = rankNow.level > rankBefore.level
-    ? `<p class="promotion">🎖️ ${t('rank.promoted', { name: `<strong>${esc(rankName(rankNow.name))}</strong>` })}</p>`
+    ? `<p class="promotion">${icon('medal', 18)} ${t('rank.promoted', { name: `<strong>${esc(rankName(rankNow.name))}</strong>` })}</p>`
     : rankNow.next
       ? `<p class="note">${t('rank.status', { name: esc(rankName(rankNow.name)), n: rankNow.next.starsNeeded, next: esc(rankName(rankNow.next.name)) })}</p>`
       : '';
@@ -88,5 +97,5 @@ export function projectionCard(score, baseline = null) {
 export function topbarRewards(progress, scenarioId) {
   const rank = rankFor(totalStars(progress));
   const stars = progress.byScenario[scenarioId]?.stars ?? 0;
-  return `<span class="topbar-rewards" title="${esc(t('rank.topbarTitle'))}">🎖️ ${esc(rankName(rank.name))} ${starRow(stars, { label: t('stars.bestHere', { n: stars }) })}</span>`;
+  return `<span class="topbar-rewards" title="${esc(t('rank.topbarTitle'))}">${icon('medal', 16)} ${esc(rankName(rank.name))} ${starRow(stars, { label: t('stars.bestHere', { n: stars }) })}</span>`;
 }

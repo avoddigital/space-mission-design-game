@@ -40,11 +40,20 @@ export function nextStep(screen, { mission, evaluation, scenario }) {
   return null;
 }
 
-/** The hint line, with a button to open the right tab when it helps. */
+/** Caption next to the lamp: who is talking (CAPCOM) or the state, so the tone is never color alone. */
+const HINT_CAPTIONS = { info: 'hint.capcom', warn: 'check.check', good: 'check.go' };
+
+/**
+ * The hint line: a message window on the console (DESIGN.md section 9), with a lamp, a caption and the
+ * message, plus a button to open the right tab when it helps.
+ */
 export function hintLine(hint, currentTab) {
   if (!hint) return '';
   const button = hint.tab && hint.tab !== currentTab
-    ? ` <button type="button" class="hint-button" data-action="tab" data-value="${hint.tab}">${t('hint.open', { tab: t(TAB_KEYS[hint.tab]) })} →</button>`
+    ? `<button type="button" class="hint-button" data-action="tab" data-value="${hint.tab}">${t('hint.open', { tab: t(TAB_KEYS[hint.tab]) })} →</button>`
     : '';
-  return `<p class="next-hint hint-${hint.tone}" role="status">👉 ${esc(hint.text)}${button}</p>`;
+  return `<p class="next-hint hint-${hint.tone}" role="status">
+    <span class="hint-lamp" aria-hidden="true"></span>
+    <span class="hint-caption">${t(HINT_CAPTIONS[hint.tone] ?? 'hint.capcom')}</span>
+    <span class="hint-text">${esc(hint.text)}</span>${button}</p>`;
 }

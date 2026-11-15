@@ -11,6 +11,7 @@ import { teamDebrief, isTeamPlay } from '../../engine/team.js';
 import { reportRewards } from '../components/rewards.js';
 import { libraryMissions, libraryTopics } from '../../data/library.js';
 import { phases, agencyEvents } from '../../data/campaign.js';
+import { examples } from '../../data/examples.js';
 import { t, localizeList } from '../../i18n/index.js';
 import { ACHIEVEMENTS } from '../../engine/achievements.js';
 import { patch } from './badges.js';
@@ -207,6 +208,25 @@ function realMissions(missions = []) {
     </section>`;
 }
 
+/** Tone of each kind of example's verdict: is this result good, risky or bad? */
+const EXAMPLE_TONES = { balanced: 'good', tight: 'risky', heavy: 'bad', reach: 'bad', power: 'bad' };
+
+/** Report of an example mission (src/data/examples.js): what it shows, how to read the numbers, what to try. */
+function exampleBlock(exampleId) {
+  const kind = examples.find((item) => item.id === exampleId)?.kind;
+  if (!kind || !EXAMPLE_TONES[kind]) return '';
+  const key = (name) => t(`example.${kind}.${name}`);
+  return `
+    <section class="example-about" aria-labelledby="example-about-title">
+      <h3 id="example-about-title">${icon('bulb', 18)} ${t('example.aboutTitle', { name: esc(key('name')) })}
+        <span class="example-verdict is-${EXAMPLE_TONES[kind]}">${esc(key('verdict'))}</span></h3>
+      <p>${esc(key('shows'))}</p>
+      <p><strong>${t('example.readNumbers')}</strong> ${esc(key('read'))}</p>
+      <p><strong>${t('example.tryIt')}</strong> ${esc(key('next'))}</p>
+      <p class="note">${t('example.noRewards')}</p>
+    </section>`;
+}
+
 export function reportScreen(ctx) {
   const { simulation, state, scenario, content, data } = ctx;
   const report = state.report ?? {};
@@ -250,6 +270,7 @@ export function reportScreen(ctx) {
   const campaignMode = state.mode === 'campaign';
   const cards = `
     ${header}
+    ${exampleBlock(state.exampleId)}
     ${reportRewards(report)}
     ${campaignMode ? agencyBlock(ctx.ui.campaignResult, state.campaign) : ''}
     ${why}

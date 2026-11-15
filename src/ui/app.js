@@ -4,8 +4,9 @@
 import {
   selectScenario, startMission, confirmStep, goToStep, goToMenu, togglePart, setPower, setComms,
   setOrbit, setRocket, launch, togglePause, newConditions, showReport, redesign, answerQuiz,
-  openFreePlay, openSetup, enterCampaign, setCampaign, planMission, goToHub, setTeam,
+  openFreePlay, openSetup, enterCampaign, setCampaign, planMission, goToHub, setTeam, loadExample,
 } from '../state/actions.js';
+import { examples } from '../data/examples.js';
 import {
   gameData, selectScenario as selectScenarioData, selectMission, selectEvaluation, runSimulation, selectScore,
   selectProjectedScore,
@@ -32,7 +33,7 @@ import { titleScreen, setupScreen, hubScreen, globeView } from './screens/campai
 import { meterDetail, METERS } from './components/meter.js';
 import { modal, toast, pauseOverlay, countdownOverlay, confetti } from './components/overlays.js';
 import { syncView3d } from './view3dHost.js';
-import { play, toggleMute } from './sound.js';
+import { enableMusic, play, setMusicTheme, toggleMute } from './sound.js';
 import { t, setLocale, nextLocale, localizeData, localizeList } from '../i18n/index.js';
 
 const SCREENS = {
@@ -91,6 +92,7 @@ const ACTION_SOUNDS = {
   'library-tab': 'tab',
   'close-library': 'close',
   'free-play': 'pick',
+  example: 'pick',
   'new-campaign': 'pick',
   'confirm-new-campaign': 'pick',
   'continue-campaign': 'pick',
@@ -102,6 +104,9 @@ const ACTION_SOUNDS = {
   'ops-tab': 'tab',
   language: 'click',
 };
+
+/** Music theme of each destination (src/ui/sound.js MUSIC_THEMES). */
+const MUSIC_OF_SCENARIO = { 'earth-observation': 'earth', 'moon-exploration': 'moon', 'mars-study': 'mars' };
 
 /** Screens with the Earth globe instead of a mission. */
 const GLOBE_SCREENS = new Set(['menu', 'setup', 'hub']);
@@ -230,6 +235,9 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     if (ui.badgeNotice.length) html += badgeNotice(ui.badgeNotice);
     root.innerHTML = html;
     root.classList.toggle('is-liftoff', ui.countdown === 0);
+    // Each destination has its own music during a mission; menus, Library and Badges share the menu theme.
+    const inMission = !ui.library && !ui.badges && !MENU_SCREENS.has(state.screen);
+    setMusicTheme(inMission ? MUSIC_OF_SCENARIO[state.scenarioId] : 'menu');
     ui.previewKey = null; // the meters now show the real values
 
     // Short entrance animation when the screen changes (PRD 8.5).
@@ -395,7 +403,7 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     store.update(launch, simulation);
     recordRun();
     ui.reportBadges = [];
-    trackAchievement({ type: 'launch' });
+    if (!store.getState().exampleId) trackAchievement({ type: 'launch' });
     playTimeline();
   }
 
@@ -616,6 +624,11 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
   function recordRun() {
     const state = store.getState();
     const score = selectScore(state, data);
+    // Example missions are ready-made: they show results but never count for best scores or stars.
+    if (state.exampleId) {
+      ui.lastRun = { simulation: state.simulation, score, best: { isNewBest: false }, rewards: null };
+      return;
+    }
     // Only successful missions can set a best score.
     const best = state.simulation?.outcome === 'success'
       ? saveBest(state.scenarioId, score.total, storage)
@@ -637,6 +650,11 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     const { score, best, rewards } = ui.lastRun;
     const state = store.getState();
     store.update(showReport, { score, ...best, rewards });
+    window.scrollTo?.(0, 0);
+    if (state.exampleId) {
+      ui.reportBadges = []; // examples earn no badges
+      return;
+    }
     const budgetEntry = state.simulation?.budget?.budget;
     ui.reportBadges = trackAchievement({
       type: 'report',
@@ -727,6 +745,13 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
       store.update(goToHub);
     },
     'free-play': () => store.update(openFreePlay),
+    example: (value) => {
+      const example = examples.find((item) => item.id === value);
+      if (!example || store.getState().screen !== 'free') return;
+      ui.tab = 'instrument';
+      store.update(loadExample, example);
+      prepareLaunch(); // straight to the countdown (or the team's GO / NO-GO poll)
+    },
     'new-campaign': () => {
       if (loadCampaign(storage)) {
         showModal(t('newCampaign.title'), [t('newCampaign.text')], [
@@ -925,6 +950,8 @@ export function mountApp(root, { store, data: baseData = gameData, storage }) {
     if (ACTION_SOUNDS[action]) play(ACTION_SOUNDS[action]);
     handlers[action](value);
   }
+
+  enableMusic(); // background music, only on the main device (starts on the first click or key)
 
   root.addEventListener('click', (event) => {
     if (ui.countdown !== null) return; // nothing can be changed during the countdown
